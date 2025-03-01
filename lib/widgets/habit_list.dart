@@ -19,17 +19,19 @@ class _HabitListState extends ConsumerState<HabitList> {
   Widget build(BuildContext context) {
     final habits = ref.watch(habitsProvider);
     final dateState = ref.watch(dateProvider.notifier);
+    // DO NOT REMOVE currentDate
+    // ignore: unused_local_variable
     final currentDate = ref.watch(dateProvider);
 
     return CarouselSlider.builder(
       itemCount: 7,
       options: CarouselOptions(
-        height: MediaQuery.of(context).size.height * 0.61,
+        height: MediaQuery.of(context).size.height * 0.55,
         viewportFraction: 0.75,
         initialPage: initialPage,
         enableInfiniteScroll: false,
         enlargeCenterPage: true,
-        enlargeFactor: 0.35,
+        enlargeFactor: 0.3,
         onPageChanged: (index, reason) {
           dateState.setDate(index);
         },
@@ -41,7 +43,7 @@ class _HabitListState extends ConsumerState<HabitList> {
             borderRadius: 19.56,
             blur: 35.87,
             glowColor: Colors.white,
-            glowSpread: 54,
+            glowSpread: 32,
             glowIntensity: 0.69,
             enableGlow: true,
             color: Colors.black.withValues(alpha: 0.22),

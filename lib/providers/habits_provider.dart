@@ -52,7 +52,7 @@ class HabitsNotifier extends StateNotifier<List<Habit>> {
         return Habit(
           id: habit.id,
           title: habit.title,
-          icon: 'assets/icons/water.svg',
+          icon: habit.icon,
           isCompleted: !habit.isCompleted,
         );
       }

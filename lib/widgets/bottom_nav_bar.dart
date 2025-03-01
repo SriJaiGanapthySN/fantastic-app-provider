@@ -1,60 +1,60 @@
+import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-class BottomNavBar extends StatelessWidget {
+final selectedTabProvider = StateProvider<int>((ref) => 1);
+
+class BottomNavBar extends ConsumerWidget {
   const BottomNavBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(selectedTabProvider);
+
+    return BlurContainer(
+      blur: 17.51,
+      borderRadius: 54.71,
+      padding: const EdgeInsets.all(8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.white,
-            child: IconButton(
-              icon: const Icon(
-                Icons.chat_bubble_outline,
-                color: Colors.black,
-              ),
-              onPressed: () {},
-            ),
-          ),
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.white,
-            child: IconButton(
-              icon: const Icon(
-                Icons.auto_graph,
-                color: Colors.black,
-              ),
-              onPressed: () {},
-            ),
-          ),
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.white,
-            child: IconButton(
-              icon: const Icon(
-                Icons.favorite_border,
-                color: Colors.black,
-              ),
-              onPressed: () {},
-            ),
-          ),
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.white,
-            child: IconButton(
-              icon: const Icon(
-                Icons.search,
-                color: Colors.black,
-              ),
-              onPressed: () {},
-            ),
-          ),
+          _buildNavButton(
+              context, 'assets/icons/chat.svg', 0, selectedIndex, ref),
+          _buildNavButton(
+              context, 'assets/icons/route.svg', 1, selectedIndex, ref),
+          _buildNavButton(
+              context, 'assets/icons/heart.svg', 2, selectedIndex, ref),
+          _buildNavButton(
+              context, 'assets/icons/search.svg', 3, selectedIndex, ref),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNavButton(BuildContext context, String iconPath, int index,
+      int selectedIndex, WidgetRef ref) {
+    final isSelected = index == selectedIndex;
+
+    return GestureDetector(
+      onTap: () => ref.read(selectedTabProvider.notifier).state = index,
+      child: BlurContainer(
+        blur: 8,
+        borderRadius: 54.71,
+        color: isSelected ? Colors.white : Colors.black.withValues(alpha: 0.2),
+        width: 64,
+        height: 64,
+        child: Center(
+          child: SvgPicture.asset(
+            iconPath,
+            colorFilter: ColorFilter.mode(
+              isSelected ? Colors.black : Colors.white,
+              BlendMode.srcIn,
+            ),
+            width: 24,
+            height: 24,
+          ),
+        ),
       ),
     );
   }

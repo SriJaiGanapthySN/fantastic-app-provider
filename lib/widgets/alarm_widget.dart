@@ -15,7 +15,7 @@ class AlarmWidget extends ConsumerWidget {
         : const Color(0xFFFCC500);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 58.0),
+      padding: const EdgeInsets.symmetric(horizontal: 54.0),
       child: BlurContainer(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 16),
         borderRadius: 24,
@@ -34,9 +34,8 @@ class AlarmWidget extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 color: alarmColor,
                 child: InkWell(
-                  onTap: () {
-                    ref.read(alarmProvider.notifier).toggleAlarm();
-                  },
+                  onTap: () => _showAlarmPicker(context, ref),
+                  borderRadius: BorderRadius.circular(12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -58,7 +57,7 @@ class AlarmWidget extends ConsumerWidget {
                                 fontSize: 14),
                           ),
                           Text(
-                            alarmState.alarmTime,
+                            alarmState.formattedAlarmTime,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 10,
@@ -99,7 +98,7 @@ class AlarmWidget extends ConsumerWidget {
                               fontSize: 14),
                         ),
                         Text(
-                          '11 Min',
+                          alarmState.formattedDuration,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 10,
@@ -115,5 +114,43 @@ class AlarmWidget extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _showAlarmPicker(BuildContext context, WidgetRef ref) async {
+    final alarmNotifier = ref.read(alarmProvider.notifier);
+    final alarmState = ref.read(alarmProvider);
+
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: alarmState.alarmTime,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.black.withValues(alpha: 0.8),
+              hourMinuteTextColor: Colors.white,
+              dayPeriodTextColor: Colors.white,
+              dialHandColor: const Color(0xFF00E29A),
+              dialBackgroundColor: Colors.black.withValues(alpha: 0.2),
+              dialTextColor: Colors.white,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: ButtonStyle(
+                foregroundColor: WidgetStatePropertyAll(Colors.white),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime != null && pickedTime != alarmState.alarmTime) {
+      alarmNotifier.setAlarmTime(pickedTime);
+    } else {
+      if (!alarmState.isAlarmSet) {
+        alarmNotifier.toggleAlarm();
+      }
+    }
   }
 }

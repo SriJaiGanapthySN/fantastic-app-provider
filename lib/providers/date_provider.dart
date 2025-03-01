@@ -30,13 +30,24 @@ class DateState extends StateNotifier<DateTime> {
   }
 
   String getFormattedDate() {
-    String prefix = formattedDay;
-    String dayAndMonth = DateFormat('E, d MMM').format(state);
+    final difference = state.difference(today).inDays;
 
-    dayAndMonth = dayAndMonth.replaceAllMapped(RegExp(r' ([A-Za-z]+)$'),
-        (match) => ' ${match.group(1)!.toLowerCase()}');
+    if (difference >= -1 && difference <= 1) {
+      String prefix = formattedDay;
+      String dayAndMonth = DateFormat('E, d MMM').format(state);
 
-    return '$prefix . $dayAndMonth';
+      dayAndMonth = dayAndMonth.replaceAllMapped(
+          RegExp(r' ([A-Za-z]+)$'), (match) => ' ${match.group(1)!}');
+
+      return '$prefix . $dayAndMonth';
+    } else {
+      String dayAndMonth = DateFormat('E, d MMM').format(state);
+
+      dayAndMonth = dayAndMonth.replaceAllMapped(
+          RegExp(r' ([A-Za-z]+)$'), (match) => ' ${match.group(1)!}');
+
+      return dayAndMonth;
+    }
   }
 
   String getNextDayText() {
@@ -44,4 +55,3 @@ class DateState extends StateNotifier<DateTime> {
     return DateFormat('EEEE').format(nextDay);
   }
 }
-

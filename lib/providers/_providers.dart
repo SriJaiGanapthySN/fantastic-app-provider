@@ -1,5 +1,6 @@
 import 'package:fantastic_app_riverpod/models/habit.dart';
 import 'package:fantastic_app_riverpod/providers/date_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'habits_provider.dart';
 import 'video_provider.dart';
@@ -18,7 +19,7 @@ final videoProvider = StateNotifierProvider<VideoNotifier, VideoState>(
 );
 
 final alarmProvider = StateNotifierProvider<AlarmNotifier, AlarmState>((ref) {
-  return AlarmNotifier();
+  return AlarmNotifier(FlutterLocalNotificationsPlugin());
 });
 
 final dateProvider = StateNotifierProvider<DateState, DateTime>((ref) {
