@@ -52,56 +52,63 @@ class AlarmNotifier extends StateNotifier<AlarmState> {
 
   AlarmNotifier(this.notifications)
       : super(AlarmState(
-          isAlarmSet: true,
-          alarmTime:
-              TimeOfDay(hour: DateTime.now().hour, minute: DateTime.now().hour),
-          duration: Duration(minutes: 11),
+          isAlarmSet: false,
+          alarmTime: TimeOfDay(
+              hour: DateTime.now().hour, minute: DateTime.now().minute + 5),
+          duration: const Duration(minutes: 10),
         )) {
     _initNotifications();
   }
 
   Future<void> _initNotifications() async {
-    const androidSettings =
+    const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings();
-    const initSettings =
+
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    const InitializationSettings initSettings =
         InitializationSettings(android: androidSettings, iOS: iosSettings);
 
     await notifications.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: (details) {},
+      onDidReceiveNotificationResponse: (NotificationResponse details) {
+        log('Notification response received: ${details.payload}');
+      },
     );
 
     await _requestPermissions();
-
-    if (state.isAlarmSet) {
-      _scheduleAlarm();
-    }
   }
 
   Future<void> _requestPermissions() async {
-    var notificationStatus = await Permission.notification.status;
+    final notificationStatus = await Permission.notification.status;
     if (!notificationStatus.isGranted) {
-      await Permission.notification.request();
+      final status = await Permission.notification.request();
+      log('Notification permission status: $status');
     }
 
-    await notifications
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+    if (notifications.resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>() !=
+        null) {
+      await notifications
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+    }
 
     try {
-      var alarmStatus = await Permission.scheduleExactAlarm.status;
+      final alarmStatus = await Permission.scheduleExactAlarm.status;
       if (!alarmStatus.isGranted) {
         final result = await Permission.scheduleExactAlarm.request();
-
-        if (!result.isGranted) {
-          log('Exact alarm permission denied');
-        }
+        log('Exact alarm permission status: $result');
       }
     } catch (e) {
       log('scheduleExactAlarm permission not available: $e');
@@ -111,10 +118,13 @@ class AlarmNotifier extends StateNotifier<AlarmState> {
   Future<void> _scheduleAlarm() async {
     await notifications.cancelAll();
 
-    if (!state.isAlarmSet) return;
+    if (!state.isAlarmSet) {
+      log('Alarm is not set, skipping scheduling');
+      return;
+    }
 
     if (!(await Permission.notification.isGranted)) {
-      log('Notification permission not granted');
+      log('Notification permission not granted, showing dialog to request it');
       return;
     }
 
@@ -129,11 +139,14 @@ class AlarmNotifier extends StateNotifier<AlarmState> {
 
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
+      log('Alarm time is in the past, scheduling for tomorrow: $scheduledDate');
     }
 
     final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    log('Scheduling alarm for: $tzScheduledDate');
 
-    const androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'alarm_channel',
       'Alarm Notifications',
       channelDescription: 'Channel for alarm notifications',
@@ -141,23 +154,28 @@ class AlarmNotifier extends StateNotifier<AlarmState> {
       priority: Priority.high,
       sound: RawResourceAndroidNotificationSound('alarm_sound'),
       playSound: true,
+      enableLights: true,
+      enableVibration: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       sound: 'alarm_sound.mp3',
       presentSound: true,
+      interruptionLevel: InterruptionLevel.critical,
     );
 
-    const details =
+    const NotificationDetails details =
         NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     bool canUseExactAlarms = false;
     try {
-      var permissionStatus = await Permission.scheduleExactAlarm.status;
+      final permissionStatus = await Permission.scheduleExactAlarm.status;
       canUseExactAlarms = permissionStatus.isGranted;
+      log('Can use exact alarms: $canUseExactAlarms');
     } catch (e) {
-      log('scheduleExactAlarm permission not available: $e');
-
+      log('scheduleExactAlarm permission check failed: $e');
       canUseExactAlarms = false;
     }
 
@@ -173,7 +191,7 @@ class AlarmNotifier extends StateNotifier<AlarmState> {
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
-        log('Exact alarm scheduled for $tzScheduledDate');
+        log('Exact alarm successfully scheduled for $tzScheduledDate');
       } else {
         await notifications.zonedSchedule(
           1,
@@ -209,30 +227,22 @@ class AlarmNotifier extends StateNotifier<AlarmState> {
   }
 
   void toggleAlarm() {
+    log('Toggling alarm from ${state.isAlarmSet} to ${!state.isAlarmSet}');
     state = state.copyWith(isAlarmSet: !state.isAlarmSet);
     if (state.isAlarmSet) {
       _scheduleAlarm();
     } else {
       notifications.cancelAll();
+      log('Alarm cancelled');
     }
   }
 
   void setAlarmTime(TimeOfDay time) {
+    log('Setting alarm time to $time');
     state = state.copyWith(
       alarmTime: time,
       isAlarmSet: true,
     );
     _scheduleAlarm();
   }
-
-  void setDuration(Duration duration) {
-    state = state.copyWith(duration: duration);
-    if (state.isAlarmSet) {
-      _scheduleAlarm();
-    }
-  }
 }
-
-final alarmProvider = StateNotifierProvider<AlarmNotifier, AlarmState>((ref) {
-  return AlarmNotifier(FlutterLocalNotificationsPlugin());
-});
