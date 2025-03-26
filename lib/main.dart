@@ -1,12 +1,18 @@
 import 'dart:developer';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'screens/main_screen.dart';
+
+import 'package:fantastic_app_riverpod/firebase_options.dart';
+import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
+import 'package:fantastic_app_riverpod/screens/auth_page.dart';
+import 'package:fantastic_app_riverpod/screens/main_screen.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -17,6 +23,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   tz.initializeTimeZones();
+  await _initializeFirebase();
 
   try {
     String timezoneName = await FlutterTimezone.getLocalTimezone();
@@ -64,11 +71,13 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
     return MaterialApp(
       title: 'Fantastic App',
       debugShowCheckedModeBanner: false,
@@ -77,7 +86,26 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
-      home: const MainScreen(),
+      home: authState.isLoading
+          ? const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          : authState.user != null
+              ? MainScreen()
+              : const AuthPage(),
     );
+  }
+}
+
+Future<void> _initializeFirebase() async {
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    if (kDebugMode) {
+      print("Firebase initialization error: $e");
+    }
   }
 }
