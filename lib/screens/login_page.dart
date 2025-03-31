@@ -40,7 +40,8 @@ class SignInPageState extends State<SignInPage> {
               _buildLoginButton(),
               _buildCreateAccountButton(),
               const Text('or'),
-              _buildLoginWithGoogleButton('assets/icons/google.png'),
+              buildLoginWithGoogleButton(),
+              buildLoginWithAppleButton(),
             ],
           ),
         ),
@@ -171,22 +172,6 @@ class SignInPageState extends State<SignInPage> {
     return ColoredButton(
       onPressed: widget.togglePages,
       labelText: "Create Account",
-    );
-  }
-
-  // ignore: unused_element
-  Widget _buildLoginWithGoogleButton(String googleLogo) {
-    return Consumer(
-      builder: (context, ref, _) {
-        return Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: ColoredButton(
-            onPressed: () => ref.read(authProvider.notifier).signInWithGoogle(),
-            labelText: "Login with Google",
-            image: AssetImage(googleLogo),
-          ),
-        );
-      },
     );
   }
 

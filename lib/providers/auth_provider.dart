@@ -73,6 +73,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> signInWithApple() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final user = await authRepo.signInWithApple();
+      state = state.copyWith(user: user, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
+  }
+
   Future<void> sendForgotPasswordLink(String email) async {
     try {
       await authRepo.sendPasswordResetLink(email);

@@ -3,6 +3,8 @@ import 'package:fantastic_app_riverpod/repos/auth_repo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter/services.dart';
 
 import '../models/app_user.dart';
 
@@ -171,7 +173,6 @@ class FirebaseAuthRepo implements AuthRepo {
   }
 
   @override
-  @override
   Future<AppUser?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -223,6 +224,76 @@ class FirebaseAuthRepo implements AuthRepo {
       _logError('Error signing in with Google: ', e);
       throw Exception(
           'Error signing in with Google or canceled by user. You can try using email instead if the issue persists.');
+    }
+  }
+
+  @override
+  Future<AppUser?> signInWithApple() async {
+    try {
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        webAuthenticationOptions: WebAuthenticationOptions(
+          clientId:
+              'com.example.fantastic_app_riverpod', //TODO: Replace with our app's client ID (When Published of course)
+          redirectUri: Uri.parse(
+              'https://example.com/callbacks/sign_in_with_apple'), //TODO: Replace with our redirect URI (When Published of course)
+        ),
+      );
+
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      UserCredential userCredential =
+          await firebaseAuth.signInWithCredential(oauthCredential);
+
+      User? firebaseUser = userCredential.user;
+
+      if (firebaseUser == null) {
+        throw Exception('Apple sign-in failed');
+      }
+
+      // Check if user already exists in Firestore
+      DocumentSnapshot userDoc = await firebaseFirestore
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        // Register the new user in Firestore
+        AppUser user = AppUser(
+          uid: firebaseUser.uid,
+          email: firebaseUser.email ?? 'No email',
+          name: appleCredential.givenName != null &&
+                  appleCredential.familyName != null
+              ? '${appleCredential.givenName} ${appleCredential.familyName}'
+              : firebaseUser.displayName ?? 'User',
+        );
+
+        await firebaseFirestore
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .set(user.toJson());
+      }
+
+      // Return the user
+      return AppUser(
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? 'No email',
+        name: firebaseUser.displayName ?? 'User',
+      );
+    } on PlatformException catch (e) {
+      _logError('Error signing in with Apple (PlatformException): ', e);
+      throw Exception(
+          'Error signing in with Apple. Please ensure your configuration is correct.');
+    } catch (e) {
+      _logError('Error signing in with Apple: ', e);
+      throw Exception(
+          'Error signing in with Apple or canceled by user. You can try using email instead if the issue persists.');
     }
   }
 }
