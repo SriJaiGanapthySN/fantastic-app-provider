@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/auth_provider.dart';
 
 class ColoredButton extends StatelessWidget {
   final String labelText;
@@ -107,4 +110,36 @@ class _ButtonInsideTFState extends State<ButtonInsideTF> {
       ),
     );
   }
+}
+
+Widget buildLoginWithGoogleButton() {
+  return Padding(
+    padding: const EdgeInsets.all(4.0),
+    child: Consumer(
+      builder: (context, ref, _) {
+        return ColoredButton(
+          onPressed: () => ref.read(authProvider.notifier).signInWithGoogle(),
+          labelText: "  Login with Google",
+          image: AssetImage('assets/icons/google.png'),
+        );
+      },
+    ),
+  );
+}
+
+Widget buildLoginWithAppleButton() {
+  return Padding(
+    padding: const EdgeInsets.all(4.0),
+    child: Consumer(
+      builder: (context, ref, _) {
+        return ColoredButton(
+          onPressed: () => ref.read(authProvider.notifier).signInWithApple(),
+          labelText: "  Login with Apple",
+          image: AssetImage(Theme.of(context).brightness == Brightness.light
+              ? 'assets/icons/apple_light.png'
+              : 'assets/icons/apple_dark.png'),
+        );
+      },
+    ),
+  );
 }
