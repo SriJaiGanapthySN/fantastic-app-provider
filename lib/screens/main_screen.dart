@@ -1,10 +1,11 @@
+import 'package:fantastic_app_riverpod/screens/journey_path.dart';
+import 'package:fantastic_app_riverpod/screens/journey_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'chat_screen.dart';
 import 'ritual_screen.dart';
 import 'heart_screen.dart';
-import 'search_screen.dart';
 
 final pageControllerProvider = Provider<PageController>((ref) {
   final controller = PageController(initialPage: 1);
@@ -39,7 +40,7 @@ class MainScreen extends ConsumerWidget {
           ChatScreen(),
           RitualScreen(),
           HeartScreen(),
-          SearchScreen(),
+          JourneyRoadmapScreen(),
         ],
       ),
       floatingActionButton: Padding(
