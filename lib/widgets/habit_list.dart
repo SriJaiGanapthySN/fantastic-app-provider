@@ -13,18 +13,18 @@ class HabitList extends ConsumerStatefulWidget {
 }
 
 class _HabitListState extends ConsumerState<HabitList> {
-  final int initialPage = 3;
+  final int initialPage = 0;
 
   @override
   Widget build(BuildContext context) {
     final habits = ref.watch(habitsProvider);
-    final dateState = ref.watch(dateProvider.notifier);
+    final dateState = ref.watch(dateProvider.notifier); 
     // DO NOT REMOVE currentDate
     // ignore: unused_local_variable
-    final currentDate = ref.watch(dateProvider);
+    final currentDate = ref.watch(dateProvider); 
 
     return CarouselSlider.builder(
-      itemCount: 7,
+      itemCount: 4,
       options: CarouselOptions(
         height: MediaQuery.of(context).size.height * 0.55,
         viewportFraction: 0.75,
@@ -33,7 +33,7 @@ class _HabitListState extends ConsumerState<HabitList> {
         enlargeCenterPage: true,
         enlargeFactor: 0.3,
         onPageChanged: (index, reason) {
-          dateState.setDate(index);
+          dateState.setDate(index+3);
         },
       ),
       itemBuilder: (context, index, realIndex) {
