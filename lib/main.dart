@@ -19,7 +19,7 @@ final notificationPluginProvider =
   return FlutterLocalNotificationsPlugin();
 });
 
-void main() async {
+ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   tz.initializeTimeZones();

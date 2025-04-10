@@ -11,10 +11,10 @@ class BackgroundVideo extends ConsumerStatefulWidget {
 }
 
 class _BackgroundVideoState extends ConsumerState<BackgroundVideo> {
-  late VideoPlayerController _controller1;
-  late VideoPlayerController _controller2;
-  late VideoPlayerController _controller3;
-  late VideoPlayerController _controller4;
+  late VideoPlayerController _controller1; // morning
+  late VideoPlayerController _controller2; // afternoon
+  late VideoPlayerController _controller3; // evening
+  late VideoPlayerController _controller4; // night
 
   late Future<void> _initializeVideoPlayerFuture1;
   late Future<void> _initializeVideoPlayerFuture2;
@@ -66,128 +66,118 @@ class _BackgroundVideoState extends ConsumerState<BackgroundVideo> {
     if (_controller4.value.isPlaying) _controller4.pause();
 
     switch (videoState.currentVideo) {
-      case VideoBackground.first:
+      case VideoBackground.morning:
         _controller1.play();
         break;
-      case VideoBackground.second:
+      case VideoBackground.afternoon:
         _controller2.play();
         break;
-      case VideoBackground.third:
+      case VideoBackground.evening:
         _controller3.play();
         break;
-      case VideoBackground.fourth:
+      case VideoBackground.night:
         _controller4.play();
         break;
     }
 
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity! > 0) {
-          ref.read(videoProvider.notifier).previousVideo();
-        } else if (details.primaryVelocity! < 0) {
-          ref.read(videoProvider.notifier).nextVideo();
-        }
-      },
-      child: Stack(
-        children: [
-          AnimatedOpacity(
-            opacity:
-                videoState.currentVideo == VideoBackground.first ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            child: FutureBuilder(
-              future: _initializeVideoPlayerFuture1,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox.expand(
-                    child: FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: _controller1.value.size.width,
-                        height: _controller1.value.size.height,
-                        child: VideoPlayer(_controller1),
-                      ),
+    return Stack(
+      children: [
+        AnimatedOpacity(
+          opacity:
+              videoState.currentVideo == VideoBackground.morning ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 500),
+          child: FutureBuilder(
+            future: _initializeVideoPlayerFuture1,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller1.value.size.width,
+                      height: _controller1.value.size.height,
+                      child: VideoPlayer(_controller1),
                     ),
-                  );
-                } else {
-                  return const Center(child: CircularProgressIndicator());
-                }
-              },
-            ),
+                  ),
+                );
+              } else {
+                return const Center(child: CircularProgressIndicator());
+              }
+            },
           ),
-          AnimatedOpacity(
-            opacity:
-                videoState.currentVideo == VideoBackground.second ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            child: FutureBuilder(
-              future: _initializeVideoPlayerFuture2,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox.expand(
-                    child: FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: _controller2.value.size.width,
-                        height: _controller2.value.size.height,
-                        child: VideoPlayer(_controller2),
-                      ),
+        ),
+        AnimatedOpacity(
+          opacity:
+              videoState.currentVideo == VideoBackground.afternoon ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 500),
+          child: FutureBuilder(
+            future: _initializeVideoPlayerFuture2,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller2.value.size.width,
+                      height: _controller2.value.size.height,
+                      child: VideoPlayer(_controller2),
                     ),
-                  );
-                } else {
-                  return const SizedBox.shrink();
-                }
-              },
-            ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
           ),
-          AnimatedOpacity(
-            opacity:
-                videoState.currentVideo == VideoBackground.third ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            child: FutureBuilder(
-              future: _initializeVideoPlayerFuture3,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox.expand(
-                    child: FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: _controller3.value.size.width,
-                        height: _controller3.value.size.height,
-                        child: VideoPlayer(_controller3),
-                      ),
+        ),
+        AnimatedOpacity(
+          opacity:
+              videoState.currentVideo == VideoBackground.evening ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 500),
+          child: FutureBuilder(
+            future: _initializeVideoPlayerFuture3,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller3.value.size.width,
+                      height: _controller3.value.size.height,
+                      child: VideoPlayer(_controller3),
                     ),
-                  );
-                } else {
-                  return const SizedBox.shrink();
-                }
-              },
-            ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
           ),
-          AnimatedOpacity(
-            opacity:
-                videoState.currentVideo == VideoBackground.fourth ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            child: FutureBuilder(
-              future: _initializeVideoPlayerFuture4,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox.expand(
-                    child: FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: _controller4.value.size.width,
-                        height: _controller4.value.size.height,
-                        child: VideoPlayer(_controller4),
-                      ),
+        ),
+        AnimatedOpacity(
+          opacity: videoState.currentVideo == VideoBackground.night ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 500),
+          child: FutureBuilder(
+            future: _initializeVideoPlayerFuture4,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller4.value.size.width,
+                      height: _controller4.value.size.height,
+                      child: VideoPlayer(_controller4),
                     ),
-                  );
-                } else {
-                  return const SizedBox.shrink();
-                }
-              },
-            ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

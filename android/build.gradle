@@ -1,3 +1,13 @@
+buildscript{
+    repositories {
+        google()       // Ensure Google Maven repository is included
+        mavenCentral() // Ensure Maven Central is included
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.3.0' // Keep this AGP version
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -16,3 +26,5 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
+
+

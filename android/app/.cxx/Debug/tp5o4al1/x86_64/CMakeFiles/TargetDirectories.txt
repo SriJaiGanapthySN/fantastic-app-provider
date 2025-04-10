@@ -1,0 +1,2 @@
+/Users/ganapathy/Downloads/fantastic_app_riverpod-main/android/app/.cxx/Debug/tp5o4al1/x86_64/CMakeFiles/edit_cache.dir
+/Users/ganapathy/Downloads/fantastic_app_riverpod-main/android/app/.cxx/Debug/tp5o4al1/x86_64/CMakeFiles/rebuild_cache.dir

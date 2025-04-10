@@ -1,0 +1,2 @@
+/Users/ganapathy/Desktop/Flutter/fantastic_app_riverpod-Ganapathy/android/app/.cxx/Debug/536o4h42/x86/CMakeFiles/edit_cache.dir
+/Users/ganapathy/Desktop/Flutter/fantastic_app_riverpod-Ganapathy/android/app/.cxx/Debug/536o4h42/x86/CMakeFiles/rebuild_cache.dir

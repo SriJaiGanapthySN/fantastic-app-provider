@@ -1,11 +1,12 @@
+import 'package:fantastic_app_riverpod/screens/chatScreen.dart';
+import 'package:fantastic_app_riverpod/screens/discoverscreen.dart';
 import 'package:fantastic_app_riverpod/screens/journey_path.dart';
-import 'package:fantastic_app_riverpod/screens/journey_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/bottom_nav_bar.dart';
-import 'chat_screen.dart';
+import '../providers/auth_provider.dart';
+
 import 'ritual_screen.dart';
-import 'heart_screen.dart';
 
 final pageControllerProvider = Provider<PageController>((ref) {
   final controller = PageController(initialPage: 1);
@@ -19,6 +20,7 @@ class MainScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pageController = ref.watch(pageControllerProvider);
+    final userEmail = ref.watch(userEmailProvider);
 
     ref.listen<int>(selectedTabProvider, (_, index) {
       pageController.animateToPage(
@@ -36,16 +38,16 @@ class MainScreen extends ConsumerWidget {
         onPageChanged: (index) {
           ref.read(selectedTabProvider.notifier).state = index;
         },
-        children: const [
-          ChatScreen(),
-          RitualScreen(),
-          HeartScreen(),
+        children: [
+          ChatScreen(email: userEmail),
+          const RitualScreen(),
           JourneyRoadmapScreen(),
+          Discoverscreen(email: userEmail),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: const BottomNavBar(),
+      floatingActionButton: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32.0),
+        child: BottomNavBar(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );

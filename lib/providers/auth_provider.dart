@@ -107,3 +107,25 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 final authRepoProvider = Provider<AuthRepo>((ref) {
   return FirebaseAuthRepo();
 });
+
+// Provider for the authentication repository
+final authRepositoryProvider = Provider<AuthRepo>((ref) {
+  return FirebaseAuthRepo();
+});
+
+// Provider for the current user
+final currentUserProvider = FutureProvider<AppUser?>((ref) async {
+  final authRepo = ref.watch(authRepositoryProvider);
+  return authRepo.getCurrentUser();
+});
+
+// Provider for the current user's email
+final userEmailProvider = Provider<String>((ref) {
+  final userAsync = ref.watch(currentUserProvider);
+
+  return userAsync.when(
+    data: (user) => user?.email ?? '',
+    loading: () => '',
+    error: (_, __) => '',
+  );
+});
