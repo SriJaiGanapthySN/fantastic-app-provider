@@ -28,11 +28,18 @@ class EmptyChatPlaceholder extends StatelessWidget {
           curve: Curves.easeInOut,
           child: Center(
             child: Lottie.asset(
-              'assets/animations/BG small Blur.json',
+              'assets/animations/BG small Blur/BG small Blur.json',
               width: screenWidth / 0.9,
               height: screenHeight / 1.8,
               fit: BoxFit.fill,
               controller: mindController,
+              onLoaded: (composition) {
+                if (!mindController.isAnimating) {
+                  mindController
+                    ..duration = composition.duration
+                    ..forward();
+                }
+              },
             ),
           ),
         ),

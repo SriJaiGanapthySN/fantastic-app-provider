@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fantastic_app_riverpod/models/skill.dart';
 import 'package:fantastic_app_riverpod/models/skillTrack.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class JourneyService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -667,4 +668,45 @@ class JourneyService {
       return false;
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchJourneyLevels(String journeyId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('skillTrack')
+          .doc(journeyId)
+          .collection('levels')
+          .orderBy('order')
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => {
+                ...doc.data() as Map<String, dynamic>,
+                'id': doc.id,
+              })
+          .toList();
+    } catch (e) {
+      print('Error fetching journey levels: $e');
+      return [];
+    }
+  }
+
+  Future<int> getCurrentLevel(String journeyId) async {
+    try {
+      final doc = await _firestore
+          .collection('skillTrack')
+          .doc(journeyId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return (data['currentLevel'] as int?) ?? 1;
+      }
+      return 1;
+    } catch (e) {
+      print('Error getting current level: $e');
+      return 1;
+    }
+  }
 }
+
+final journeyServiceProvider = Provider<JourneyService>((ref) => JourneyService());

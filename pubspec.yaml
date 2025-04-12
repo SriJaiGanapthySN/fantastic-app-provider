@@ -51,8 +51,8 @@ dependencies:
   flutter_bloc: ^9.1.0
   firebase_core: ^3.8.0
   sign_in_with_apple: ^6.1.4
-  lottie: ^3.3.1
   speech_to_text: ^7.0.0
+  lottie: ^3.3.1
   widget_and_text_animator: ^1.1.5
   google_fonts: ^6.2.1
 
@@ -82,9 +82,18 @@ flutter:
     - assets/icons/
     - assets/videos/
     - assets/fonts/
-    - assets/animations/
     - assets/images/
-
+    - assets/animations/1/data.json
+    - assets/animations/3/data.json
+    - assets/videos/fc5890dd77de131e0e032b98260ee54cfa710eda.mp4
+    - assets/animations/circular anti-clockwise/data.json
+    - assets/animations/
+    - assets/animations/All Lottie/
+    - assets/animations/All Lottie/BG Glow Gradient/1/
+    - assets/animations/BG small Blur/
+    - assets/animations/All Lottie/Text Moving/
+    - assets/animations/All Lottie/Down Text/
+    - assets/animations/All Lottie/Glowing Star/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
