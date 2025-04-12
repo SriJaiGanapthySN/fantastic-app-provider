@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
+import 'ChallengeScreen.dart';
+
 class Discoverscreen extends ConsumerStatefulWidget {
   final String email;
   const Discoverscreen({super.key, required this.email});
@@ -39,11 +41,9 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
   }
 
   // Handle button press using the provider
-  void _handleButtonPress(int index) {
-    // Update the UI state
+  Future<void> _handleButtonPress(int index) async {
     ref.read(discoverUIStateProvider.notifier).selectButton(index);
 
-    // Fetch data for the selected category if it hasn't been loaded yet
     if (index == 0) {
       if (ref.read(journeysProvider).journeys.isEmpty) {
         ref.read(journeysProvider.notifier).fetchJourneys();
@@ -57,11 +57,31 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
         ref.read(activitiesProvider.notifier).fetchCategories();
       }
     } else if (index == 3) {
-      if (ref.read(challengesProvider).challenges.isEmpty) {
-        ref.read(challengesProvider.notifier).fetchChallenges();
+      final challenges = ref.read(challengesProvider).challenges;
+
+      if (challenges.isEmpty) {
+        await ref.read(challengesProvider.notifier).fetchChallenges();
+        final updatedChallenges = ref.read(challengesProvider).challenges;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChallengeScreen(cardData: updatedChallenges),
+          ),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChallengeScreen(cardData: challenges),
+          ),
+        );
       }
     }
   }
+
+
+
 
   @override
   void dispose() {
