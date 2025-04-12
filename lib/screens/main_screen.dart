@@ -4,7 +4,7 @@ import 'package:fantastic_app_riverpod/screens/journey_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/bottom_nav_bar.dart';
-import '../providers/auth_provider.dart';
+import '../providers/auth_provider.dart' as auth;
 
 import 'ritual_screen.dart';
 
@@ -20,7 +20,7 @@ class MainScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pageController = ref.watch(pageControllerProvider);
-    final userEmail = ref.watch(userEmailProvider);
+    final userEmail = ref.watch(auth.userEmailProvider);
 
     ref.listen<int>(selectedTabProvider, (_, index) {
       pageController.animateToPage(

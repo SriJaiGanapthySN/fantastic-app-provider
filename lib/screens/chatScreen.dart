@@ -112,6 +112,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     ref.read(speechRecognitionProvider.notifier).clearText();
   }
 
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      // Increased delay to allow UI to fully update with the new message
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(
+                milliseconds: 500), // Longer duration for smoother animation
+            curve: Curves.easeOutCubic, // More natural feeling curve
+          );
+        }
+      });
+    }
+  }
+
   void _sendCard(String voiceText) {
     if (!mounted) return;
 
@@ -121,6 +137,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _textController.clear();
 
     ref.read(messageProvider(this).notifier).sendMessage(messageText);
+
+    // Ensure we scroll down when sending a message
+    _scrollToBottom();
+
+    // Also scroll when the response starts (AI response)
+    // Add a slightly longer delay for AI response animation to begin
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        _scrollToBottom();
+      }
+    });
   }
 
   void _toggleMessageBoxVisibility() {

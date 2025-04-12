@@ -87,13 +87,15 @@ flutter:
     - assets/animations/3/data.json
     - assets/videos/fc5890dd77de131e0e032b98260ee54cfa710eda.mp4
     - assets/animations/circular anti-clockwise/data.json
-    - assets/animations/
-    - assets/animations/All Lottie/
-    - assets/animations/All Lottie/BG Glow Gradient/1/
-    - assets/animations/BG small Blur/
-    - assets/animations/All Lottie/Text Moving/
-    - assets/animations/All Lottie/Down Text/
-    - assets/animations/All Lottie/Glowing Star/
+    - assets/animations/emptychat.json
+    - assets/animations/All Lottie/Down Ripple/Ripple.json
+    - assets/animations/All Lottie/BG Glow Gradient/3 in 1/BG Glow Gradient.json
+    - assets/animations/QnA/2. Circle/data.json
+    - assets/animations/All Lottie/Glowing Star/Image Preload Gradient.json
+    - assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json
+    - assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json
+    - assets/animations/gradient.json
+    - assets/images/blur.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
