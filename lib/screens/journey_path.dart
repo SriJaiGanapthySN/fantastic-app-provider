@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/premium_button.dart';
 
 class JourneyRoadmapScreen extends StatelessWidget {
   const JourneyRoadmapScreen({super.key});
@@ -36,6 +37,10 @@ class JourneyRoadmapScreen extends StatelessWidget {
             _progressOverview(),
             const SizedBox(height: 20),
             _journeySteps(),
+            const SizedBox(height: 20),
+            // Premium Button
+            const PremiumButton(),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -111,7 +116,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
   Widget _journeySteps() {
     return Column(
       children: [
-        _journeyStep("Manufacture Your Best Night’s Sleep", "1/6 achieved", true),
+        _journeyStep("Manufacture Your Best Night's Sleep", "1/6 achieved", true),
         _journeyStep("Design the Perfect Sleep Environment", "Not yet unlocked", false),
         _journeyStep("Create Your Bedtime Routine", "Not yet unlocked", false),
       ],

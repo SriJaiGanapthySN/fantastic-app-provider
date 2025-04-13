@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import '../utils/blur_container.dart';
 import '../providers/journey_levels_provider.dart';
+import '../widgets/premium_button.dart';
 
 // Mock data for debugging
 final List<Map<String, dynamic>> mockLevels = [
@@ -359,7 +360,7 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with Sing
         final nextLevel = index < sortedMockLevels.length - 1 ? sortedMockLevels[index + 1] : null;
         final showAnimation = (level['status'] == 'completed' || level['status'] == 'in_progress') &&
                              (nextLevel != null && (nextLevel['status'] == 'completed' || nextLevel['status'] == 'in_progress'));
-
+        
         return Stack(
           clipBehavior: Clip.none,
           children: [
