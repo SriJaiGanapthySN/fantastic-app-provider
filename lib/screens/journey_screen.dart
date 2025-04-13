@@ -9,6 +9,7 @@ import '../widgets/stats_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../utils/blur_container.dart';
 import '../widgets/journey_levels_list.dart';
+import '../widgets/premium_button.dart';
 
 // Mock user email - replace with actual user email from auth
 final mockUserEmail = "test@example.com";
