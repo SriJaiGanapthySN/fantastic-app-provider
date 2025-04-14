@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../screens/upgrades.dart';
 
 class PremiumButton extends StatefulWidget {
   const PremiumButton({Key? key}) : super(key: key);
@@ -74,6 +75,10 @@ class _PremiumButtonState extends State<PremiumButton> {
     }
   }
 
+  void _handlePremiumStatusChanged() {
+    _checkPremiumStatus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -99,7 +104,16 @@ class _PremiumButtonState extends State<PremiumButton> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _isPremium ? null : _startPayment,
+          onTap: _isPremium ? null : () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UpgradesScreen(
+                  onPremiumStatusChanged: _handlePremiumStatusChanged,
+                ),
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -126,7 +140,7 @@ class _PremiumButtonState extends State<PremiumButton> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _isPremium ? 'Premium Unlocked' : 'Buy Premium',
+                        _isPremium ? 'Premium Unlocked' : 'Fabulous Premium',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -135,7 +149,7 @@ class _PremiumButtonState extends State<PremiumButton> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _isPremium ? 'Enjoy all premium features' : 'Unlock all features for just ₹100',
+                        _isPremium ? 'Enjoy all premium features' : 'Transformation is just moments away',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 14,
