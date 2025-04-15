@@ -137,7 +137,7 @@ class MainScreen extends ConsumerWidget {
         children: [
           ChatScreen(email: userEmail),
           const RitualScreen(),
-          JourneyScreen(),
+          JourneyRoadmapScreen(),
           Discoverscreen(email: userEmail),
         ],
       ),
