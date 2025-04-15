@@ -9,10 +9,11 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import 'package:fantastic_app_riverpod/firebase_options.dart';
-import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
-import 'package:fantastic_app_riverpod/screens/auth_page.dart';
-import 'package:fantastic_app_riverpod/screens/main_screen.dart';
+import 'firebase_options.dart';
+import 'providers/auth_provider.dart';
+import 'screens/auth_page.dart';
+import 'screens/main_screen.dart';
+import 'screens/notification_tone_screen.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -86,6 +87,9 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
+      home: const NotificationToneScreen(),
+      
+      /*
       home: authState.isLoading
           ? const Scaffold(
               body: Center(
@@ -95,6 +99,7 @@ class MyApp extends ConsumerWidget {
           : authState.user != null
               ? MainScreen()
               : const AuthPage(),
+      */
     );
   }
 }
