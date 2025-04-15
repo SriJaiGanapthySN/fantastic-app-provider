@@ -100,6 +100,7 @@ flutter:
     - assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json
     - assets/animations/gradient.json
     - assets/images/blur.jpeg
+    - assets/audio/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
