@@ -11,6 +11,7 @@ import '../models/feedback.dart';
 import 'feedback/feed_back.dart';
 
 import 'ritual_screen.dart';
+import 'notification_tone_screen.dart';
 
 final pageControllerProvider = Provider<PageController>((ref) {
   final controller = PageController(initialPage: 1);
@@ -40,6 +41,20 @@ class MainScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.pink),
+        title: const Text('Fantastic App'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationToneScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -105,6 +120,18 @@ class MainScreen extends ConsumerWidget {
               },
             ),
             Divider(),
+            ListTile(
+              leading: Icon(Icons.notifications_none, color: Colors.pink),
+              title: Text('Notification Tone'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationToneScreen(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: Icon(Icons.settings, color: Colors.pink),
               title: Text('Settings'),
