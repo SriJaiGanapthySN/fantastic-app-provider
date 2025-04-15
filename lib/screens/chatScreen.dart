@@ -100,27 +100,67 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   void _onLongPressEnd(LongPressEndDetails details) {
     if (!mounted) return;
 
-    final voiceText =
-        ref.read(speechRecognitionProvider.notifier).recognizedText;
-    if (voiceText.isNotEmpty) {
-      _sendCard(voiceText);
-    }
-
-    ref.read(chatProvider.notifier).onLongPressEnd();
-    ref.read(animationProvider(this).notifier).startMindAnimation();
+    // Stop listening first to ensure it captures all speech
     ref.read(speechRecognitionProvider.notifier).stopListening();
-    ref.read(speechRecognitionProvider.notifier).clearText();
+
+    // Add a small delay to ensure speech recognition has time to finalize
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+
+      // Get the latest recognized text after the delay
+      final voiceText =
+          ref.read(speechRecognitionProvider).recognizedText.value;
+      if (voiceText.isNotEmpty) {
+        _sendCard(voiceText);
+      }
+
+      ref.read(chatProvider.notifier).onLongPressEnd();
+      ref.read(animationProvider(this).notifier).startMindAnimation();
+      ref.read(speechRecognitionProvider.notifier).clearText();
+    });
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      // Increased delay to allow UI to fully update with the new message
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(
+                milliseconds: 500), // Longer duration for smoother animation
+            curve: Curves.easeOutCubic, // More natural feeling curve
+          );
+        }
+      });
+    }
   }
 
   void _sendCard(String voiceText) {
     if (!mounted) return;
 
+    // Trim voice text to remove any leading/trailing whitespace
+    final trimmedVoiceText = voiceText.trim();
     final messageText = _textController.text.isNotEmpty
         ? _textController.text.trim()
-        : voiceText;
+        : trimmedVoiceText;
+
+    if (messageText.isEmpty) return; // Don't send empty messages
+
     _textController.clear();
 
     ref.read(messageProvider(this).notifier).sendMessage(messageText);
+
+    // Ensure we scroll down when sending a message
+    _scrollToBottom();
+
+    // Also scroll when the response starts (AI response)
+    // Add a slightly longer delay for AI response animation to begin
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        _scrollToBottom();
+      }
+    });
   }
 
   void _toggleMessageBoxVisibility() {
@@ -149,6 +189,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final animationManager = ref.watch(animationProvider(this));
+    // Consistently access the recognized text the same way
     final voiceText = ref.watch(speechRecognitionProvider).recognizedText.value;
 
     return Scaffold(
