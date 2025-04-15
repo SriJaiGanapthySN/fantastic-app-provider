@@ -27,7 +27,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   @override
   void initState() {
     super.initState();
-    _videoController = VideoPlayerController.asset('assets/videos/fc5890dd77de131e0e032b98260ee54cfa710eda.mp4')
+    _videoController = VideoPlayerController.asset(
+        'assets/videos/fc5890dd77de131e0e032b98260ee54cfa710eda.mp4')
       ..initialize().then((_) {
         _videoController.setLooping(true);
         _videoController.play();
@@ -80,11 +81,12 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             child: ShaderMask(
                               shaderCallback: (Rect bounds) {
                                 return LinearGradient(
-                                  begin: Alignment(0,0),
+                                  begin: Alignment(0, 0),
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.white,
-                                    const Color.fromARGB(154, 0, 0, 0).withOpacity(0.7),
+                                    const Color.fromARGB(154, 0, 0, 0)
+                                        .withOpacity(0.7),
                                   ],
                                 ).createShader(bounds);
                               },
@@ -136,15 +138,18 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                               if (journey != null) {
                                 return JourneyCard(
                                   title: journey['title'] ?? 'No Title',
-                                  subtitle: journey['subtitle'] ?? 'No Subtitle',
-                                  progress: '${((journey['levelsCompleted'] ?? 0) / (journey['skillLevelCount'] ?? 1) * 100).toStringAsFixed(0)}%',
+                                  subtitle:
+                                      journey['subtitle'] ?? 'No Subtitle',
+                                  progress:
+                                      '${((journey['levelsCompleted'] ?? 0) / (journey['skillLevelCount'] ?? 1) * 100).toStringAsFixed(0)}%',
                                   imageUrl: journey['imageUrl'],
                                 );
                               } else {
                                 // Template card with placeholder values
                                 return JourneyCard(
                                   title: 'Start Your Journey',
-                                  subtitle: 'Begin your path to self-improvement',
+                                  subtitle:
+                                      'Begin your path to self-improvement',
                                   progress: '0%',
                                   imageUrl: null,
                                 );
@@ -174,8 +179,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                               completionValue: stats['completion']!,
                               eventsValue: stats['eventsAchieved']!,
                             ),
-                            loading: () =>
-                                const Center(child: CircularProgressIndicator()),
+                            loading: () => const Center(
+                                child: CircularProgressIndicator()),
                             error: (_, __) => const Center(
                               child: Text('Error loading stats',
                                   style: TextStyle(color: Colors.white)),
@@ -186,10 +191,13 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const JourneyLevelsList(journeyId: 'mock_journey_id'),
+                              const JourneyLevelsList(
+                                  journeyId: 'mock_journey_id'),
                             ],
                           ),
-                          const SizedBox(height: 100), // Add extra padding at bottom for nav bar
+                          const SizedBox(
+                              height:
+                                  100), // Add extra padding at bottom for nav bar
                         ],
                       ),
                     ),
@@ -198,7 +206,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
               ],
             ),
           ),
-          
+
           // Bottom navigation - moved outside the Column to be a direct child of the Stack
           Positioned(
             left: 5,

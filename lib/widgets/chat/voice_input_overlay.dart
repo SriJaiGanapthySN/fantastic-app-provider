@@ -30,7 +30,7 @@ class VoiceInputOverlay extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Container(
-              height: screenHeight * 0.4,
+              height: screenHeight * 0.6,
               alignment: Alignment.bottomCenter,
               child: Lottie.asset(
                 "assets/animations/All Lottie/Down Ripple/Ripple.json",
@@ -40,36 +40,40 @@ class VoiceInputOverlay extends StatelessWidget {
                 repeat: true,
                 animate: true,
                 controller: rippleController,
+                options: LottieOptions(
+                  enableMergePaths: true,
+                ),
+                frameRate: FrameRate.composition,
               ),
             ),
-            if (voiceText.isNotEmpty)
-              Positioned(
-                bottom: screenHeight * 0.08,
-                left: 16,
-                right: 16,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  child: TextAnimator(
-                    voiceText,
-                    incomingEffect:
-                        WidgetTransitionEffects.incomingSlideInFromBottom(),
-                    outgoingEffect:
-                        WidgetTransitionEffects.outgoingSlideOutToBottom(),
-                    atRestEffect: WidgetRestingEffects.wave(
-                      numberOfPlays: 1,
-                      effectStrength: 0.2,
-                    ),
-                    style: GoogleFonts.roboto(
-                      textStyle: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 2,
-                        fontSize: 20,
-                      ),
+            // Always show a placeholder text even when voiceText is empty
+            Positioned(
+              bottom: screenHeight * 0.08,
+              left: 16,
+              right: 16,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                child: TextAnimator(
+                  voiceText.isNotEmpty ? voiceText : "Listening...",
+                  incomingEffect:
+                      WidgetTransitionEffects.incomingSlideInFromBottom(),
+                  outgoingEffect:
+                      WidgetTransitionEffects.outgoingSlideOutToBottom(),
+                  atRestEffect: WidgetRestingEffects.wave(
+                    numberOfPlays: 1,
+                    effectStrength: 0.2,
+                  ),
+                  style: GoogleFonts.roboto(
+                    textStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 2,
+                      fontSize: 20,
                     ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
