@@ -44,7 +44,7 @@ class _OnBoard18State extends ConsumerState<OnBoard18> {
         fit: StackFit.expand,
         children: [
           Image.asset(
-            'assets/images/fabulous_onboarding_ios17.jpg',
+            'assets/images/onboardingImages/f63c5509baeec25e4e519a24bccd1b71_img_enchant_hypnosis_eat_for_your_health_big_image_opt.jpg',
             fit: BoxFit.cover,
           ),
           Container(
