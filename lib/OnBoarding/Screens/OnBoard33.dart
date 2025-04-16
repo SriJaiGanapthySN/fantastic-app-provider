@@ -30,7 +30,7 @@ class _OnBoard33State extends ConsumerState<OnBoard33> {
             decoration: BoxDecoration(
               color: Colors.purple, // Purple base color
               image: DecorationImage(
-                image: AssetImage('assets/your_image.png'), // Replace with your image
+                image: AssetImage('assets/images/onboardingImages/8bc243b8878eebf35dac9034ad5ddf71_img_enchant_hypnosis_eat_for_your_health_inner_step_opt.jpg'), // Replace with your image
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.purple.withOpacity(0.5), // Purple overlay

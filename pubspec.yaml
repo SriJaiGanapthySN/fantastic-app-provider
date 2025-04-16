@@ -103,6 +103,8 @@ flutter:
     - assets/animations/gradient.json
     - assets/images/blur.jpeg
     - assets/audio/
+    - assets/images/onboardingImages/
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

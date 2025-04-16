@@ -15,7 +15,7 @@ class OnBoard24 extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset(
-            'assets/images/fabulous_onboarding_ios17.jpg', // Your background image
+            'assets/images/onboardingImages/34a787542c22a9d63f2f68f459b151ca_img_lune_affirmation_vibrant_dreams_inner_step_opt.jpg', // Your background image
             fit: BoxFit.cover,
           ),
           Container(

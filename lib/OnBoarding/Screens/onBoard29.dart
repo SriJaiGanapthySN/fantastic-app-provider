@@ -75,7 +75,7 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: NetworkImage('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1050&q=80'),
+                image: AssetImage('assets/images/onboardingImages/29422565604857cc3d9b651485bb53eb_img_hypnotic_lune_still_as_a_forest_lake_inner_step_opt.jpg'),
                 fit: BoxFit.cover,
               ),
             ),
