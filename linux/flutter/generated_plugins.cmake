@@ -3,7 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+<<<<<<< HEAD
+  file_selector_linux
+=======
   audioplayers_linux
+>>>>>>> origin/main
   flutter_timezone
 )
 
