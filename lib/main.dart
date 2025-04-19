@@ -20,7 +20,7 @@ final notificationPluginProvider =
   return FlutterLocalNotificationsPlugin();
 });
 
- void main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   tz.initializeTimeZones();
@@ -87,9 +87,8 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
-      home: const NotificationToneScreen(),
-      
-      /*
+      // home: const NotificationToneScreen(),
+
       home: authState.isLoading
           ? const Scaffold(
               body: Center(
@@ -99,7 +98,6 @@ class MyApp extends ConsumerWidget {
           : authState.user != null
               ? MainScreen()
               : const AuthPage(),
-      */
     );
   }
 }

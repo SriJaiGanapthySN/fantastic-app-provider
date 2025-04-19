@@ -1,4 +1,5 @@
 import 'package:fantastic_app_riverpod/screens/ritual/notesscreen.dart';
+import 'package:fantastic_app_riverpod/screens/ritual_screen.dart';
 import 'package:fantastic_app_riverpod/services/task_services.dart';
 import 'package:fantastic_app_riverpod/widgets/common/generalcompenentfornotes.dart';
 import 'package:flutter/material.dart';
@@ -267,8 +268,7 @@ class _TaskrevealState extends State<Taskreveal> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        Routinelistscreen(email: widget.email),
+                    builder: (context) => RitualScreen(),
                   ),
                 );
               });

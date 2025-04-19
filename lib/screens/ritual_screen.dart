@@ -2,21 +2,28 @@ import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/background_video.dart';
 import '../widgets/alarm_widget.dart';
 import '../widgets/habit_list.dart';
 import '../providers/_providers.dart';
 import '../services/task_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'ritual/taskreveal.dart'; // Add import for TaskReveal
+import 'ritual/habitPlay.dart'; // Add import for habitPlay
 
 // Provider for TaskServices
 final taskServicesProvider = Provider<TaskServices>((ref) => TaskServices());
 
-// Provider for user email (replace with actual user email from auth)
-final userEmailProvider = Provider<String>((ref) => 'test@example.com'); // Replace with actual user email
+// Provider for user email from Firebase Auth
+final userEmailProvider = Provider<String>((ref) {
+  final user = FirebaseAuth.instance.currentUser;
+  return user?.email ?? ''; // Return the email or empty string if not available
+});
 
 // Provider for daily tasks stream
-final dailyTasksStreamProvider = StreamProvider.family<QuerySnapshot, String>((ref, email) {
+final dailyTasksStreamProvider =
+    StreamProvider.family<QuerySnapshot, String>((ref, email) {
   final taskServices = ref.watch(taskServicesProvider);
   return taskServices.getdailyTasks(email);
 });
@@ -64,7 +71,8 @@ class RitualScreen extends ConsumerWidget {
                     return ListView.builder(
                       itemCount: tasks.length,
                       itemBuilder: (context, index) {
-                        final task = tasks[index].data() as Map<String, dynamic>;
+                        final task =
+                            tasks[index].data() as Map<String, dynamic>;
                         return ListTile(
                           title: Text(
                             task['name'] ?? 'Unnamed Task',
@@ -72,17 +80,18 @@ class RitualScreen extends ConsumerWidget {
                           ),
                           subtitle: Text(
                             task['descriptionHtml'] ?? 'No description',
-                            style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                            style:
+                                TextStyle(color: Colors.white.withOpacity(0.7)),
                           ),
                           trailing: Checkbox(
                             value: task['iscompleted'] ?? false,
                             onChanged: (bool? value) {
                               if (value != null) {
                                 ref.read(taskServicesProvider).updateTaskStatus(
-                                  value,
-                                  task['objectID'],
-                                  userEmail,
-                                );
+                                      value,
+                                      task['objectID'],
+                                      userEmail,
+                                    );
                               }
                             },
                           ),
@@ -102,7 +111,8 @@ class RitualScreen extends ConsumerWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 112.0, left: 16, right: 16),
+                padding:
+                    const EdgeInsets.only(bottom: 112.0, left: 16, right: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -115,17 +125,29 @@ class RitualScreen extends ConsumerWidget {
                         'assets/icons/stars.svg',
                       ),
                     ),
-                    BlurContainer(
-                      borderRadius: 74,
-                      blur: 16,
-                      color: const Color(0xff9747FF),
-                      enableGlow: true,
-                      glowColor: const Color(0xff9747FF),
-                      glowSpread: 24,
-                      glowIntensity: 0.9,
-                      padding: const EdgeInsets.all(10),
-                      child: SvgPicture.asset(
-                        'assets/icons/play.svg',
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => habitPlay(
+                              email: userEmail,
+                            ),
+                          ),
+                        );
+                      },
+                      child: BlurContainer(
+                        borderRadius: 74,
+                        blur: 16,
+                        color: const Color(0xff9747FF),
+                        enableGlow: true,
+                        glowColor: const Color(0xff9747FF),
+                        glowSpread: 24,
+                        glowIntensity: 0.9,
+                        padding: const EdgeInsets.all(10),
+                        child: SvgPicture.asset(
+                          'assets/icons/play.svg',
+                        ),
                       ),
                     ),
                   ],
