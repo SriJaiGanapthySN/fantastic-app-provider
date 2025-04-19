@@ -1,7 +1,12 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fantastic_app_riverpod/providers/discover_provider.dart';
+import 'package:fantastic_app_riverpod/screens/journey_screen.dart';
+import 'package:fantastic_app_riverpod/screens/coaching/coachingscreenreveal.dart';
+import 'package:fantastic_app_riverpod/screens/guidedcoaching/guidedcoachingsecondlevel.dart';
 
-class AddDiscoveryTile extends StatefulWidget {
+class AddDiscoveryTile extends ConsumerWidget {
   const AddDiscoveryTile({
     super.key,
     required this.tile,
@@ -12,40 +17,61 @@ class AddDiscoveryTile extends StatefulWidget {
   final String email;
 
   @override
-  State<AddDiscoveryTile> createState() => _AddDiscoveryTileState();
-}
-
-class _AddDiscoveryTileState extends State<AddDiscoveryTile> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  bool infotapped = false;
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final selectedButtonIndex = ref.watch(discoverUIStateProvider).selectedButtonIndex;
 
     // Extract data from tile
-    final String url = widget.tile['imageUrl'] ?? 'assets/images/default.jpg';
-    final String title =
-        widget.tile['title'] ?? widget.tile['name'] ?? 'No Title';
-    final String subtitle = widget.tile['subtitle'] ?? 'No Subtitle';
-    final String timestamp = widget.tile['timestamp']?.toString() ?? '0';
+    final String url = tile['imageUrl'] ?? 'assets/images/default.jpg';
+    final String title = tile['title'] ?? tile['name'] ?? 'No Title';
+    final String subtitle = tile['subtitle'] ?? 'No Subtitle';
+    final String timestamp = tile['timestamp']?.toString() ?? '0';
 
     return InkWell(
       onTap: () {
-        // Navigate to the JourneyPlayScreen with email and tile data
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => Journeyplayscreen(
-        //       email: widget.email,
-        //       data: widget.tile, // Pass the tile data if needed
-        //     ),
-        //   ),
-        // );
+        // Navigate to appropriate screen based on selected button index
+        switch (selectedButtonIndex) {
+          case 0: // Journeys
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => JourneyScreen(),
+              ),
+            );
+            break;
+          case 1: // Coaching
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Coachingscreenreveal(
+                  email: email,
+                  coachingSeriesId: tile['id'] ?? '',
+                  coachingSeries: tile,
+                ),
+              ),
+            );
+            break;
+          case 2: // Guided Activities
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Guidedcoachingsecondlevel(
+                  email: email,
+                  category: tile,
+                ),
+              ),
+            );
+            break;
+          default:
+            // Default to journey screen if index is unknown
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => JourneyScreen(),
+              ),
+            );
+        }
       },
       child: Column(
         children: [
@@ -53,60 +79,51 @@ class _AddDiscoveryTileState extends State<AddDiscoveryTile> {
           Stack(
             children: [
               AnimatedContainer(
-                duration:
-                    const Duration(milliseconds: 300), // Animation duration
-                curve: Curves.easeInOut, // Smooth animation curve
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
                 margin: EdgeInsets.symmetric(horizontal: screenWidth * 0),
                 padding: EdgeInsets.all(screenWidth * 0.03),
                 height: screenHeight * 0.12,
                 width: screenWidth * 0.4,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: infotapped
-                      ? Colors.blue // Blue when info is tapped
-                      : null, // Null to show image
+                  color: null,
                 ),
-                child: !infotapped
-                    ? Material(
-                        shadowColor: Colors.black,
-                        elevation: 20, // Add elevation here
+                child: Material(
+                  shadowColor: Colors.black,
+                  elevation: 20,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                url,
-                                fit: BoxFit.cover,
-                                width: screenWidth * 0.4,
-                                height: screenWidth * 0.5,
-                                loadingBuilder: (BuildContext context,
-                                    Widget child,
-                                    ImageChunkEvent? loadingProgress) {
-                                  if (loadingProgress == null) {
-                                    return child;
-                                  }
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                      color: Colors.amberAccent,
-                                    ),
-                                  );
-                                },
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                          width: screenWidth * 0.4,
+                          height: screenWidth * 0.5,
+                          loadingBuilder: (BuildContext context,
+                              Widget child,
+                              ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: Colors.amberAccent,
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      )
-                    : null,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

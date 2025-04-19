@@ -1,9 +1,6 @@
-import 'package:fab/models/skill.dart';
-import 'package:fab/models/skillTrack.dart';
-import 'package:fab/screens/journeys/journeysecondlevel.dart';
-import 'package:fab/services/journey_service.dart';
 import 'package:fantastic_app_riverpod/models/skill.dart';
 import 'package:fantastic_app_riverpod/models/skillTrack.dart';
+import 'package:fantastic_app_riverpod/screens/journey_path.dart';
 import 'package:fantastic_app_riverpod/services/journey_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -38,10 +35,7 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
 
   Future<void> fetchGoal(String email, String id) async {
     try {
-      // Await the result from getSkillGoal
       skillGoalData = await _journeyService.getSkillGoal(email, id);
-
-      // Refresh the UI after data is fetched
       setState(() {
         if (skillGoalData != null) {
           print(skillGoalData);
@@ -56,11 +50,8 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
 
   Future<void> updateGoal(int rate, String email, String id) async {
     try {
-      // Await the result from getSkillGoal
-      final upddated = await _journeyService.updateGoal(rate, email, id);
-
-      // Refresh the UI after data is fetched
-      if (upddated) {
+      final updated = await _journeyService.updateGoal(rate, email, id);
+      if (updated) {
         print("Updated!");
         await fetchGoal(email, id);
       } else {
@@ -74,45 +65,26 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
   Future<void> completeGoal(String email, String id, String skillLevelId,
       String skillId, String skillTrackId) async {
     try {
-      // Await the result from getSkillGoal
-      final upddated = await _journeyService.updateGoalCompletion(
+      final updated = await _journeyService.updateGoalCompletion(
           email, id, skillLevelId, skillId, skillTrackId);
 
-      // Refresh the UI after data is fetched
-      if (upddated) {
+      if (updated) {
         print("COMPLETED!");
-        // Navigator.pushReplacement(
-        //                   context,
-        //                   MaterialPageRoute(
-        //                     builder: (context) => Journeysecondlevel(
-        //                       skill: widget.skill,
-        //                       email: email,
-        //                       skilltrack: widget.skilltrack,
-        //                     ),
-        //                   ),
-        //                 );
-
-        int count = 0; // Counter to track popped routes
+        int count = 0;
         Navigator.popUntil(
           context,
           (route) {
             count++;
-            return count > 1; // Stop popping after 2 routes
+            return count > 1;
           },
         );
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => Journeysecondlevel(
-              skill: widget.skill,
-              email: email,
-              skilltrack: widget.skilltrack,
-            ),
+            builder: (context) => const JourneyRoadmapScreen(),
           ),
         );
-
-        // await fetchGoal(email, id);
       } else {
         print("Not Completing");
       }
@@ -122,14 +94,9 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
   }
 
   Color colorFromString(String colorString) {
-    // Remove the '#' if it's there and parse the hex color code
     String hexColor = colorString.replaceAll('#', '');
-
-    // Ensure the string has the correct length (6 digits)
     if (hexColor.length == 6) {
-      // Parse the color string to an integer and return it as a Color
-      return Color(
-          int.parse('0xFF$hexColor')); // Adding 0xFF to indicate full opacity
+      return Color(int.parse('0xFF$hexColor'));
     } else {
       throw FormatException('Invalid color string format');
     }
@@ -137,7 +104,6 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
 
   @override
   Widget build(BuildContext context) {
-    // Fetch screen size for dynamic font and spacing
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
@@ -149,24 +115,20 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
           style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05),
         ),
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {},
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.share,
-              color: Colors.white,
-            ),
-            onPressed: () {},
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: () {
+              // TODO: Implement share functionality
+            },
           ),
         ],
       ),
       body: skillGoalData == null
-          ? Center(child: CircularProgressIndicator()) // Show loading indicator
+          ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
                 Container(
@@ -177,18 +139,17 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Centered Content
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(height: 50),
+                        const SizedBox(height: 50),
                         SvgPicture.network(
                           widget.skill.iconUrl,
                           width: screenWidth * 0.2,
                           height: screenWidth * 0.2,
                           fit: BoxFit.contain,
                         ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         Text(
                           skillGoalData?["title"] ?? "Loading...",
                           textAlign: TextAlign.center,
@@ -197,12 +158,11 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
                             fontSize: screenWidth * 0.09,
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
                           child: Text(
-                            skillGoalData?["description"] ??
-                                "Loading description...",
+                            skillGoalData?["description"] ?? "Loading description...",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white,
@@ -212,13 +172,12 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
                         ),
                       ],
                     ),
-                    // Center-aligned "Do it _ times" box at the bottom
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.vertical(),
                       ),
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -232,12 +191,11 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
                                 skillGoalData?["value"] ?? 0, (index) {
-                              // Check if the completionRateGoal is greater than 0
                               int completionRateGoal =
                                   skillGoalData?["completionRateGoal"] ?? 0;
                               bool isColored = index < completionRateGoal;
@@ -248,69 +206,11 @@ class _Journeyscreenrevealtype2 extends State<Journeyscreenrevealtype2> {
                                 child: Icon(
                                   Icons.check_circle,
                                   color: isColored
-                                      ? colorFromString(widget.skill.color)
-                                      : Colors
-                                          .grey, // Gray if the goal isn't met
-                                  size: screenWidth * 0.1,
+                                      ? Colors.green
+                                      : Colors.grey,
                                 ),
                               );
                             }),
-                          ),
-                          SizedBox(height: 16),
-                          Builder(
-                            builder: (context) {
-                              int completionRateGoal =
-                                  skillGoalData?["completionRateGoal"] ?? 0;
-                              int value = skillGoalData?["value"] ?? 0;
-
-                              return (completionRateGoal < value)
-                                  ? ElevatedButton(
-                                      onPressed: () {
-                                        completionRateGoal =
-                                            completionRateGoal + 1;
-                                        updateGoal(
-                                            completionRateGoal,
-                                            widget.email,
-                                            widget.goalData["goalId"]);
-                                        if (completionRateGoal == value) {
-                                          completeGoal(
-                                              widget.email,
-                                              widget.goalData["goalId"],
-                                              widget.goalData["objectId"],
-                                              widget.skill.objectId,
-                                              widget.skilltrack.objectId);
-                                        }
-
-                                        // Add action here, such as marking goal as complete
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Colors.green, // Green button
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 32.0, vertical: 12.0),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'I have done this today!',
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.05,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    )
-                                  : Text(
-                                      "Completed",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.05,
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    );
-                            },
                           ),
                         ],
                       ),

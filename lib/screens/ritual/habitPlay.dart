@@ -1,5 +1,4 @@
 import 'package:fantastic_app_riverpod/screens/main_screen.dart';
-import 'package:fantastic_app_riverpod/screens/ritual/audio.dart';
 import 'package:fantastic_app_riverpod/screens/ritual/notesscreen.dart';
 import 'package:fantastic_app_riverpod/services/coaching_service.dart';
 import 'package:fantastic_app_riverpod/services/task_services.dart';
@@ -7,13 +6,12 @@ import 'package:fantastic_app_riverpod/widgets/common/generalcompenentfornotes.d
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_svg/svg.dart';
-// import 'package:just_audio/just_audio.dart';
 import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/habit_play_provider.dart';
 
-import 'package:audioplayers/audioplayers.dart';
-
-class habitPlay extends StatefulWidget {
+class habitPlay extends ConsumerStatefulWidget {
   final String email;
 
   const habitPlay({
@@ -22,20 +20,12 @@ class habitPlay extends StatefulWidget {
   });
 
   @override
-  State<habitPlay> createState() => _TaskrevealState();
+  ConsumerState<habitPlay> createState() => _TaskrevealState();
 }
 
-class _TaskrevealState extends State<habitPlay> {
+class _TaskrevealState extends ConsumerState<habitPlay> {
   final CoachingService _coachingService = CoachingService();
-  bool _isAnimationVisible = false;
-  int _currentIndex = 0; // Track the current task
-  bool _isSnoozed = false; // Track snooze state
-  bool _isSkiped = false; // Track if the task is skipped
-  final AudioPlayer _audioPlayer = AudioPlayer(); // Audio player instance
-  final AudioPlayer _audioPlayerBgm = AudioPlayer(); // Audio player instance
-  final AudioPlayer _audioPlayerDrag = AudioPlayer(); // Audio player instance
   late ScrollController _scrollController;
-  bool _isPlayingAudio = false;
   Map<String, dynamic>? habitCoachingData;
 
   String items = '';
@@ -45,108 +35,40 @@ class _TaskrevealState extends State<habitPlay> {
   @override
   void initState() {
     super.initState();
-    // _setupAudioContext();
-    _playBgm();
-
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _setupAudioContext() async {
-    await _audioPlayerBgm.setAudioContext(
-      AudioContext(
-        android: AudioContextAndroid(
-          isSpeakerphoneOn: false,
-          stayAwake: true,
-          contentType: AndroidContentType.music,
-          usageType: AndroidUsageType.media,
-          audioFocus: AndroidAudioFocus.gain,
-        ),
-      ),
-    );
-  }
-
-  // Play audio if snooze is not active
-  void _playAudio(String audioLink) async {
-    if (!_isSnoozed) {
-      await _audioPlayer.play(UrlSource(audioLink));
-    }
-  }
-
-  void _playBgm() async {
-    if (!_isSnoozed) {
-      // await _audioPlayerBgm.setAsset('assets/audio/bgm_task_reveal.m4a');
-      // await _audioPlayerBgm.play();
-      await _audioPlayerBgm.play(AssetSource("audio/bgm_task_reveal.m4a"));
-    }
-  }
-
-  void _stopBgm() async {
-    await _audioPlayerBgm.stop();
-  }
-
-  void _playDragAudio() async {
-    if (!_isSnoozed) {
-      await _audioPlayerDrag.play(AssetSource("audio/drag_task_reveal.m4a"));
-    }
-  }
-
-  // void noteData(QueryDocumentSnapshot currentTask) {
   void noteData(QueryDocumentSnapshot currentTask) {
     Map<String, dynamic> taskData = currentTask.data() as Map<String, dynamic>;
 
-// Check if 'notes' field exists and if 'notes' is a valid map
-    items = '';
     if (taskData.containsKey('notes') && taskData['notes'] != null) {
-      print(taskData);
-      // Check if 'notes' is a Map and contains 'items'
       if (taskData['notes'] is Map && taskData['notes'].containsKey('items')) {
-        print("HOLLLLL");
-        items = taskData['notes']['items']; // Assign 'items' from 'notes'
-        Timestamp firebaseTimestamp = taskData['notes']['timestamp'];
-        DateTime dateTime =
-            firebaseTimestamp.toDate(); // Convert Timestamp to DateTime
-        timestamp = dateTime.toString();
+        ref.read(notesDataProvider.notifier).state = {
+          'items': taskData['notes']['items'],
+          'timestamp': taskData['notes']['timestamp'].toDate().toString(),
+        };
       }
     }
-  }
-
-  // Stop the audio
-  void _stopAudio() async {
-    await _audioPlayer.stop();
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    _audioPlayer.stop();
-    _audioPlayerBgm.stop();
-    _audioPlayerDrag.stop();
     super.dispose();
   }
 
   void _onScroll() {
-    if (!_isPlayingAudio) {
-      _playdragAudio();
-    }
-  }
-
-  void _playdragAudio() async {
-    setState(() {
-      _isPlayingAudio = true;
-    });
-    await _audioPlayerDrag.play(AssetSource('audio/drag_task_reveal.m4a'));
-    setState(() {
-      _isPlayingAudio = false;
-    });
+    // Handle scroll if needed
   }
 
   // Handle task completion (check button press)
   void _onCheckPressed(String animationLink, String taskID) {
-    setState(() {
-      _isAnimationVisible = true;
-    });
+    ref.read(audioStateProvider.notifier).state = {
+      ...ref.read(audioStateProvider),
+      'isAnimationVisible': true,
+    };
 
     // Update task status
     TaskServices().updateHabitStatus(true, taskID, widget.email);
@@ -159,75 +81,54 @@ class _TaskrevealState extends State<habitPlay> {
     // Move to the next task after the animation
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        setState(() {
-          _currentIndex++;
-          _isAnimationVisible = false;
-        });
+        ref.read(currentTaskIndexProvider.notifier).state++;
+        ref.read(audioStateProvider.notifier).state = {
+          ...ref.read(audioStateProvider),
+          'isAnimationVisible': false,
+        };
       }
     });
   }
 
-  // void _coachingPlay(QueryDocumentSnapshot task) {
   void _coachingPlay(Map<String, dynamic> task) {
     print("In COACHING");
-    _stopAudio();
-    _stopBgm();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => PlayAudio(
-                email: widget.email,
-                coachingData: task,
-              )),
-    );
+    // Handle coaching play without audio
+    if (habitCoachingData != null) {
+      // Add any non-audio related coaching functionality here
+      print("Playing coaching content");
+    } else {
+      print("habitCoachingData is null");
+    }
   }
 
   // Handle skip button press
   void _onSkipPressed() {
-    setState(() {
-      _isSkiped = !_isSkiped;
-    });
+    ref.read(isTaskSkippedProvider.notifier).state = !ref.read(isTaskSkippedProvider);
 
     // Move to the next task after a short delay
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        setState(() {
-          _currentIndex++;
-          _isAnimationVisible = false;
-        });
+        ref.read(currentTaskIndexProvider.notifier).state++;
+        ref.read(audioStateProvider.notifier).state = {
+          ...ref.read(audioStateProvider),
+          'isAnimationVisible': false,
+        };
       }
     });
   }
 
   int dayOfWeek() {
     DateTime now = DateTime.now();
-    return now
-        .weekday; // Adjust because DateTime.weekday starts from 1 (Monday) to 7 (Sunday)
+    return now.weekday;
   }
 
   // Handle snooze button press
   void _onSnoozePressed() {
-    setState(() {
-      _isSnoozed = !_isSnoozed;
-    });
-    if (_isSnoozed) {
-      _audioPlayer.setVolume(0); // Set volume to 0 (mute)
-      _audioPlayerDrag.setVolume(0);
-      _audioPlayerBgm.setVolume(0);
-    } else {
-      _audioPlayer.setVolume(1); // Set volume back to normal (unmute)
-      _audioPlayerDrag.setVolume(1);
-      _audioPlayerBgm.setVolume(1);
-    }
-    // Stop the audio when snooze is pressed
-    // _stopAudio();
-    // _stopBgm();
+    final isSnoozed = !ref.read(isTaskSnoozedProvider);
+    ref.read(isTaskSnoozedProvider.notifier).state = isSnoozed;
   }
 
   double _calculateDynamicMaxChildSize(
-      // BuildContext context, QueryDocumentSnapshot currentTask, String items) {
-
       BuildContext context,
       Map<String, dynamic> currentTask,
       String items) {
@@ -248,7 +149,6 @@ class _TaskrevealState extends State<habitPlay> {
 
     // Add additional height for "Coaching" tasks (Play button, subtitle, etc.)
     double coachingAdditionalHeight = 100;
-    // currentTask['category'] == 'Coaching' ? 100 : 0;
 
     // Total content height
     double totalContentHeight = descriptionHeight +
@@ -266,16 +166,9 @@ class _TaskrevealState extends State<habitPlay> {
     return maxChildSize > 1.0 ? 1.0 : maxChildSize;
   }
 
-// Custom function to calculate the dynamic height of the description box based on content
   double getDescriptionHeight(
-      // BuildContext context, QueryDocumentSnapshot currentTask) {
       BuildContext context,
       Map<String, dynamic> currentTask) {
-    // This can be based on the content of the description. For now, assuming average content height.
-    // String descriptionText = currentTask['category'] == 'Coaching'
-    //     ? currentTask['subtitle'] ?? ''
-    //     : currentTask['descriptionHtml'] ?? '';
-
     String descriptionText = currentTask['descriptionHtml'] ?? '';
 
     double textHeight = (descriptionText.length / 50).ceil() *
@@ -337,15 +230,20 @@ class _TaskrevealState extends State<habitPlay> {
 
   @override
   Widget build(BuildContext context) {
+    final currentTaskIndex = ref.watch(currentTaskIndexProvider);
+    final isTaskSnoozed = ref.watch(isTaskSnoozedProvider);
+    final isTaskSkipped = ref.watch(isTaskSkippedProvider);
+    final taskData = ref.watch(taskDataProvider);
+    final notesData = ref.watch(notesDataProvider);
+    final habitCoachingData = ref.watch(habitCoachingDataProvider);
+    final audioState = ref.watch(audioStateProvider);
+
     return Scaffold(
       appBar: null, // Hide the app bar
       body: GestureDetector(
         onPanUpdate: (details) {
-          // Detect drag and play audio
-          _playDragAudio();
+          // Handle pan update if needed
         },
-        // child: StreamBuilder<QuerySnapshot>(
-        //   stream: TaskServices().getdailyTasks(widget.email),
         child: FutureBuilder<List<Map<String, dynamic>>>(
           future: TaskServices().getUserHabits(widget.email),
           builder: (context, snapshot) {
@@ -354,60 +252,30 @@ class _TaskrevealState extends State<habitPlay> {
             }
 
             var tasks = snapshot.data!;
-            // var tasks = snapshot.data!.docs;
 
             // Navigate back when all tasks are completed
-            if (_currentIndex >= tasks.length) {
+            if (currentTaskIndex >= tasks.length) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _stopAudio();
-                _stopBgm();
-                // Navigator.pushReplacement(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) =>
-                //         // Routinelistscreen(email: widget.email),
-                //         MainScreen(email: widget.email),
-                //   ),
-                // );
-
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
                     builder: (context) => MainScreen(),
                   ),
-                  (route) => false, // Removes all previous routes
+                  (route) => false,
                 );
               });
               return SizedBox.shrink();
             }
 
-            var currentTask = tasks[_currentIndex];
-
-            // noteData(currentTask);
-
-            // Play audio when background is shown
-            if (!_isSnoozed) {
-              // _playAudio(currentTask['audioLink']);
-              if (currentTask.containsKey('voiceUrl')) {
-                _playAudio(currentTask['voiceUrl']);
-              }
-            }
+            var currentTask = tasks[currentTaskIndex];
 
             // Stop audio when the last task's animation finishes
-            if (_currentIndex == tasks.length - 1 && _isAnimationVisible) {
-              _stopAudio();
+            if (currentTaskIndex == tasks.length - 1 && (audioState['isAnimationVisible'] ?? false)) {
+              // Animation completion handled in _onCheckPressed
             }
 
             return Stack(
               children: [
-                // Background Image
-                // Positioned.fill(
-                //   child: Image.network(
-                //     currentTask['backgroundLink'],
-                //     fit: BoxFit.cover,
-                //   ),
-                // ),
-
                 Positioned.fill(
                     child: (currentTask.containsKey('backgroundLink') &&
                             currentTask['backgroundLink'] != null &&
@@ -448,7 +316,7 @@ class _TaskrevealState extends State<habitPlay> {
                           ),
                         ],
                       ),
-                      textAlign: TextAlign.center, // Center align the text
+                      textAlign: TextAlign.center,
                       softWrap: true,
                     ),
                   ),
@@ -459,7 +327,7 @@ class _TaskrevealState extends State<habitPlay> {
                   right: 20,
                   child: IconButton(
                     icon: Icon(
-                      _isSnoozed ? Icons.volume_off : Icons.volume_up,
+                      isTaskSnoozed ? Icons.volume_off : Icons.volume_up,
                       color: Colors.white,
                       size: 35,
                     ),
@@ -471,7 +339,7 @@ class _TaskrevealState extends State<habitPlay> {
                   initialChildSize: 0.3,
                   minChildSize: 0.2,
                   maxChildSize: _calculateDynamicMaxChildSize(
-                      context, currentTask, items), // Use dynamic maxChildSize
+                      context, currentTask, items),
                   builder: (context, scrollController) {
                     _scrollController = scrollController;
 
@@ -493,7 +361,7 @@ class _TaskrevealState extends State<habitPlay> {
                                   color: Colors.white.withOpacity(0.8),
                                 ),
                               ),
-                              const SizedBox(height: 16), // Spacing below arrow
+                              const SizedBox(height: 16),
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   final boxWidth = constraints.maxWidth * 1;
@@ -542,18 +410,6 @@ class _TaskrevealState extends State<habitPlay> {
                                                         ),
                                                         const SizedBox(
                                                             height: 8),
-                                                        // Text(
-                                                        //   _dailyCoaching(currentTask['name']) ??
-                                                        //       '',
-                                                        //   style:
-                                                        //       const TextStyle(
-                                                        //     color: Colors.white,
-                                                        //     fontSize: 18,
-                                                        //   ),
-                                                        //   textAlign:
-                                                        //       TextAlign.left,
-                                                        // ),
-
                                                         FutureBuilder<String>(
                                                           future:
                                                               _dailyCoaching(
@@ -565,7 +421,7 @@ class _TaskrevealState extends State<habitPlay> {
                                                                     .connectionState ==
                                                                 ConnectionState
                                                                     .waiting) {
-                                                              return const CircularProgressIndicator(); // Or any loading indicator
+                                                              return const CircularProgressIndicator();
                                                             } else if (snapshot
                                                                 .hasError) {
                                                               return Text(
@@ -574,7 +430,7 @@ class _TaskrevealState extends State<habitPlay> {
                                                                 .hasData) {
                                                               return Text(
                                                                 snapshot.data ??
-                                                                    '', // Safely using the data once it's loaded
+                                                                    '',
                                                                 style:
                                                                     const TextStyle(
                                                                   color: Colors
@@ -587,7 +443,7 @@ class _TaskrevealState extends State<habitPlay> {
                                                               );
                                                             } else {
                                                               return const Text(
-                                                                  ''); // Handle case when there's no data
+                                                                  '');
                                                             }
                                                           },
                                                         )
@@ -606,11 +462,10 @@ class _TaskrevealState extends State<habitPlay> {
                                                           null)
                                                         {
                                                           _coachingPlay(
-                                                              habitCoachingData!) // Use the non-nullable value
+                                                              habitCoachingData!)
                                                         }
                                                       else
                                                         {
-                                                          // Handle the case where habitCoachingData is null (if needed)
                                                           print(
                                                               "habitCoachingData is null")
                                                         }
@@ -633,151 +488,22 @@ class _TaskrevealState extends State<habitPlay> {
                                                   Html(
                                                     data: currentTask[
                                                             'descriptionHtml'] ??
-                                                        '', // Pass HTML content here
+                                                        '',
                                                     style: {
                                                       "html": Style(
                                                         color: Colors
-                                                            .white, // Text color
+                                                            .white,
                                                         fontSize: FontSize(
-                                                            18), // Font size
+                                                            18),
                                                         textAlign:
                                                             TextAlign.center,
                                                       ),
                                                     },
-                                                    // Text alignment
                                                   ),
                                                 ],
                                               ),
                                       ),
                                       const SizedBox(height: 20),
-                                      // Buttons Box
-                                      // Container(
-                                      //   width: boxWidth,
-                                      //   padding: const EdgeInsets.all(12),
-                                      //   decoration: BoxDecoration(
-                                      //     color: Colors.black.withOpacity(0.6),
-                                      //     borderRadius:
-                                      //         BorderRadius.circular(15),
-                                      //   ),
-                                      //   child: Column(
-                                      //     children: [
-                                      //       const Text(
-                                      //         "Today",
-                                      //         style: TextStyle(
-                                      //           color: Colors.white,
-                                      //           fontSize: 18,
-                                      //           fontWeight: FontWeight.bold,
-                                      //         ),
-                                      //       ),
-                                      //       const Divider(
-                                      //         color: Colors.white,
-                                      //         thickness: 1,
-                                      //       ),
-                                      //       Wrap(
-                                      //         spacing: 20,
-                                      //         alignment: WrapAlignment.center,
-                                      //         children: [
-                                      //           // Skip Button
-                                      //           Column(
-                                      //             children: [
-                                      //               IconButton(
-                                      //                 onPressed: _onSkipPressed,
-                                      //                 icon: const Icon(
-                                      //                   Icons.skip_next,
-                                      //                   color: Colors.white,
-                                      //                   size: 35,
-                                      //                 ),
-                                      //               ),
-                                      //               const Text(
-                                      //                 "Skip",
-                                      //                 style: TextStyle(
-                                      //                   color: Colors.white,
-                                      //                   fontSize: 18,
-                                      //                 ),
-                                      //               ),
-                                      //             ],
-                                      //           ),
-                                      //           // Check Button with Animation
-                                      //           Stack(
-                                      //             alignment: Alignment.center,
-                                      //             children: [
-
-                                      //               IconButton(
-                                      //                 icon: const Icon(
-                                      //                   Icons.check,
-                                      //                   color: Colors.white,
-                                      //                   size: 45,
-                                      //                 ),
-                                      //                 onPressed: () =>
-                                      //                     _onCheckPressed(
-                                      //                         // currentTask[
-                                      //                         //     'animationLink'],
-                                      //                         currentTask.containsKey(
-                                      //                                 "completionLottieUrl")
-                                      //                             ? currentTask[
-                                      //                                 'completionLottieUrl']
-                                      //                             : "",
-                                      //                         // currentTask[
-                                      //                         //     'objectID']),
-                                      //                         currentTask[
-                                      //                             'objectId']),
-                                      //                 style:
-                                      //                     IconButton.styleFrom(
-                                      //                   backgroundColor:
-                                      //                       Colors.pink,
-                                      //                   shape:
-                                      //                       const CircleBorder(),
-                                      //                 ),
-                                      //               ),
-                                      //               SizedBox(
-                                      //                 height: 150,
-                                      //                 width: 100,
-                                      //                 child: Visibility(
-                                      //                   visible:
-                                      //                       _isAnimationVisible,
-                                      //                   child: currentTask
-                                      //                           .containsKey(
-                                      //                               "completionLottieUrl")
-                                      //                       ? Lottie.network(
-                                      //                           currentTask[
-                                      //                               'completionLottieUrl'],
-                                      //                           repeat: false,
-                                      //                           width:
-                                      //                               500, // Adjust size as needed
-                                      //                           height: 500,
-                                      //                         )
-                                      //                       : Container(), // Empty container if no Lottie URL exists
-                                      //                 ),
-                                      //               ),
-                                      //             ],
-                                      //           ),
-                                      //           // Snooze Button
-                                      //           Column(
-                                      //             children: [
-                                      //               IconButton(
-                                      //                 onPressed:
-                                      //                     _onSnoozePressed,
-                                      //                 icon: const Icon(
-                                      //                   Icons.repeat,
-                                      //                   color: Colors.white,
-                                      //                   size: 35,
-                                      //                 ),
-                                      //               ),
-                                      //               const Text(
-                                      //                 "Snooze",
-                                      //                 style: TextStyle(
-                                      //                   color: Colors.white,
-                                      //                   fontSize: 18,
-                                      //                 ),
-                                      //               ),
-                                      //             ],
-                                      //           ),
-                                      //         ],
-                                      //       ),
-                                      //     ],
-                                      //   ),
-                                      // ),
-
                                       Container(
                                         width: boxWidth,
                                         padding: const EdgeInsets.all(12),
@@ -802,7 +528,7 @@ class _TaskrevealState extends State<habitPlay> {
                                             ),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment
-                                                  .center, // Center the buttons horizontally
+                                                  .center,
                                               children: [
                                                 // Skip Button
                                                 Column(
@@ -858,17 +584,12 @@ class _TaskrevealState extends State<habitPlay> {
                                                       height: 150,
                                                       width: 150,
                                                       child: Visibility(
-                                                        visible:
-                                                            _isAnimationVisible,
-                                                        child: currentTask
-                                                                .containsKey(
-                                                                    "completionLottieUrl")
+                                                        visible: audioState['isAnimationVisible'] ?? false,
+                                                        child: currentTask.containsKey("completionLottieUrl")
                                                             ? Lottie.network(
-                                                                currentTask[
-                                                                    'completionLottieUrl'],
+                                                                currentTask['completionLottieUrl'],
                                                                 repeat: false,
-                                                                width:
-                                                                    150, // Adjust size as needed
+                                                                width: 150,
                                                                 height: 150,
                                                               )
                                                             : Container(),
@@ -918,14 +639,14 @@ class _TaskrevealState extends State<habitPlay> {
                                         ),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment
-                                              .start, // Align content to start
+                                              .start,
                                           children: [
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               crossAxisAlignment: CrossAxisAlignment
-                                                  .start, // Align text to the top if it's multiline
+                                                  .start,
                                               children: [
                                                 IconButton(
                                                   onPressed: () {
@@ -960,17 +681,16 @@ class _TaskrevealState extends State<habitPlay> {
                                                           FontWeight.bold,
                                                     ),
                                                     overflow: TextOverflow
-                                                        .visible, // Make sure it wraps correctly
+                                                        .visible,
                                                     softWrap:
-                                                        true, // This is default and allows text to wrap
+                                                        true,
                                                     textAlign: TextAlign
-                                                        .center, // Center-align the text
+                                                        .center,
                                                   ),
                                                 ),
                                                 IconButton(
                                                   onPressed: (items.isNotEmpty)
                                                       ? () {
-                                                          // Navigate only if 'items' is not null and not empty
                                                           Navigator.push(
                                                             context,
                                                             MaterialPageRoute(
@@ -989,20 +709,19 @@ class _TaskrevealState extends State<habitPlay> {
                                                             ),
                                                           );
                                                         }
-                                                      : null, // Disable the button if 'items' is null or empty
+                                                      : null,
                                                   icon: Icon(
                                                     Icons.book,
                                                     color: (items.isNotEmpty)
                                                         ? Colors.white
                                                         : Colors
-                                                            .grey, // White if 'items' is not empty, grey if empty
+                                                            .grey,
                                                     size: 30,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                             if (items.isNotEmpty) ...[
-                                              // Show divider and text only when items is not empty
                                               const Divider(
                                                 color: Colors.white,
                                                 thickness: 1,

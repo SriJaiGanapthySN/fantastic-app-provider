@@ -13,6 +13,7 @@ import 'feedback/feed_back.dart';
 
 import 'ritual_screen.dart';
 import 'notification_tone_screen.dart';
+import 'extras_screen.dart';
 
 final pageControllerProvider = Provider<PageController>((ref) {
   final controller = PageController(initialPage: 1);
@@ -62,6 +63,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           const RitualScreen(),
           const JourneyRoadmapScreen(),
           Discoverscreen(email: userEmail),
+          const ExtrasScreen(),
         ],
       ),
       floatingActionButton: const Padding(

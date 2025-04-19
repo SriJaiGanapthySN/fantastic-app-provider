@@ -85,62 +85,6 @@ class UserGuide extends StatefulWidget {
   }
 
   static Future<void> showAppGuide(BuildContext context) async {
-    await showIfFirstTime(
-      context,
-      [
-        GuideStep(
-          title: "Chat with Fabulous",
-          description: "Get personalized guidance and support from your AI companion. Ask questions, share thoughts, and get motivation.",
-          target: _buildPreviewCard(
-            title: "AI Chat",
-            subtitle: "Your personal AI companion",
-            iconPath: 'assets/icons/chat.svg',
-            iconColor: Colors.blue,
-          ),
-        ),
-        GuideStep(
-          title: "Your Daily Ritual",
-          description: "Start your day right with a personalized morning routine. Track your habits and build a healthy lifestyle.",
-          target: _buildPreviewCard(
-            title: "Daily Ritual",
-            subtitle: "Build your perfect morning routine",
-            iconPath: 'assets/icons/route.svg',
-            iconColor: Colors.amber,
-          ),
-        ),
-        GuideStep(
-          title: "Your Journey",
-          description: "Track your progress and unlock new achievements. See how far you've come and where you're headed.",
-          target: _buildPreviewCard(
-            title: "Journey Map",
-            subtitle: "Your path to success",
-            iconPath: 'assets/icons/heart.svg',
-            iconColor: Colors.green,
-          ),
-        ),
-        GuideStep(
-          title: "Discover More",
-          description: "Explore new challenges, guided activities, and coaching series to enhance your journey.",
-          target: _buildPreviewCard(
-            title: "Discover",
-            subtitle: "Find new challenges and activities",
-            iconPath: 'assets/icons/search.svg',
-            iconColor: Colors.purple,
-          ),
-        ),
-        GuideStep(
-          title: "Quick Navigation",
-          description: "Switch between different sections of the app using this navigation bar.",
-          target: _buildNavPreview(),
-        ),
-      ],
-    );
-  }
-
-  static Future<void> showIfFirstTime(
-    BuildContext context,
-    List<GuideStep> steps,
-  ) async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenGuide = prefs.getBool('has_seen_guide') ?? false;
     
@@ -149,7 +93,53 @@ class UserGuide extends StatefulWidget {
       final overlayEntry = OverlayEntry(
         builder: (context) => UserGuide(
           child: const SizedBox.shrink(),
-          steps: steps,
+          steps: [
+            GuideStep(
+              title: "Chat with Fabulous",
+              description: "Get personalized guidance and support from your AI companion. Ask questions, share thoughts, and get motivation.",
+              target: _buildPreviewCard(
+                title: "AI Chat",
+                subtitle: "Your personal AI companion",
+                iconPath: 'assets/icons/chat.svg',
+                iconColor: Colors.blue,
+              ),
+            ),
+            GuideStep(
+              title: "Your Daily Ritual",
+              description: "Start your day right with a personalized morning routine. Track your habits and build a healthy lifestyle.",
+              target: _buildPreviewCard(
+                title: "Daily Ritual",
+                subtitle: "Build your perfect morning routine",
+                iconPath: 'assets/icons/route.svg',
+                iconColor: Colors.amber,
+              ),
+            ),
+            GuideStep(
+              title: "Your Journey",
+              description: "Track your progress and unlock new achievements. See how far you've come and where you're headed.",
+              target: _buildPreviewCard(
+                title: "Journey Map",
+                subtitle: "Your path to success",
+                iconPath: 'assets/icons/heart.svg',
+                iconColor: Colors.green,
+              ),
+            ),
+            GuideStep(
+              title: "Discover More",
+              description: "Explore new challenges, guided activities, and coaching series to enhance your journey.",
+              target: _buildPreviewCard(
+                title: "Discover",
+                subtitle: "Find new challenges and activities",
+                iconPath: 'assets/icons/search.svg',
+                iconColor: Colors.purple,
+              ),
+            ),
+            GuideStep(
+              title: "Quick Navigation",
+              description: "Switch between different sections of the app using this navigation bar.",
+              target: _buildNavPreview(),
+            ),
+          ],
           onComplete: () async {
             await prefs.setBool('has_seen_guide', true);
           },
@@ -192,6 +182,7 @@ class _UserGuideState extends State<UserGuide> {
 
     if (currentStep >= widget.steps.length) {
       widget.onComplete?.call();
+      _removeOverlay();
       return;
     }
 

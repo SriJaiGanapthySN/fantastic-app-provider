@@ -8,40 +8,52 @@ class JourneyRoadmapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 50),
-            const Text(
-              "Journey Roadmap",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+      backgroundColor: const Color(0xFF0E0B1F), // Dark background color
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0E0B1F),
+              Color(0xFF1A1A2E),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 50),
+              const Text(
+                "Journey Roadmap",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Thinking about next step?",
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
+              const SizedBox(height: 8),
+              const Text(
+                "Thinking about next step?",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _currentJourneyCard(),
-            const SizedBox(height: 20),
-            _progressOverview(),
-            const SizedBox(height: 20),
-            _journeySteps(),
-            const SizedBox(height: 20),
-            // Premium Button
-            const PremiumButton(),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 16),
+              _currentJourneyCard(),
+              const SizedBox(height: 20),
+              _progressOverview(),
+              const SizedBox(height: 20),
+              _journeySteps(),
+              const SizedBox(height: 20),
+              // Premium Button
+              const PremiumButton(),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

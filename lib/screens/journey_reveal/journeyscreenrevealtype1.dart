@@ -1,6 +1,7 @@
 import 'package:fantastic_app_riverpod/models/skill.dart';
 import 'package:fantastic_app_riverpod/models/skillTrack.dart';
 import 'package:flutter/material.dart';
+import 'package:fantastic_app_riverpod/screens/journey_path.dart';
 
 class JourneyRevealType1 extends StatelessWidget {
   final Map letterData;
@@ -21,22 +22,27 @@ class JourneyRevealType1 extends StatelessWidget {
       appBar: AppBar(
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.share,
-            ),
-            onPressed: () {},
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              // TODO: Implement share functionality
+            },
           ),
           IconButton(
-            icon: Icon(
-              Icons.arrow_right_rounded,
-            ),
-            onPressed: () {},
+            icon: const Icon(Icons.arrow_right_rounded),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const JourneyRoadmapScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
       backgroundColor: Colors.white,
       body: Container(
-        margin: EdgeInsets.only(top: 300, bottom: 30),
+        margin: const EdgeInsets.only(top: 300, bottom: 30),
         alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -52,7 +58,7 @@ class JourneyRevealType1 extends StatelessWidget {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: const [
                   Text(
                     'Next',
                     style: TextStyle(color: Colors.white),

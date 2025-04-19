@@ -2,24 +2,21 @@ import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/background_video.dart';
 import '../widgets/alarm_widget.dart';
 import '../widgets/habit_list.dart';
 import '../providers/_providers.dart';
+import '../providers/habit_play_provider.dart';
 import '../services/task_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'ritual/taskreveal.dart'; // Add import for TaskReveal
-import 'ritual/habitPlay.dart'; // Add import for habitPlay
+import 'ritual/taskreveal.dart';
+import 'ritual/habitPlay.dart';
 
 // Provider for TaskServices
 final taskServicesProvider = Provider<TaskServices>((ref) => TaskServices());
 
-// Provider for user email from Firebase Auth
-final userEmailProvider = Provider<String>((ref) {
-  final user = FirebaseAuth.instance.currentUser;
-  return user?.email ?? ''; // Return the email or empty string if not available
-});
+// Hardcoded email ID
+final userEmailProvider = Provider<String>((ref) => "03@gmail.com");
 
 // Provider for daily tasks stream
 final dailyTasksStreamProvider =
@@ -35,6 +32,14 @@ class RitualScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userEmail = ref.watch(userEmailProvider);
     final tasksAsyncValue = ref.watch(dailyTasksStreamProvider(userEmail));
+    final currentTaskIndex = ref.watch(currentTaskIndexProvider);
+    final isTaskSnoozed = ref.watch(isTaskSnoozedProvider);
+    final isTaskSkipped = ref.watch(isTaskSkippedProvider);
+    final audioState = ref.watch(audioStateProvider);
+    final taskData = ref.watch(taskDataProvider);
+    final notesData = ref.watch(notesDataProvider);
+    final habitCoachingData = ref.watch(habitCoachingDataProvider);
+    final scrollController = ref.watch(scrollControllerProvider);
 
     return Stack(
       children: [
@@ -68,11 +73,18 @@ class RitualScreen extends ConsumerWidget {
                         ),
                       );
                     }
+
+                    // Update task data in provider
+                    if (currentTaskIndex < tasks.length) {
+                      final currentTask = tasks[currentTaskIndex].data() as Map<String, dynamic>;
+                      ref.read(taskDataProvider.notifier).state = currentTask;
+                    }
+
                     return ListView.builder(
+                      controller: scrollController,
                       itemCount: tasks.length,
                       itemBuilder: (context, index) {
-                        final task =
-                            tasks[index].data() as Map<String, dynamic>;
+                        final task = tasks[index].data() as Map<String, dynamic>;
                         return ListTile(
                           title: Text(
                             task['name'] ?? 'Unnamed Task',
@@ -80,8 +92,7 @@ class RitualScreen extends ConsumerWidget {
                           ),
                           subtitle: Text(
                             task['descriptionHtml'] ?? 'No description',
-                            style:
-                                TextStyle(color: Colors.white.withOpacity(0.7)),
+                            style: TextStyle(color: Colors.white.withOpacity(0.7)),
                           ),
                           trailing: Checkbox(
                             value: task['iscompleted'] ?? false,
@@ -99,14 +110,9 @@ class RitualScreen extends ConsumerWidget {
                       },
                     );
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(
-                    child: Text(
-                      'Error: $error',
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                    child: Text('Error: ${error.toString()}'),
                   ),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import '../utils/blur_container.dart';
 import '../providers/journey_levels_provider.dart';
 import '../widgets/premium_button.dart';
+import '../screens/journey_path.dart';
 
 // Mock data for debugging
 final List<Map<String, dynamic>> mockLevels = [
@@ -408,7 +409,12 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with Sing
                               borderRadius: 50,
                               child: InkWell(
                                 onTap: () {
-                                  // Handle view button tap
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const JourneyRoadmapScreen(),
+                                    ),
+                                  );
                                 },
                                 child: Container(
                                   color: const Color.fromARGB(51, 255, 255, 255),

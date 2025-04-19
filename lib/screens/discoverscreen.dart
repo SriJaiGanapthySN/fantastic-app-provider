@@ -80,9 +80,6 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
     }
   }
 
-
-
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -98,40 +95,35 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
     final uiState = ref.watch(discoverUIStateProvider);
     final currentData = ref.watch(currentDataProvider);
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/bgdiscover.jpeg'),
-                fit: BoxFit.cover,
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bgdiscover.jpeg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.transparent,
+                    BlendMode.dst,
+                  ),
+                ),
               ),
             ),
-          ),
-          Buttonimage(currentImage: uiState.currentImage),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Lottie.asset(
-              "assets/animations/disbottom.json",
-              controller: _dataDiscoveryController,
-              repeat: false,
-              animate: false,
-              width: MediaQuery.of(context).size.width,
+            Buttonimage(currentImage: uiState.currentImage),
+            // Temporarily removed Lottie animation to debug red screen issue
+            Column(
+              children: [
+                Discoverbuttons(
+                    handleButtonPress: _handleButtonPress,
+                    selectedButtonIndex: uiState.selectedButtonIndex),
+                SizedBox(height: screenHeight * 0.09),
+                Discoverstrip(currentData: currentData, email: widget.email)
+              ],
             ),
-          ),
-          Column(
-            children: [
-              Discoverbuttons(
-                  handleButtonPress: _handleButtonPress,
-                  selectedButtonIndex: uiState.selectedButtonIndex),
-              SizedBox(height: screenHeight * 0.09),
-              Discoverstrip(currentData: currentData, email: widget.email)
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
