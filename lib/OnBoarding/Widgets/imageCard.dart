@@ -21,7 +21,8 @@ class ImageCard extends StatelessWidget {
           double screenWidth = constraints.maxWidth;
           double screenHeight = constraints.maxHeight;
 
-          bool selected = isSelected; // Call the function to get current selection
+          bool selected =
+              isSelected; // Call the function to get current selection
 
           return Card(
             elevation: 5,
@@ -70,7 +71,7 @@ class ImageCard extends StatelessWidget {
                         text,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.08,
+                          fontSize: screenWidth * 0.1,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

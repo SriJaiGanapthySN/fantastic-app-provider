@@ -5,7 +5,7 @@ import 'premium_success.dart';
 
 class UpgradesScreen extends StatefulWidget {
   final VoidCallback? onPremiumStatusChanged;
-  
+
   const UpgradesScreen({
     super.key,
     this.onPremiumStatusChanged,
@@ -36,14 +36,14 @@ class _UpgradesScreenState extends State<UpgradesScreen> {
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_premiumKey, true);
-    
+
     if (mounted) {
       // Notify parent about premium status change
       widget.onPremiumStatusChanged?.call();
-      
+
       // Pop the upgrades screen first
       Navigator.pop(context);
-      
+
       // Show success dialog
       if (mounted) {
         await PremiumSuccessDialog.show(context);
@@ -65,10 +65,7 @@ class _UpgradesScreenState extends State<UpgradesScreen> {
       'amount': 10000, // Amount in paise (100 INR)
       'name': 'Premium Features',
       'description': 'Unlock all premium features',
-      'prefill': {
-        'email': 'test@example.com',
-        'name': 'Test User'
-      }
+      'prefill': {'email': 'test@example.com', 'name': 'Test User'}
     };
 
     try {
@@ -85,7 +82,7 @@ class _UpgradesScreenState extends State<UpgradesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(255, 19, 191, 197),
       body: Stack(
         children: [
           // Background gradient or image can be added here
@@ -263,4 +260,4 @@ class _UpgradesScreenState extends State<UpgradesScreen> {
       ),
     );
   }
-} 
+}

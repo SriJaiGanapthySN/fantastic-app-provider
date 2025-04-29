@@ -76,7 +76,8 @@ class RitualScreen extends ConsumerWidget {
 
                     // Update task data in provider
                     if (currentTaskIndex < tasks.length) {
-                      final currentTask = tasks[currentTaskIndex].data() as Map<String, dynamic>;
+                      final currentTask = tasks[currentTaskIndex].data()
+                          as Map<String, dynamic>;
                       ref.read(taskDataProvider.notifier).state = currentTask;
                     }
 
@@ -84,7 +85,8 @@ class RitualScreen extends ConsumerWidget {
                       controller: scrollController,
                       itemCount: tasks.length,
                       itemBuilder: (context, index) {
-                        final task = tasks[index].data() as Map<String, dynamic>;
+                        final task =
+                            tasks[index].data() as Map<String, dynamic>;
                         return ListTile(
                           title: Text(
                             task['name'] ?? 'Unnamed Task',
@@ -92,17 +94,38 @@ class RitualScreen extends ConsumerWidget {
                           ),
                           subtitle: Text(
                             task['descriptionHtml'] ?? 'No description',
-                            style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                            style:
+                                TextStyle(color: Colors.white.withOpacity(0.7)),
                           ),
                           trailing: Checkbox(
                             value: task['iscompleted'] ?? false,
                             onChanged: (bool? value) {
                               if (value != null) {
+                                // First update the task status
                                 ref.read(taskServicesProvider).updateTaskStatus(
                                       value,
                                       task['objectID'],
                                       userEmail,
                                     );
+
+                                // Set current task index to this task
+                                ref
+                                    .read(currentTaskIndexProvider.notifier)
+                                    .state = index;
+
+                                // Store task data in provider
+                                ref.read(taskDataProvider.notifier).state =
+                                    task;
+
+                                // Navigate to TaskReveal
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Taskreveal(
+                                      email: userEmail,
+                                    ),
+                                  ),
+                                );
                               }
                             },
                           ),
@@ -110,7 +133,8 @@ class RitualScreen extends ConsumerWidget {
                       },
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(
                     child: Text('Error: ${error.toString()}'),
                   ),

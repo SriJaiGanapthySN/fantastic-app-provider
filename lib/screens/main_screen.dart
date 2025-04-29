@@ -63,7 +63,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           const RitualScreen(),
           const JourneyRoadmapScreen(),
           Discoverscreen(email: userEmail),
-          const ExtrasScreen(),
         ],
       ),
       floatingActionButton: const Padding(

@@ -38,7 +38,9 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
                   });
 
                   // Save the image to the file
-                  final imagePath = await ref.read(selectedSleepProvider.notifier).saveImageToFile(pickedFile);
+                  final imagePath = await ref
+                      .read(selectedSleepProvider.notifier)
+                      .saveImageToFile(pickedFile);
                   debugPrint('Image saved at: $imagePath');
                 }
                 Navigator.pop(context);
@@ -57,7 +59,9 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
                   });
 
                   // Save the image to the file
-                  final imagePath = await ref.read(selectedSleepProvider.notifier).saveImageToFile(pickedFile);
+                  final imagePath = await ref
+                      .read(selectedSleepProvider.notifier)
+                      .saveImageToFile(pickedFile);
                   debugPrint('Image saved at: $imagePath');
                 }
                 Navigator.pop(context);
@@ -96,7 +100,7 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
               radius: Radius.circular(12),
               child: Container(
                 width: double.infinity,
-                height: 200,
+                height: 150,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -106,14 +110,14 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
                     child: _image == null
                         ? Icon(Icons.add_a_photo, color: Colors.white, size: 40)
                         : ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        _image!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                    ),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              _image!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -122,19 +126,20 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
             ElevatedButton(
               onPressed: _isImageSelected
                   ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OnboardingCompletedScreen(),
-                  ),
-                );
-              }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OnboardingCompletedScreen(),
+                        ),
+                      );
+                    }
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 150),
               ),
               child: Text(
                 'Done',

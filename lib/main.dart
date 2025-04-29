@@ -1,7 +1,13 @@
 import 'dart:developer';
 
+import 'package:fantastic_app_riverpod/screens/all_journey.dart';
+import 'package:fantastic_app_riverpod/screens/auth_page.dart';
 import 'package:fantastic_app_riverpod/screens/discoverscreen.dart';
+import 'package:fantastic_app_riverpod/screens/feedback/feed_back.dart';
 import 'package:fantastic_app_riverpod/screens/journey_path.dart';
+import 'package:fantastic_app_riverpod/screens/journey_screen.dart';
+import 'package:fantastic_app_riverpod/screens/main_screen.dart';
+import 'package:fantastic_app_riverpod/screens/ritual_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +18,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'firebase_options.dart';
-// import 'providers/auth_provider.dart';
-// import 'screens/auth_page.dart';
-import 'screens/extras_screen.dart';
-// import 'screens/notification_tone_screen.dart';
+import 'models/feedback.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -80,44 +83,43 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.teal,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          fontFamily: 'SF Pro Display',
-        ),
-        builder: (context, child) {
-          ErrorWidget.builder = (FlutterErrorDetails details) {
-            return MaterialApp(
-              home: Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 50),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Something went wrong',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        details.exception.toString(),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: 'SF Pro Display',
+      ),
+      builder: (context, child) {
+        ErrorWidget.builder = (FlutterErrorDetails details) {
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.red, size: 50),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Something went wrong',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      details.exception.toString(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
               ),
-            );
-          };
-          return child!;
-        },
-        home: Discoverscreen(
-          email: 'test03@gmail.com',
-        ));
+            ),
+          );
+        };
+        return child!;
+      },
+      home: MainScreen(), // Change this to your desired initial screen
+    );
   }
 }
 
