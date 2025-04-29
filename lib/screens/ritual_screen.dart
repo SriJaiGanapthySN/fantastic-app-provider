@@ -11,12 +11,10 @@ import '../services/task_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ritual/taskreveal.dart';
 import 'ritual/habitPlay.dart';
+import '../providers/auth_provider.dart';
 
 // Provider for TaskServices
 final taskServicesProvider = Provider<TaskServices>((ref) => TaskServices());
-
-// Hardcoded email ID
-final userEmailProvider = Provider<String>((ref) => "03@gmail.com");
 
 // Provider for daily tasks stream
 final dailyTasksStreamProvider =
@@ -30,8 +28,14 @@ class RitualScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get email from auth provider or use fallback for development
     final userEmail = ref.watch(userEmailProvider);
-    final tasksAsyncValue = ref.watch(dailyTasksStreamProvider(userEmail));
+    final fallbackEmail = ref.read(fallbackEmailProvider);
+    final effectiveEmail = userEmail.isNotEmpty ? userEmail : fallbackEmail;
+
+    print('RitualScreen using email: $effectiveEmail');
+
+    final tasksAsyncValue = ref.watch(dailyTasksStreamProvider(effectiveEmail));
     final currentTaskIndex = ref.watch(currentTaskIndexProvider);
     final isTaskSnoozed = ref.watch(isTaskSnoozedProvider);
     final isTaskSkipped = ref.watch(isTaskSkippedProvider);
@@ -61,85 +65,6 @@ class RitualScreen extends ConsumerWidget {
               const SizedBox(height: 64),
               const AlarmWidget(),
               const HabitList(),
-              Expanded(
-                child: tasksAsyncValue.when(
-                  data: (snapshot) {
-                    final tasks = snapshot.docs;
-                    if (tasks.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No tasks available',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      );
-                    }
-
-                    // Update task data in provider
-                    if (currentTaskIndex < tasks.length) {
-                      final currentTask = tasks[currentTaskIndex].data()
-                          as Map<String, dynamic>;
-                      ref.read(taskDataProvider.notifier).state = currentTask;
-                    }
-
-                    return ListView.builder(
-                      controller: scrollController,
-                      itemCount: tasks.length,
-                      itemBuilder: (context, index) {
-                        final task =
-                            tasks[index].data() as Map<String, dynamic>;
-                        return ListTile(
-                          title: Text(
-                            task['name'] ?? 'Unnamed Task',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            task['descriptionHtml'] ?? 'No description',
-                            style:
-                                TextStyle(color: Colors.white.withOpacity(0.7)),
-                          ),
-                          trailing: Checkbox(
-                            value: task['iscompleted'] ?? false,
-                            onChanged: (bool? value) {
-                              if (value != null) {
-                                // First update the task status
-                                ref.read(taskServicesProvider).updateTaskStatus(
-                                      value,
-                                      task['objectID'],
-                                      userEmail,
-                                    );
-
-                                // Set current task index to this task
-                                ref
-                                    .read(currentTaskIndexProvider.notifier)
-                                    .state = index;
-
-                                // Store task data in provider
-                                ref.read(taskDataProvider.notifier).state =
-                                    task;
-
-                                // Navigate to TaskReveal
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Taskreveal(
-                                      email: userEmail,
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(
-                    child: Text('Error: ${error.toString()}'),
-                  ),
-                ),
-              ),
               Padding(
                 padding:
                     const EdgeInsets.only(bottom: 112.0, left: 16, right: 16),
@@ -161,7 +86,7 @@ class RitualScreen extends ConsumerWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => habitPlay(
-                              email: userEmail,
+                              email: "test03@gmail.com",
                             ),
                           ),
                         );

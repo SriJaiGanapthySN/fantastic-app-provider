@@ -19,7 +19,7 @@ class AuthState {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: error ?? this.error,
     );
   }
 }
@@ -124,8 +124,31 @@ final userEmailProvider = Provider<String>((ref) {
   final userAsync = ref.watch(currentUserProvider);
 
   return userAsync.when(
-    data: (user) => user?.email ?? '',
-    loading: () => '',
-    error: (_, __) => '',
+    data: (user) {
+      final email = user?.email ?? '';
+      print('Current user email from provider: $email');
+      return email;
+    },
+    loading: () {
+      print('User data is loading...');
+      return '';
+    },
+    error: (error, stackTrace) {
+      print('Error getting user email: $error');
+      return '';
+    },
   );
+});
+
+// Fallback email for development
+final fallbackEmailProvider = Provider<String>((ref) => "03@gmail.com");
+
+// Provider that never returns an empty email
+final safeUserEmailProvider = Provider<String>((ref) {
+  final userEmail = ref.watch(userEmailProvider);
+  final fallbackEmail = ref.watch(fallbackEmailProvider);
+
+  final email = userEmail.isNotEmpty ? userEmail : fallbackEmail;
+  print('Safe email provider returning: $email');
+  return email;
 });

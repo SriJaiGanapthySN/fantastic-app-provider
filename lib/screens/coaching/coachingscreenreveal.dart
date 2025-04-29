@@ -74,7 +74,11 @@ class _Coachingscreenreveal extends State<Coachingscreenreveal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HeaderSection(coaching: widget.coachingSeries),
+                  HeaderSection(
+                    coaching: widget.coachingSeries,
+                    email: widget.email,
+                    coachingData: coachingData,
+                  ),
                   const SizedBox(height: 24),
                   // Dynamically generated coaching content cards
                   ...coachingData.map((coachingItem) {
@@ -82,7 +86,6 @@ class _Coachingscreenreveal extends State<Coachingscreenreveal> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            // Navigate to a new screen
                             Navigator.push(
                               context,
                               MaterialPageRoute(

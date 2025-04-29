@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/screens/all_journey.dart';
 import 'package:fantastic_app_riverpod/screens/auth_page.dart';
 import 'package:fantastic_app_riverpod/screens/discoverscreen.dart';
@@ -82,6 +83,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -118,7 +120,15 @@ class MyApp extends ConsumerWidget {
         };
         return child!;
       },
-      home: MainScreen(), // Change this to your desired initial screen
+      home: authState.isLoading
+          ? const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          : authState.user != null
+              ? MainScreen()
+              : const AuthPage(), // Change this to your desired initial screen
     );
   }
 }

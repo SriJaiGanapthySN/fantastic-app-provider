@@ -60,21 +60,31 @@ class TaskServices {
 
   Future<List<Map<String, dynamic>>> getUserHabits(String email) async {
     try {
+      print('TaskServices: Fetching habits for user: $email');
       QuerySnapshot snapshot = await _firestore
           .collection('testers')
           .doc(email)
           .collection('habits')
           .get();
 
+      print('TaskServices: Got ${snapshot.docs.length} habit documents');
+
       // Convert the snapshot to a List of Maps
       List<Map<String, dynamic>> habits = [];
       for (var doc in snapshot.docs) {
-        habits.add(doc.data() as Map<String, dynamic>);
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        // Ensure objectId is available
+        if (!data.containsKey('objectId') && doc.id != null) {
+          data['objectId'] = doc.id;
+        }
+        habits.add(data);
+        print(
+            'TaskServices: Added habit: ${data['name'] ?? 'Unnamed'} with ID: ${data['objectId'] ?? 'No ID'}');
       }
 
       return habits;
     } catch (e) {
-      print('Error fetching user habits: $e');
+      print('TaskServices: Error fetching user habits: $e');
       return []; // Return an empty list in case of an error
     }
   }

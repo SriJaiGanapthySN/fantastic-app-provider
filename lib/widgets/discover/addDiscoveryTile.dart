@@ -20,7 +20,8 @@ class AddDiscoveryTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final selectedButtonIndex = ref.watch(discoverUIStateProvider).selectedButtonIndex;
+    final selectedButtonIndex =
+        ref.watch(discoverUIStateProvider).selectedButtonIndex;
 
     // Extract data from tile
     final String url = tile['imageUrl'] ?? 'assets/images/default.jpg';
@@ -46,7 +47,7 @@ class AddDiscoveryTile extends ConsumerWidget {
               MaterialPageRoute(
                 builder: (context) => Coachingscreenreveal(
                   email: email,
-                  coachingSeriesId: tile['id'] ?? '',
+                  coachingSeriesId: tile["objectId"] ?? '',
                   coachingSeries: tile,
                 ),
               ),
@@ -103,15 +104,15 @@ class AddDiscoveryTile extends ConsumerWidget {
                           fit: BoxFit.cover,
                           width: screenWidth * 0.4,
                           height: screenWidth * 0.5,
-                          loadingBuilder: (BuildContext context,
-                              Widget child,
+                          loadingBuilder: (BuildContext context, Widget child,
                               ImageChunkEvent? loadingProgress) {
                             if (loadingProgress == null) {
                               return child;
                             }
                             return Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
                                     ? loadingProgress.cumulativeBytesLoaded /
                                         loadingProgress.expectedTotalBytes!
                                     : null,

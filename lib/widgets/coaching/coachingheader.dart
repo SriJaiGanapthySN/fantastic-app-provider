@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:fantastic_app_riverpod/screens/coaching/coachingPlay.dart';
 
 class HeaderSection extends StatelessWidget {
-  final Map<String,dynamic> coaching;
-  const HeaderSection({super.key,required this.coaching});
+  final Map<String, dynamic> coaching;
+  final String email;
+  final List<Map<String, dynamic>> coachingData;
+
+  const HeaderSection({
+    super.key,
+    required this.coaching,
+    required this.email,
+    required this.coachingData,
+  });
+
   Color colorFromString(String colorString) {
     // Remove the '#' if it's there and parse the hex color code
     String hexColor = colorString.replaceAll('#', '');
@@ -16,6 +26,7 @@ class HeaderSection extends StatelessWidget {
       throw FormatException('Invalid color string format');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -33,7 +44,7 @@ class HeaderSection extends StatelessWidget {
         const SizedBox(height: 16),
         Container(
           alignment: Alignment.topLeft,
-          child:  Text(
+          child: Text(
             coaching["title"],
             style: TextStyle(
               color: Colors.white,
@@ -55,7 +66,22 @@ class HeaderSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () {
+            if (coachingData.isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Coachingplay(
+                    email: email,
+                    coachingSeries: coaching,
+                    coachingData:
+                        coachingData.first, // Use the first coaching item
+                    coachings: coachingData,
+                  ),
+                ),
+              );
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: colorFromString(coaching["color"]),
