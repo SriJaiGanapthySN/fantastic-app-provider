@@ -1,9 +1,19 @@
-import 'package:fantastic_app_riverpod/widgets/discover/discoverbuttons.dart';
+import 'package:fantastic_app_riverpod/widgets/challanges/ChallengesButton.dart';
+// Assuming DiscoverButtons might be needed elsewhere, keeping the import
+// import 'package:fantastic_app_riverpod/widgets/discover/discoverbuttons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Assuming Riverpod might be used elsewhere or in ChallengeButton, keeping the import
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
-import '../services/challenges_service.dart';
-import '../widgets/challanges/cardLayout.dart';
+// Assuming ChallengesService might be needed elsewhere, keeping the import
+// import '../services/challenges_service.dart';
+import '../subChallenges/SubChallengeScreen.dart';
+import '../widgets/challanges/cardLayout.dart'; // Ensure this path is correct
+
+// Make sure ChallengeScreen exists if you intend to navigate TO it again.
+// If this IS the screen you navigate TO, ensure the naming is consistent.
+// For clarity, let's assume the screen you navigate TO might have a different name
+// or purpose, but for this example, we'll use the same name as requested.
 
 class ChallengeScreen extends StatelessWidget {
   final List<Map<String, dynamic>> cardData;
@@ -13,6 +23,25 @@ class ChallengeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // 👇 Print cardData when the screen builds
     debugPrint('CardData in ChallengeScreen build: $cardData');
+
+    // --- Define the handleButtonPress method ---
+    void handleButtonPress(int index) {
+      debugPrint('Button pressed with index: $index'); // For debugging
+      if (index == 1) {
+        // Navigate to ChallengeScreen if index is 1
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            // Pass the current cardData to the new screen instance
+            builder: (context) => Sub_Challenge_Screen(cardData: cardData),
+          ),
+        );
+      } else {
+        // Do nothing if index is 0 (or any other value)
+        debugPrint('Index is $index, no navigation action taken.');
+      }
+    }
+    // --- End of handleButtonPress method definition ---
 
     return Scaffold(
       backgroundColor: Colors.black, // keep black
@@ -26,7 +55,7 @@ class ChallengeScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Background Lottie animation
+          // Background Lottie animation (commented out as in original)
           // Positioned.fill(
           //   child: Container(
           //     color: Colors.black.withOpacity(0.5),
@@ -91,19 +120,19 @@ class ChallengeScreen extends StatelessWidget {
               // Cross button at top
               Align(
                 alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                child: Padding( // Added padding for better touch area
+                  padding: const EdgeInsets.only(top: 40.0, right: 16.0), // Adjust padding as needed
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
                 ),
               ),
-
-              // Semi-transparent black overlay to make cards & icons pop
-
+              // Semi-transparent black overlay (commented out as in original)
               // Main Content (Cross button + Cards)
-
-              // The card layout
+              // The card layout (moved inside the second Column)
             ],
           ),
           Positioned(
@@ -118,8 +147,13 @@ class ChallengeScreen extends StatelessWidget {
           ),
           Column(
             children: [
-              Discoverbuttons(handleButtonPress:(){} , selectedButtonIndex: 0),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.13),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.10),
+              // Use the defined handleButtonPress and set default index to 1
+              ChallengeButton(
+                handleButtonPress: handleButtonPress, // Pass the method here
+                selectedButtonIndex: 0,            // Default index is 1
+              ),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.15),
               Expanded(child: CardLayout(cardData: cardData)),
             ],
           ),

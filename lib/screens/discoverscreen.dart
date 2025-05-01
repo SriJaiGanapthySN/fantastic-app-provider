@@ -2,6 +2,7 @@
 
 import 'package:fantastic_app_riverpod/OnBoarding/Screens/onBoard1.dart';
 import 'package:fantastic_app_riverpod/providers/discover_provider.dart';
+import 'package:fantastic_app_riverpod/subChallenges/SubChallengeScreen.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/buttonimage.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/discoverbuttons.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/discoverstrip.dart';
@@ -69,7 +70,7 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ChallengeScreen(cardData: updatedChallenges),
+            builder: (context) => ChallengeScreen(cardData: updatedChallenges),  //ChallengeScreen(cardData: updatedChallenges)
           ),
         );
       } else {

@@ -89,7 +89,10 @@ flutter:
     - assets/videos/
     - assets/fonts/
     - assets/images/
+    - assets/videos/dice_roll.mp4
+    - assets/images/imageFlower.jpg
     - assets/animations/1/data.json
+    - assets/images/image (2).png
     - assets/animations/3/data.json
     - assets/videos/fc5890dd77de131e0e032b98260ee54cfa710eda.mp4
     - assets/animations/circular anti-clockwise/data.json
@@ -106,6 +109,8 @@ flutter:
     - assets/images/onboardingImages/
     - assets/images/Habit/
     - assets/animations/audio.json
+    - assets/animations/challenge.json
+    - assets/images/bgdiscover.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
