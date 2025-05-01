@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:fantastic_app_riverpod/OnBoarding/Screens/onBoard1.dart';
 import 'package:fantastic_app_riverpod/providers/discover_provider.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/buttonimage.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/discoverbuttons.dart';
@@ -9,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
 import 'ChallengeScreen.dart';
+import '../OnBoarding/Screens/onBoard36.dart';
+import 'notification_tone_screen.dart';
 
 class Discoverscreen extends ConsumerStatefulWidget {
   final String email;
@@ -97,6 +100,120 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
 
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Extra screen in drawer',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 21, 21, 21),
+            ),
+          ),
+          centerTitle: true,
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.indigo,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      widget.email,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      'Welcome!',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.dashboard_customize, color: Colors.indigo),
+                title: Text('Onboarding'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Onboard1()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.person, color: Colors.indigo),
+                title: Text('Profile'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Navigate to profile screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Profile screen not implemented yet')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.settings, color: Colors.indigo),
+                title: Text('Settings'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Navigate to settings screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Settings screen not implemented yet')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.notifications, color: Colors.indigo),
+                title: Text('Notifications'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationToneScreen(),
+                    ),
+                  );
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.logout, color: Colors.red),
+                title: Text('Logout'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Implement logout functionality
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content:
+                            Text('Logout functionality not implemented yet')),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
         body: Stack(
           children: [
             Container(

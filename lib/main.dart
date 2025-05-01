@@ -1,14 +1,7 @@
 import 'dart:developer';
-
 import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
-import 'package:fantastic_app_riverpod/screens/all_journey.dart';
 import 'package:fantastic_app_riverpod/screens/auth_page.dart';
-import 'package:fantastic_app_riverpod/screens/discoverscreen.dart';
-import 'package:fantastic_app_riverpod/screens/feedback/feed_back.dart';
-import 'package:fantastic_app_riverpod/screens/journey_path.dart';
-import 'package:fantastic_app_riverpod/screens/journey_screen.dart';
 import 'package:fantastic_app_riverpod/screens/main_screen.dart';
-import 'package:fantastic_app_riverpod/screens/ritual_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-
 import 'firebase_options.dart';
-import 'models/feedback.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -28,7 +19,6 @@ final notificationPluginProvider =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   tz.initializeTimeZones();
   await _initializeFirebase();
 
