@@ -51,14 +51,14 @@ class _OnBoard29State extends ConsumerState<OnBoard30> {
 
                         const SizedBox(height: 20),
                         // First Image
-                        Image.network(
-                          'https://via.placeholder.com/150',
+                        Image.asset(
+                          'assets/images/onboardingImages/82a01b9be94079ab195f2580c28d6570_img_lune_affirmation_a_good_night_s_rest_big_image_opt.jpg',
                           height: 150,
                         ),
                         const SizedBox(height: 20),
                         // Second Image
-                        Image.network(
-                          'https://via.placeholder.com/150',
+                        Image.asset(
+                          'assets/images/onboardingImages/86f43d1c141ba1a87faf8d777ab484d6_img_enchant_affirmation_nurture_positivity_inner_step_opt.jpg',
                           height: 150,
                         ),
                         const SizedBox(height: 20),
