@@ -5,7 +5,9 @@ import '../OnBoarding/Widgets/imageCard1.dart';
 
 class SuperPowerScreen extends StatefulWidget {
   final String imageUrl;
-  const SuperPowerScreen({super.key, required this.imageUrl});
+  final String title;
+  final String objectId;
+  const SuperPowerScreen({super.key, required this.imageUrl, required this.title, required this.objectId});
 
   @override
   _SuperPowerScreenState createState() => _SuperPowerScreenState();
@@ -208,7 +210,8 @@ class _SuperPowerScreenState extends State<SuperPowerScreen> {
                     ),
                   ),
                   onPressed: () {
-                     Navigator.push(context, MaterialPageRoute(builder: (context) => MeditationActionScreen(imageUrl: widget.imageUrl))); // Close the dialog
+                    Navigator.of(dialogContext).pop(); // Close the dialog
+                    Navigator.of(dialogContext).pop(); // Close the dialog
                     // Potentially navigate or trigger next step
                   },
                   child: const Text("I WANT TO THANK SOMEONE!"),
@@ -225,6 +228,8 @@ class _SuperPowerScreenState extends State<SuperPowerScreen> {
                     // TODO: Implement action for NOT wanting to show gratitude
                     debugPrint("I don't want to show gratitude tapped!");
                     Navigator.of(dialogContext).pop(); // Close the dialog
+                    Navigator.of(dialogContext).pop(); // Close the dialog
+
                   },
                   child: const Text(
                     "I DON'T WANT TO SHOW\nGRATITUDE",
@@ -255,6 +260,19 @@ class _SuperPowerScreenState extends State<SuperPowerScreen> {
         children: [
           // Top Section
           SizedBox(height: 25,),
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding( // Added padding for better touch area
+              padding: const EdgeInsets.only(top: 40.0, right: 16.0), // Adjust padding as needed
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 10,),
           Padding(
             padding: EdgeInsets.all(16.0),
             child: Row(
@@ -311,7 +329,7 @@ class _SuperPowerScreenState extends State<SuperPowerScreen> {
                   final isSelected = selectedItems.contains(item.text);
 
                   return GestureDetector(
-                    onTap: () => toggleSelection(item.text),
+                    onTap: () => {toggleSelection(item.text),_showGratitudeChallengeDialog(context)},
                     child: ImageCard1(
                       imageAdd: item.imageAdd,
                       text: item.text,
@@ -333,7 +351,7 @@ class _SuperPowerScreenState extends State<SuperPowerScreen> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: () {
-                  _showGratitudeChallengeDialog(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=> MeditationActionScreen(imageUrl: widget.imageUrl,objectId:widget.objectId,)));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
