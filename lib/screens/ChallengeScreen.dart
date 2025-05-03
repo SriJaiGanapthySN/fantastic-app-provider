@@ -119,11 +119,11 @@ class ChallengeScreen extends StatelessWidget {
             children: [
               // Cross button at top
               Align(
-                alignment: Alignment.topRight,
+                alignment: Alignment.topLeft,
                 child: Padding( // Added padding for better touch area
                   padding: const EdgeInsets.only(top: 40.0, right: 16.0), // Adjust padding as needed
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                    icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 28),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },

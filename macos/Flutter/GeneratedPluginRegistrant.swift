@@ -18,6 +18,7 @@ import shared_preferences_foundation
 import sign_in_with_apple
 import speech_to_text
 import video_player_avfoundation
+import webview_flutter_wkwebview
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
@@ -33,4 +34,5 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   SignInWithApplePlugin.register(with: registry.registrar(forPlugin: "SignInWithApplePlugin"))
   SpeechToTextPlugin.register(with: registry.registrar(forPlugin: "SpeechToTextPlugin"))
   FVPVideoPlayerPlugin.register(with: registry.registrar(forPlugin: "FVPVideoPlayerPlugin"))
+  WebViewFlutterPlugin.register(with: registry.registrar(forPlugin: "WebViewFlutterPlugin"))
 }
