@@ -1,10 +1,10 @@
-import 'package:fantastic_app_riverpod/models/skill.dart';
-import 'package:fantastic_app_riverpod/models/skillTrack.dart';
-import 'package:fantastic_app_riverpod/screens/journey_path.dart';
-import 'package:fantastic_app_riverpod/services/journey_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:http/http.dart' as http;
+import '../journey_screen.dart';
+import '../../models/skill.dart';
+import '../../models/skillTrack.dart';
+import '../../services/journey_service.dart';
 
 class Journeyscreentype3 extends StatefulWidget {
   final Map motivatorData;
@@ -28,6 +28,7 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
   final JourneyService _journeyService = JourneyService();
   String? content;
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -37,22 +38,25 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
 
   Future<void> fetchContent() async {
     try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
       final response = await http.get(Uri.parse(widget.motivatorData['contentUrl']));
-      if (response.statusCode == 200) {
-        setState(() {
+      
+      setState(() {
+        isLoading = false;
+        if (response.statusCode == 200) {
           content = response.body;
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          content = 'Failed to load content';
-          isLoading = false;
-        });
-      }
+        } else {
+          errorMessage = 'Failed to load content: ${response.statusCode}';
+        }
+      });
     } catch (e) {
       setState(() {
-        content = 'Error loading content: $e';
         isLoading = false;
+        errorMessage = 'Error loading content: $e';
       });
     }
   }
@@ -64,7 +68,7 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.motivatorData['title']),
+        title: Text(widget.motivatorData['title'] ?? 'Motivator'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -76,17 +80,25 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Image.network(
-                  widget.motivatorData['headlineImageUrl'],
-                  fit: BoxFit.cover,
-                  height: screenHeight * 0.25,
-                  width: screenWidth,
-                ),
+                if (widget.motivatorData['headlineImageUrl'] != null)
+                  Image.network(
+                    widget.motivatorData['headlineImageUrl'],
+                    fit: BoxFit.cover,
+                    height: screenHeight * 0.25,
+                    width: screenWidth,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: screenHeight * 0.25,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error),
+                      );
+                    },
+                  ),
                 SizedBox(height: screenHeight * 0.02),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
                   child: Text(
-                    widget.motivatorData['contentTitle'],
+                    widget.motivatorData['contentTitle'] ?? 'Content Title',
                     style: TextStyle(
                       fontSize: screenWidth * 0.07,
                       fontWeight: FontWeight.bold,
@@ -97,10 +109,20 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
                 SizedBox(height: screenHeight * 0.02),
                 if (isLoading)
                   const Center(child: CircularProgressIndicator())
+                else if (errorMessage != null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
                 else
                   Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.04),
+                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
                     child: Html(
                       data: content ?? '<p>No content available</p>',
                       style: {
@@ -115,8 +137,7 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
                           textAlign: TextAlign.justify,
                         ),
                         "ul": Style(
-                          padding: HtmlPaddings.only(
-                              left: screenWidth * 0.04),
+                          padding: HtmlPaddings.only(left: screenWidth * 0.04),
                         ),
                         "li": Style(
                           fontSize: FontSize(screenWidth * 0.045),
@@ -148,25 +169,43 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
                     horizontal: screenWidth * 0.04,
                   ),
                   child: ElevatedButton(
-                    onPressed: () async {
-                      await _journeyService.updateMotivator(
-                        true,
-                        widget.motivatorData['objectId'],
-                        widget.email,
-                        widget.skill.objectId,
-                        widget.skilltrack.objectId,
-                      );
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const JourneyRoadmapScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            try {
+                              setState(() {
+                                isLoading = true;
+                                errorMessage = null;
+                              });
+
+                              await _journeyService.updateMotivator(
+                                true,
+                                widget.motivatorData['objectId'],
+                                widget.email,
+                                widget.skill.objectId,
+                                widget.skilltrack.objectId,
+                              );
+
+                              setState(() {
+                                isLoading = false;
+                              });
+
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const JourneyScreen(),
+                                ),
+                              );
+                            } catch (e) {
+                              setState(() {
+                                isLoading = false;
+                                errorMessage = 'Error updating motivator: $e';
+                              });
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 13, 173, 32),
-                      padding: EdgeInsets.symmetric(
-                          vertical: screenHeight * 0.02),
+                      padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),

@@ -10,9 +10,10 @@ import '../widgets/bottom_nav_bar.dart';
 import '../utils/blur_container.dart';
 import '../widgets/journey_levels_list.dart';
 import '../widgets/premium_button.dart';
-
-// Mock user email - replace with actual user email from auth
-final mockUserEmail = "test@example.com";
+import '../services/journey_service.dart';
+import '../models/skill.dart';
+import '../models/skillTrack.dart';
+import '../providers/auth_provider.dart';
 
 class JourneyScreen extends ConsumerStatefulWidget {
   const JourneyScreen({Key? key}) : super(key: key);
@@ -23,6 +24,8 @@ class JourneyScreen extends ConsumerStatefulWidget {
 
 class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   late VideoPlayerController _videoController;
+  final JourneyService _journeyService = JourneyService();
+  String? _userEmail;
 
   @override
   void initState() {
@@ -34,6 +37,14 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
         _videoController.play();
         setState(() {});
       });
+    _loadUserEmail();
+  }
+
+  Future<void> _loadUserEmail() async {
+    // For testing/debugging, use test03@gmail.com
+    setState(() {
+      _userEmail = "test03@gmail.com";
+    });
   }
 
   @override
@@ -44,8 +55,15 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentJourney = ref.watch(currentJourneyProvider(mockUserEmail));
-    final journeyStats = ref.watch(journeyStatsProvider(mockUserEmail));
+    if (_userEmail == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final currentJourney = ref.watch(currentJourneyProvider(_userEmail!));
+    final journeyStats = ref.watch(journeyStatsProvider(_userEmail!));
+    final allJourneys = ref.watch(allJourneysProvider(_userEmail!));
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E0B1F),
@@ -138,20 +156,32 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                               if (journey != null) {
                                 return JourneyCard(
                                   title: journey['title'] ?? 'No Title',
-                                  subtitle:
-                                      journey['subtitle'] ?? 'No Subtitle',
-                                  progress:
-                                      '${((journey['levelsCompleted'] ?? 0) / (journey['skillLevelCount'] ?? 1) * 100).toStringAsFixed(0)}%',
-                                  imageUrl: journey['imageUrl'],
+                                  subtitle: journey['subtitle'] ?? 'No Subtitle',
+                                  progress: '${((journey['levelsCompleted'] ?? 0) / (journey['skillLevelCount'] ?? 1) * 100).toStringAsFixed(0)}%',
+                                  imageUrl: journey['imageUrl'] ?? '',
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const JourneyScreen(),
+                                      ),
+                                    );
+                                  },
                                 );
                               } else {
-                                // Template card with placeholder values
                                 return JourneyCard(
                                   title: 'Start Your Journey',
-                                  subtitle:
-                                      'Begin your path to self-improvement',
+                                  subtitle: 'Begin your path to self-improvement',
                                   progress: '0%',
                                   imageUrl: null,
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const JourneyScreen(),
+                                      ),
+                                    );
+                                  },
                                 );
                               }
                             },
@@ -169,15 +199,20 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           // All Journey Button
                           JourneyListItem(
                             onTap: () {
-                              // Handle all journey tap
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const JourneyScreen(),
+                                ),
+                              );
                             },
                           ),
                           const SizedBox(height: 16),
                           // Progress Stats
                           journeyStats.when(
                             data: (stats) => StatsCard(
-                              completionValue: stats['completion']!,
-                              eventsValue: stats['eventsAchieved']!,
+                              completionValue: stats['completion'] ?? 0,
+                              eventsValue: stats['eventsAchieved'] ?? 0,
                             ),
                             loading: () => const Center(
                                 child: CircularProgressIndicator()),
@@ -188,16 +223,42 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           ),
                           const SizedBox(height: 32),
                           // Journey Levels List Section
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const JourneyLevelsList(
-                                  journeyId: 'mock_journey_id'),
-                            ],
+                          allJourneys.when(
+                            data: (journeys) {
+                              if (journeys.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    'No journeys available',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                );
+                              }
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: journeys.map((journey) {
+                                  return JourneyLevelsList(
+                                    journeyId: journey['objectId'] ?? '',
+                                    email: _userEmail!,
+                                    onLevelTap: (levelId) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const JourneyScreen(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }).toList(),
+                              );
+                            },
+                            loading: () => const Center(
+                                child: CircularProgressIndicator()),
+                            error: (_, __) => const Center(
+                              child: Text('Error loading journeys',
+                                  style: TextStyle(color: Colors.white)),
+                            ),
                           ),
-                          const SizedBox(
-                              height:
-                                  100), // Add extra padding at bottom for nav bar
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -206,8 +267,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
               ],
             ),
           ),
-
-          // Bottom navigation - moved outside the Column to be a direct child of the Stack
+          // Bottom navigation
           Positioned(
             left: 5,
             right: 5,

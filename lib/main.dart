@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/screens/auth_page.dart';
+import 'package:fantastic_app_riverpod/screens/discoverscreen.dart';
 import 'package:fantastic_app_riverpod/screens/main_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'firebase_options.dart';
+import 'screens/journey_screen.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -81,6 +83,12 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
+      routes: {
+        '/journey-details': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return const JourneyScreen();
+        },
+      },
       builder: (context, child) {
         ErrorWidget.builder = (FlutterErrorDetails details) {
           return MaterialApp(
@@ -118,7 +126,8 @@ class MyApp extends ConsumerWidget {
             )
           : authState.user != null
               ? MainScreen()
-              : const AuthPage(), // Change this to your desired initial screen
+              : const Discoverscreen(email: ''),
+              //: const AuthPage(), // Change this to your desired initial screen
     );
   }
 }

@@ -1,16 +1,14 @@
-import 'package:fantastic_app_riverpod/screens/ChallengeScreen.dart';
-import 'package:fantastic_app_riverpod/screens/chatScreen.dart';
-import 'package:fantastic_app_riverpod/screens/discoverscreen.dart';
-import 'package:fantastic_app_riverpod/screens/journey_path.dart';
-import 'package:fantastic_app_riverpod/screens/journey_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'ChallengeScreen.dart';
+import 'chatScreen.dart';
+import 'discoverscreen.dart';
+import 'journey_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../providers/auth_provider.dart' as auth;
 import '../widgets/user_guide.dart';
 import '../models/feedback.dart';
 import 'feedback/feed_back.dart';
-
 import 'ritual_screen.dart';
 import 'notification_tone_screen.dart';
 import 'extras_screen.dart';
@@ -20,6 +18,8 @@ final pageControllerProvider = Provider<PageController>((ref) {
   ref.onDispose(() => controller.dispose());
   return controller;
 });
+
+final selectedTabProvider = StateProvider<int>((ref) => 1);
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -59,10 +59,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ref.read(selectedTabProvider.notifier).state = index;
         },
         children: [
-          ChatScreen(email: userEmail),
+          if (userEmail != null) ChatScreen(email: userEmail) else const SizedBox(),
           const RitualScreen(),
-          const JourneyRoadmapScreen(),
-          Discoverscreen(email: userEmail),
+          const JourneyScreen(),
+          if (userEmail != null) Discoverscreen(email: userEmail) else const SizedBox(),
         ],
       ),
       floatingActionButton: const Padding(
