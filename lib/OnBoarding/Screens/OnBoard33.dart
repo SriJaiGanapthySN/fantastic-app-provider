@@ -68,7 +68,7 @@ class _OnBoard33State extends ConsumerState<OnBoard33> {
                   height: MediaQuery.of(context).size.height*0.1,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => Onboard35(),

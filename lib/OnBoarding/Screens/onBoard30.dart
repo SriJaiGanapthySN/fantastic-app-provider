@@ -122,7 +122,7 @@ Future ${displayText}
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => OnBoard31()),
                   );

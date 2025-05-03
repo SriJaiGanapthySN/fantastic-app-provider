@@ -44,7 +44,7 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
           buttonSize += 2;
         } else {
           timer.cancel();
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const OnBoard30()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const OnBoard30()));
         }
       });
     });

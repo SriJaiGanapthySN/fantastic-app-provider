@@ -27,7 +27,7 @@ class _OnBoard28State extends ConsumerState<OnBoard28> {
     await Future.delayed(const Duration(milliseconds: 600));
 
     ref.read(selectedSleepProvider.notifier).addPersonalDetails(text);
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const OnBoard29()), // Replace with your next screen
     );
