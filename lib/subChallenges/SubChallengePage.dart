@@ -36,6 +36,8 @@ class ChallengeDetailScreen extends StatelessWidget {
     // Define the teal color used in the dialog (adjust if needed)
     const Color dialogPrimaryColor = Color(0xFF009688); // A standard Teal
     const Color dialogTextColor = Color(0xFF616161); // Dark Grey for body text
+    final String whyDescription = challengeData['whyDescription'] ??
+        "Taking on this challenge helps build positive habits and improve well-being.";
 
     showDialog(
       context: context,
@@ -56,19 +58,20 @@ class ChallengeDetailScreen extends StatelessWidget {
               fontSize: 20.0,
             ),
           ),
-          content: const SingleChildScrollView( // In case text is long
+          content: SingleChildScrollView( // In case text is long
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "A meditation routine makes you feel amazing.",
-                  style: TextStyle(fontSize: 15.5, color: dialogTextColor, height: 1.4),
+                  challengeData['subtitle'] ?? 'Complete the challenge.',
+                  style: const TextStyle(fontSize: 15.5, color: dialogTextColor, height: 1.4),
                 ),
-                SizedBox(height: 15.0), // Space between paragraphs
+                const SizedBox(height: 15.0), // Space between paragraphs
                 Text(
-                  "Studies show it has the same effect on your body and mind as a vacation, boosting your immune system and mood at the same time.",
-                  style: TextStyle(fontSize: 15.5, color: dialogTextColor, height: 1.4),
+                  challengeData['whyDescription'] ??
+                      "Taking on this challenge helps build positive habits and improve well-being.",
+                  style: const TextStyle(fontSize: 15.5, color: dialogTextColor, height: 1.4),
                 ),
               ],
             ),
@@ -216,6 +219,8 @@ class ChallengeDetailScreen extends StatelessWidget {
     const Color dialogTextColor = Color(0xFF424242); // Dark Grey for body text
     const Color secondaryButtonColor = Color(0xFF757575);
     final String imageUrl = challengeData['imageUrl'] ?? '';
+    final String title = challengeData['title'] ?? '';
+    final String objectId = challengeData['objectId'] ?? '';
 
     showDialog(
       context: context,
@@ -299,7 +304,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                                 ),
                               ),
                               onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => ChallengeTimeScreen(imageUrl: imageUrl,)));
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => ChallengeTimeScreen(imageUrl: imageUrl,title: title,objectId: objectId,)));
                               },
                             ),
                             const SizedBox(height: 8.0), // Space between buttons

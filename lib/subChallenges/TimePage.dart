@@ -7,7 +7,9 @@ enum TimeOption { recommended, evening, late, other }
 
 class ChallengeTimeScreen extends StatefulWidget {
   final String imageUrl;
-  const ChallengeTimeScreen({super.key, required this.imageUrl});
+  final String title;
+  final String objectId;
+  const ChallengeTimeScreen({super.key, required this.imageUrl, required this.title, required this.objectId});
 
 
   @override
@@ -282,7 +284,7 @@ class _ChallengeTimeScreenState extends State<ChallengeTimeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => NameChallengeScreen(imageUrl: widget.imageUrl,)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => NameChallengeScreen(imageUrl: widget.imageUrl,objectId: widget.objectId, title: widget.title,)));
                   // Example: Navigator.pop(context, finalSelectedTime);
                 },
                 child: const Text(

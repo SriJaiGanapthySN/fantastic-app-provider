@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:ui'; // Important: for the frosted glass effect
+import '../../subChallenges/SubChallengePage.dart';
 import 'customCard.dart';
 
 class CardLayout extends StatefulWidget {
@@ -126,6 +127,20 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
       });
     }
   }
+  void _onCardTap(Map<String, dynamic> cardData) {
+    // Prevent navigation if a swipe or undo animation is in progress
+    if ( _isUndoing || _isDragging || _animationController.isAnimating || _undoAnimationController.isAnimating) {
+      print("Navigation prevented: Animation/Drag in progress.");
+      return;
+    }
+    print("Card tapped: ${cardData['title']}"); // Debugging
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChallengeDetailScreen(challengeData: cardData),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -165,6 +180,7 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
                       );
                     } else if (isTop) {
                       cardWidget = GestureDetector(
+                        onTap: () => _onCardTap(card),
                         onPanStart: (_) {
                           _isDragging = true;
                         },

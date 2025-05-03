@@ -1,11 +1,14 @@
 import 'package:fantastic_app_riverpod/subChallenges/SuperPower.dart';
 import 'package:fantastic_app_riverpod/subChallenges/SuperPowerList.dart';
+import 'package:fantastic_app_riverpod/subChallenges/testing.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Required for ImageFilter
 
 class NameChallengeScreen extends StatefulWidget {
-  final String imageUrl; // Expect the URL for the main image
-  const NameChallengeScreen({super.key, required this.imageUrl});
+  final String imageUrl;// Expect the URL for the main image
+  final String title;
+  final String objectId;
+  const NameChallengeScreen({super.key, required this.imageUrl, required this.title, required this.objectId});
 
   @override
   State<NameChallengeScreen> createState() => _NameChallengeScreenState();
@@ -18,7 +21,7 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
   @override
   void initState() {
     super.initState();
-    _textController = TextEditingController(text: "7-Day Meditate Challenge");
+    _textController = TextEditingController(text: widget.title);
   }
 
   @override
@@ -190,7 +193,8 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
                     )
                 ),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SuperPowerScreen(imageUrl: widget.imageUrl,)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SuperPowerScreen(imageUrl: widget.imageUrl,objectId: widget.objectId,title: widget.title,)));
+                  //Navigator.push(context, MaterialPageRoute(builder: (context) => SkillLevelDetailScreen(skillTrackId: widget.objectId,)));
                   // Add navigation/action
                 },
                 child: const Text("CONTINUE"),
