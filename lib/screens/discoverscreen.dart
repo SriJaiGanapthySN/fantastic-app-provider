@@ -1,7 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:fantastic_app_riverpod/OnBoarding/Screens/onBoard1.dart';
+import 'package:fantastic_app_riverpod/profile/profile.dart';
 import 'package:fantastic_app_riverpod/providers/discover_provider.dart';
+import 'package:fantastic_app_riverpod/setting/settingPage.dart';
 import 'package:fantastic_app_riverpod/subChallenges/SubChallengeScreen.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/buttonimage.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/discoverbuttons.dart';
@@ -70,7 +72,9 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ChallengeScreen(cardData: updatedChallenges),  //ChallengeScreen(cardData: updatedChallenges)
+            builder: (context) => ChallengeScreen(
+                cardData:
+                    updatedChallenges), //ChallengeScreen(cardData: updatedChallenges)
           ),
         );
       } else {
@@ -165,24 +169,18 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                 leading: Icon(Icons.person, color: Colors.indigo),
                 title: Text('Profile'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => ProfileScreen()));
                   // Navigate to profile screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Profile screen not implemented yet')),
-                  );
                 },
               ),
               ListTile(
                 leading: Icon(Icons.settings, color: Colors.indigo),
                 title: Text('Settings'),
                 onTap: () {
-                  Navigator.pop(context);
                   // Navigate to settings screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Settings screen not implemented yet')),
-                  );
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()));
                 },
               ),
               ListTile(
@@ -199,19 +197,6 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                 },
               ),
               Divider(),
-              ListTile(
-                leading: Icon(Icons.logout, color: Colors.red),
-                title: Text('Logout'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Implement logout functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content:
-                            Text('Logout functionality not implemented yet')),
-                  );
-                },
-              ),
             ],
           ),
         ),

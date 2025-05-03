@@ -59,10 +59,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ref.read(selectedTabProvider.notifier).state = index;
         },
         children: [
-          if (userEmail != null) ChatScreen(email: userEmail) else const SizedBox(),
+          if (userEmail != null)
+            ChatScreen(email: userEmail)
+          else
+            const SizedBox(),
           const RitualScreen(),
           const JourneyScreen(),
-          if (userEmail != null) Discoverscreen(email: userEmail) else const SizedBox(),
+          if (userEmail != null)
+            Discoverscreen(email: userEmail)
+          else
+            const SizedBox(),
         ],
       ),
       floatingActionButton: const Padding(

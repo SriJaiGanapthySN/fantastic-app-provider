@@ -34,13 +34,11 @@ class AddDiscoveryTile extends ConsumerWidget {
         // Navigate to appropriate screen based on selected button index
         switch (selectedButtonIndex) {
           case 0: // Journeys
-            Navigator.pushNamed(
+            Navigator.push(
               context,
-              '/journey-details',
-              arguments: {
-                'journeyId': tile['objectId'] ?? '',
-                'email': email,
-              },
+              MaterialPageRoute(
+                builder: (context) => JourneyScreen(),
+              ),
             );
             break;
           case 1: // Coaching
@@ -68,13 +66,11 @@ class AddDiscoveryTile extends ConsumerWidget {
             break;
           default:
             // Default to journey screen if index is unknown
-            Navigator.pushNamed(
+            Navigator.push(
               context,
-              '/journey-details',
-              arguments: {
-                'journeyId': tile['objectId'] ?? '',
-                'email': email,
-              },
+              MaterialPageRoute(
+                builder: (context) => JourneyScreen(),
+              ),
             );
         }
       },

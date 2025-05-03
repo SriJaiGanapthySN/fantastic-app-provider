@@ -85,7 +85,8 @@ class MyApp extends ConsumerWidget {
       ),
       routes: {
         '/journey-details': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>;
           return const JourneyScreen();
         },
       },
@@ -125,9 +126,10 @@ class MyApp extends ConsumerWidget {
               ),
             )
           : authState.user != null
-              ? MainScreen()
-              : const Discoverscreen(email: ''),
-              //: const AuthPage(), // Change this to your desired initial screen
+              ? Discoverscreen(
+                  email: "test03@gmail.com",
+                )
+              : const AuthPage(), // Change this to your desired initial screen
     );
   }
 }
