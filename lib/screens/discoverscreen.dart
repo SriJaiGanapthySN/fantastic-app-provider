@@ -46,26 +46,32 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
 
   // Handle button press using the provider
   Future<void> _handleButtonPress(int index) async {
-    ref.read(discoverUIStateProvider.notifier).selectButton(index);
+
 
     if (index == 0) {
+      ref.read(discoverUIStateProvider.notifier).selectButton(index);
       if (ref.read(journeysProvider).journeys.isEmpty) {
         ref.read(journeysProvider.notifier).fetchJourneys();
       }
     } else if (index == 1) {
+      ref.read(discoverUIStateProvider.notifier).selectButton(index);
       if (ref.read(coachingProvider).coaching.isEmpty) {
         ref.read(coachingProvider.notifier).fetchCoaching();
       }
     } else if (index == 2) {
+      ref.read(discoverUIStateProvider.notifier).selectButton(index);
       if (ref.read(activitiesProvider).categories.isEmpty) {
         ref.read(activitiesProvider.notifier).fetchCategories();
       }
     } else if (index == 3) {
+
       final challenges = ref.read(challengesProvider).challenges;
 
       if (challenges.isEmpty) {
         await ref.read(challengesProvider.notifier).fetchChallenges();
         final updatedChallenges = ref.read(challengesProvider).challenges;
+        ref.read(journeysProvider.notifier).fetchJourneys();
+
 
         Navigator.push(
           context,
@@ -73,13 +79,23 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
             builder: (context) => ChallengeScreen(cardData: updatedChallenges),  //ChallengeScreen(cardData: updatedChallenges)
           ),
         );
+        ref.read(discoverUIStateProvider.notifier).selectButton(0);
+        if (ref.read(journeysProvider).journeys.isEmpty) {
+          ref.read(journeysProvider.notifier).fetchJourneys();
+        }
       } else {
+          ref.read(journeysProvider.notifier).fetchJourneys();
+
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChallengeScreen(cardData: challenges),
           ),
         );
+          ref.read(discoverUIStateProvider.notifier).selectButton(0);
+      }
+      if (ref.read(journeysProvider).journeys.isEmpty) {
+        ref.read(journeysProvider.notifier).fetchJourneys();
       }
     }
   }

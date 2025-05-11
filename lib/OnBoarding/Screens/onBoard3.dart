@@ -26,7 +26,7 @@ class _OnBoard3State extends ConsumerState<OnBoard3> {
     await Future.delayed(const Duration(milliseconds: 300)); // Wait for fade
 
     ref.read(selectedSleepProvider.notifier).select(text);
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const OnBoard4()),
     );
