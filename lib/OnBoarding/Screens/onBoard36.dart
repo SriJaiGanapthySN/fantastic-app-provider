@@ -126,6 +126,7 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
             ElevatedButton(
               onPressed: _isImageSelected
                   ? () {
+                      Navigator.pushReplacement(
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(

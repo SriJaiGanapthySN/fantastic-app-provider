@@ -106,7 +106,7 @@ class _OnBoard25 extends ConsumerState<Onboard26> {
                     ref.read(selectedSleepProvider.notifier).addPersonalDetails(input);
 
                     // Navigate to the next page
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => OnBoard27()), // Replace `NextPage` with your target page
                     );
