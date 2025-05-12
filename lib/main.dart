@@ -126,10 +126,8 @@ class MyApp extends ConsumerWidget {
               ),
             )
           : authState.user != null
-              ? Discoverscreen(
-                  email: "test03@gmail.com",
-                )
-              : const AuthPage(), // Change this to your desired initial screen
+              ? const MainScreen()
+              : const AuthPage(),
     );
   }
 }

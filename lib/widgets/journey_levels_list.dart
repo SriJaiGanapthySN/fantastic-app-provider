@@ -1,3 +1,4 @@
+import 'package:fantastic_app_riverpod/providers/journey_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
@@ -57,10 +58,26 @@ class LevelImage extends StatelessWidget {
                 // Locked levels - black and white
                 ColorFiltered(
                   colorFilter: const ColorFilter.matrix([
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0, 0, 0, 1, 0,
+                    0.2126,
+                    0.7152,
+                    0.0722,
+                    0,
+                    0,
+                    0.2126,
+                    0.7152,
+                    0.0722,
+                    0,
+                    0,
+                    0.2126,
+                    0.7152,
+                    0.0722,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
                   ]),
                   child: ClipOval(
                     child: Image.network(
@@ -152,8 +169,9 @@ class ConnectingAnimation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!shouldShow) return const SizedBox.shrink();
-    
-    final delay = isTransitionOdd ? const Duration(milliseconds: 500) : Duration.zero;
+
+    final delay =
+        isTransitionOdd ? const Duration(milliseconds: 500) : Duration.zero;
 
     return FutureBuilder(
       future: Future.delayed(delay),
@@ -165,7 +183,7 @@ class ConnectingAnimation extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
           child: Lottie.asset(
-            isTransitionOdd 
+            isTransitionOdd
                 ? 'assets/animations/3/data.json'
                 : 'assets/animations/1/data.json',
             width: 140,
@@ -183,12 +201,16 @@ class ConnectingAnimation extends StatelessWidget {
 class JourneyLevelsList extends ConsumerStatefulWidget {
   final String journeyId;
   final String email;
+  final String skillTrackId;
+  final Map<String, dynamic>? tile;
   final Function(String) onLevelTap;
 
   const JourneyLevelsList({
     Key? key,
     required this.journeyId,
     required this.email,
+    required this.skillTrackId,
+    this.tile,
     required this.onLevelTap,
   }) : super(key: key);
 
@@ -196,7 +218,8 @@ class JourneyLevelsList extends ConsumerStatefulWidget {
   ConsumerState<JourneyLevelsList> createState() => _JourneyLevelsListState();
 }
 
-class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with SingleTickerProviderStateMixin {
+class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
+    with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final Map<int, bool> _visibleAnimations = {};
   final Map<int, AnimationController> _animationControllers = {};
@@ -220,17 +243,18 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with Sing
   void _onScroll() {
     final scrollPosition = _scrollController.position.pixels;
     final viewportHeight = _scrollController.position.viewportDimension;
-    
+
     final journeyLevels = ref.read(journeyLevelsProvider(widget.journeyId));
     journeyLevels.whenData((levels) {
       for (int i = 0; i < levels.length - 1; i++) {
         final itemPosition = i * 200.0;
-        final isVisible = (itemPosition - scrollPosition).abs() < viewportHeight * 1.5;
-        
+        final isVisible =
+            (itemPosition - scrollPosition).abs() < viewportHeight * 1.5;
+
         if (isVisible != _visibleAnimations[i]) {
           setState(() {
             _visibleAnimations[i] = isVisible;
-            
+
             if (isVisible && !_animationControllers.containsKey(i)) {
               final controller = AnimationController(
                 vsync: this,
@@ -250,14 +274,30 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with Sing
 
   @override
   Widget build(BuildContext context) {
-    final journeyLevels = ref.watch(journeyLevelsProvider(widget.journeyId));
+    final journeyService = ref.watch(journeyServiceProvider);
 
-    return journeyLevels.when(
-      data: (levels) {
-        if (levels.isEmpty) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: journeyService.fetchSkillsByTrackId(widget.skillTrackId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading skills: ${snapshot.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final skills = snapshot.data ?? [];
+
+        if (skills.isEmpty) {
           return const Center(
             child: Text(
-              'No levels available',
+              'No skills available',
               style: TextStyle(color: Colors.white),
             ),
           );
@@ -266,8 +306,27 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with Sing
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.tile != null) ...[
+              Text(
+                widget.tile!['title'] ?? 'Journey Title',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.tile!['description'] ?? 'Journey Description',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             const Text(
-              'Journey Levels',
+              'Skills',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -275,40 +334,22 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList> with Sing
               ),
             ),
             const SizedBox(height: 16),
-            ...levels.map((level) {
-              final isCompleted = level['isCompleted'] ?? false;
-              final isInProgress = level['isInProgress'] ?? false;
-              final isLocked = level['isLocked'] ?? true;
-              final imageUrl = level['imageUrl'] ?? '';
-              final levelId = level['objectId'] ?? '';
-
-              return GestureDetector(
-                onTap: !isLocked ? () => widget.onLevelTap(levelId) : null,
-                child: _LevelItem(
-                  title: level['title'] ?? 'Untitled Level',
-                  description: level['description'] ?? '',
-                  isCompleted: isCompleted,
-                  isInProgress: isInProgress,
-                  isLocked: isLocked,
-                  imageUrl: imageUrl,
-                  journeyId: widget.journeyId,
-                  levelId: levelId,
-                  email: widget.email,
-                ),
+            ...skills.map((skill) {
+              return _LevelItem(
+                title: skill['title'] ?? 'Untitled Skill',
+                description: skill['description'] ?? '',
+                isCompleted: skill['isCompleted'] ?? false,
+                isInProgress: skill['isInProgress'] ?? false,
+                isLocked: skill['isLocked'] ?? true,
+                imageUrl: skill['imageUrl'] ?? '',
+                journeyId: widget.journeyId,
+                levelId: skill['objectId'] ?? '',
+                email: widget.email,
               );
             }).toList(),
           ],
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (error, stack) => Center(
-        child: Text(
-          'Error loading levels: $error',
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
     );
   }
 }
@@ -354,13 +395,18 @@ class _LevelItem extends StatelessWidget {
               // Left circular image
               LevelImage(
                 imageUrl: imageUrl,
-                status: isLocked ? 'locked' : isCompleted ? 'completed' : 'in_progress',
+                status: isLocked
+                    ? 'locked'
+                    : isCompleted
+                        ? 'completed'
+                        : 'in_progress',
                 isInProgress: isInProgress,
               ),
               // Right side content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16),
+                  padding: const EdgeInsets.only(
+                      left: 16, right: 16, top: 16, bottom: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -389,13 +435,19 @@ class _LevelItem extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const JourneyScreen(),
+                                  builder: (context) => JourneyScreen(
+                                    tile: (context
+                                        .findAncestorWidgetOfExactType<
+                                            JourneyLevelsList>()
+                                        ?.tile), // Pass tile data to new screen
+                                  ),
                                 ),
                               );
                             },
                             child: Container(
                               color: const Color.fromARGB(51, 255, 255, 255),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 6),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -429,4 +481,4 @@ class _LevelItem extends StatelessWidget {
       ],
     );
   }
-} 
+}

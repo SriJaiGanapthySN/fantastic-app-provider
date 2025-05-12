@@ -173,82 +173,6 @@ class JourneyService {
     }
   }
 
-  // Future<void> addSkillTrack(String id, String email) async {
-  //   try {
-  //     // Reference to the document path '/skillGoal/{id}'
-  //     final skillDocRef = _firestore.collection('skillTrack').doc(id);
-  //     await skillDocRef.update({'isReleased': false});
-  //     // Fetch the document snapshot
-  //     final docSnapshot = await skillDocRef.get();
-
-  //     // Check if the document exists
-  //     if (docSnapshot.exists) {
-  //       // Get the document data
-  //       final skillData = docSnapshot.data() as Map<String, dynamic>;
-
-  //       // Reference to the target path '/testers/{email}/skillGoal/{id}'
-  //       final userSkillLevelPath = _firestore
-  //           .collection('testers')
-  //           .doc(email)
-  //           .collection('skillTrack');
-
-  //       // Add the document data to the target path
-  //       await userSkillLevelPath.doc(id).set(skillData);
-
-  //       print('Document $id added to /testers/$email/skillTrack');
-  //     } else {
-  //       print('Document with id $id does not exist in /skillTrack.');
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching and adding skills: $e');
-  //   }
-  // }
-
-// Future<List<Skill>> addSkills(String skillTrackId, String email) async {
-//   try {
-//     // Reference to the 'skill' collection
-//     final skillCollection = _firestore.collection('skill');
-
-//     // Query to fetch documents where skillTrackId matches
-//     final querySnapshot = await skillCollection
-//         .where('skillTrackId', isEqualTo: skillTrackId)
-//         .get();
-
-//     // Check if documents are found
-//     if (querySnapshot.docs.isEmpty) {
-//       print('No skills found for skillTrackId: $skillTrackId');
-//       return [];
-//     }
-
-//     // Map the documents into a list of Skill objects
-//     final List<Skill> skills = querySnapshot.docs
-//         .map((doc) => Skill.fromMap(doc.data() as Map<String, dynamic>))
-//         .toList();
-
-//     // Reference to the target path: /testers/{email}/skill
-//     final userSkillPath = _firestore.collection('testers').doc(email).collection('skill');
-
-//     // Check if the 'skill' collection already exists for the user
-//     final userSkillsSnapshot = await userSkillPath.get();
-//     if (userSkillsSnapshot.docs.isEmpty) {
-//       // If no skills exist, print a message (optional)
-//       print('Skill collection for $email does not exist. Creating now.');
-//     }
-
-//     // Add each skill to the specified path
-//     for (var skill in skills) {
-//       // Add the skill to the user's skill collection
-//       await userSkillPath.doc(skill.objectId).set(skill.toMap());
-//     }
-
-//     print('${skills.length} skills added to /testers/$email/skill');
-//     return skills;
-//   } catch (e) {
-//     print('Error fetching and adding skills: $e');
-//     return [];
-//   }
-// }
-
   Future<List<Skill>> addSkills(String skillTrackId, String email) async {
     try {
       // Reference to the 'skill' collection
@@ -669,7 +593,8 @@ class JourneyService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchJourneyLevels(String journeyId) async {
+  Future<List<Map<String, dynamic>>> fetchJourneyLevels(
+      String journeyId) async {
     try {
       final querySnapshot = await _firestore
           .collection('skillTrack')
@@ -692,10 +617,8 @@ class JourneyService {
 
   Future<int> getCurrentLevel(String journeyId) async {
     try {
-      final doc = await _firestore
-          .collection('skillTrack')
-          .doc(journeyId)
-          .get();
+      final doc =
+          await _firestore.collection('skillTrack').doc(journeyId).get();
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -707,6 +630,37 @@ class JourneyService {
       return 1;
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchSkillsByTrackId(
+      String skillTrackId) async {
+    try {
+      final skillCollection = _firestore.collection('skill');
+      final querySnapshot = await skillCollection
+          .where('skillTrackId', isEqualTo: skillTrackId)
+          .orderBy('position') // Add this if you want to maintain order
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print('No skills found for skillTrackId: $skillTrackId');
+        return [];
+      }
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          ...data,
+          'objectId': doc.id,
+          'isCompleted': false,
+          'isInProgress': false,
+          'isLocked': true,
+        };
+      }).toList();
+    } catch (e) {
+      print('Error fetching skills by track ID: $e');
+      return [];
+    }
+  }
 }
 
-final journeyServiceProvider = Provider<JourneyService>((ref) => JourneyService());
+final journeyServiceProvider =
+    Provider<JourneyService>((ref) => JourneyService());

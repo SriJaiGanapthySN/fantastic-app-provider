@@ -16,7 +16,8 @@ import '../models/skillTrack.dart';
 import '../providers/auth_provider.dart';
 
 class JourneyScreen extends ConsumerStatefulWidget {
-  const JourneyScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic>? tile;
+  const JourneyScreen({Key? key, this.tile}) : super(key: key);
 
   @override
   ConsumerState<JourneyScreen> createState() => _JourneyScreenState();
@@ -155,30 +156,36 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             data: (journey) {
                               if (journey != null) {
                                 return JourneyCard(
-                                  title: journey['title'] ?? 'No Title',
-                                  subtitle: journey['subtitle'] ?? 'No Subtitle',
-                                  progress: '${((journey['levelsCompleted'] ?? 0) / (journey['skillLevelCount'] ?? 1) * 100).toStringAsFixed(0)}%',
-                                  imageUrl: journey['imageUrl'] ?? '',
+                                  title: widget.tile?['title'] ?? 'No Title',
+                                  subtitle:
+                                      widget.tile?['subtitle'] ?? 'No Subtitle',
+                                  progress:
+                                      '${((widget.tile?['skillLevelCompleted'] ?? 0) / (widget.tile?['totalLevels'] ?? 1) * 100).toStringAsFixed(0)}%',
+                                  imageUrl: widget.tile?['imageUrl'] ?? '',
                                   onTap: () {
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const JourneyScreen(),
+                                        builder: (context) =>
+                                            const JourneyScreen(),
                                       ),
                                     );
                                   },
                                 );
                               } else {
                                 return JourneyCard(
-                                  title: 'Start Your Journey',
-                                  subtitle: 'Begin your path to self-improvement',
+                                  title: widget.tile?['title'] ??
+                                      'Start Your Journey',
+                                  subtitle: widget.tile?['subtitle'] ??
+                                      'Begin your path to self-improvement',
                                   progress: '0%',
-                                  imageUrl: null,
+                                  imageUrl: widget.tile?['imageUrl'] ?? null,
                                   onTap: () {
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const JourneyScreen(),
+                                        builder: (context) =>
+                                            const JourneyScreen(),
                                       ),
                                     );
                                   },
@@ -197,16 +204,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           ),
                           const SizedBox(height: 16),
                           // All Journey Button
-                          JourneyListItem(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const JourneyScreen(),
-                                ),
-                              );
-                            },
-                          ),
+
                           const SizedBox(height: 16),
                           // Progress Stats
                           journeyStats.when(
@@ -237,13 +235,19 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: journeys.map((journey) {
                                   return JourneyLevelsList(
-                                    journeyId: journey['objectId'] ?? '',
+                                    journeyId: widget.tile?['objectId'] ?? '',
                                     email: _userEmail!,
+                                    tile: widget.tile,
+                                    skillTrackId:
+                                        widget.tile?['objectId'] ?? '',
                                     onLevelTap: (levelId) {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const JourneyScreen(),
+                                          builder: (context) => JourneyScreen(
+                                            tile: widget
+                                                .tile, // Pass tile to new screen
+                                          ),
                                         ),
                                       );
                                     },
@@ -265,28 +269,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-          // Bottom navigation
-          Positioned(
-            left: 5,
-            right: 5,
-            bottom: 20,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-              child: BlurContainer(
-                borderRadius: 50,
-                blur: 1,
-                color: Colors.transparent,
-                enableGlow: true,
-                glowColor: Colors.white,
-                glowIntensity: 0.09,
-                glowSpread: 0,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                  child: BottomNavBar(),
-                ),
-              ),
             ),
           ),
         ],

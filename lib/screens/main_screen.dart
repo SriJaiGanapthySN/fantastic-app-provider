@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/nav_provider.dart';
 import 'ChallengeScreen.dart';
 import 'chatScreen.dart';
 import 'discoverscreen.dart';
@@ -18,8 +19,6 @@ final pageControllerProvider = Provider<PageController>((ref) {
   ref.onDispose(() => controller.dispose());
   return controller;
 });
-
-final selectedTabProvider = StateProvider<int>((ref) => 1);
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -59,16 +58,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ref.read(selectedTabProvider.notifier).state = index;
         },
         children: [
-          if (userEmail != null)
-            ChatScreen(email: userEmail)
-          else
-            const SizedBox(),
+          ChatScreen(email: "test03@gmail.com"),
           const RitualScreen(),
           const JourneyScreen(),
-          if (userEmail != null)
-            Discoverscreen(email: userEmail)
-          else
-            const SizedBox(),
+          Discoverscreen(email: "test03@gmail.com"),
         ],
       ),
       floatingActionButton: const Padding(

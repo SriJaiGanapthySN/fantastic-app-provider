@@ -37,7 +37,7 @@ class AddDiscoveryTile extends ConsumerWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => JourneyScreen(),
+                builder: (context) => JourneyScreen(tile: tile),
               ),
             );
             break;

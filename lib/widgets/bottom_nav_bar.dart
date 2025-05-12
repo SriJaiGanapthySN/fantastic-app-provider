@@ -2,8 +2,7 @@ import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-final selectedTabProvider = StateProvider<int>((ref) => 1);
+import '../providers/nav_provider.dart';
 
 class BottomNavBar extends ConsumerWidget {
   const BottomNavBar({super.key});
@@ -41,7 +40,7 @@ class BottomNavBar extends ConsumerWidget {
       child: BlurContainer(
         blur: 8,
         borderRadius: 54.71,
-        color: isSelected ? Colors.white : Colors.black.withValues(alpha: 0.2),
+        color: isSelected ? Colors.white : Colors.black.withAlpha(51),
         width: 64,
         height: 64,
         child: Center(
