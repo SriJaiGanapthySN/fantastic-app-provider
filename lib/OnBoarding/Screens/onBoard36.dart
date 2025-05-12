@@ -127,12 +127,11 @@ class _OnBoard36State extends ConsumerState<OnBoard36> {
               onPressed: _isImageSelected
                   ? () {
                       Navigator.pushReplacement(
-                      Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
                           builder: (context) => OnboardingCompletedScreen(),
                         ),
-                        (route) => false, // This removes all previous routes
+                        // This removes all previous routes
                       );
                     }
                   : null,

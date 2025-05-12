@@ -1,4 +1,5 @@
 import 'package:fantastic_app_riverpod/providers/journey_provider.dart';
+import 'package:fantastic_app_riverpod/screens/journey_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
@@ -277,7 +278,11 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
     final journeyService = ref.watch(journeyServiceProvider);
 
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: journeyService.fetchSkillsByTrackId(widget.skillTrackId),
+      future: journeyService
+          .addSkills(widget.skillTrackId, "test03@gmail.com")
+          .then((skills) => skills.map((skill) => skill.toMap()).toList()
+            ..sort(
+                (a, b) => (a['position'] ?? 0).compareTo(b['position'] ?? 0))),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -340,8 +345,8 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
                 description: skill['description'] ?? '',
                 isCompleted: skill['isCompleted'] ?? false,
                 isInProgress: skill['isInProgress'] ?? false,
-                isLocked: skill['isLocked'] ?? true,
-                imageUrl: skill['imageUrl'] ?? '',
+                isLocked: skill['isLocked'] ?? false,
+                imageUrl: skill['iosIconUrl'] ?? '',
                 journeyId: widget.journeyId,
                 levelId: skill['objectId'] ?? '',
                 email: widget.email,
@@ -435,12 +440,9 @@ class _LevelItem extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => JourneyScreen(
-                                    tile: (context
-                                        .findAncestorWidgetOfExactType<
-                                            JourneyLevelsList>()
-                                        ?.tile), // Pass tile data to new screen
-                                  ),
+                                  builder: (context) => JourneyRoadmapScreen(
+                                      // Pass tile data to new screen
+                                      ),
                                 ),
                               );
                             },

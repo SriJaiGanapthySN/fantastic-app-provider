@@ -231,28 +231,22 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                   ),
                                 );
                               }
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: journeys.map((journey) {
-                                  return JourneyLevelsList(
-                                    journeyId: widget.tile?['objectId'] ?? '',
-                                    email: _userEmail!,
-                                    tile: widget.tile,
-                                    skillTrackId:
-                                        widget.tile?['objectId'] ?? '',
-                                    onLevelTap: (levelId) {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => JourneyScreen(
-                                            tile: widget
-                                                .tile, // Pass tile to new screen
-                                          ),
-                                        ),
-                                      );
-                                    },
+                              // Only create one JourneyLevelsList instance
+                              return JourneyLevelsList(
+                                journeyId: widget.tile?['objectId'] ?? '',
+                                email: _userEmail!,
+                                tile: widget.tile,
+                                skillTrackId: widget.tile?['objectId'] ?? '',
+                                onLevelTap: (levelId) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => JourneyScreen(
+                                        tile: widget.tile, // Pass tile to new screen
+                                      ),
+                                    ),
                                   );
-                                }).toList(),
+                                },
                               );
                             },
                             loading: () => const Center(
