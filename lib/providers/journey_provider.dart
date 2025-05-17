@@ -72,6 +72,27 @@ class SkillsRequest {
   int get hashCode => skillTrackId.hashCode ^ email.hashCode;
 }
 
+// Enhanced skills provider that includes the journey type from skillTrack model
+final skillsWithTypeProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, SkillsRequest>(
+        (ref, request) async {
+  final journeyService = ref.watch(journeyServiceProvider);
+  
+  // Get journey type from the skillTrack
+  final journeyData = await journeyService.getJourneyType(request.skillTrackId, request.email);
+  final journeyType = journeyData['type'] ?? '';
+  
+  // Get skills
+  final skills = await journeyService.fetchJourneyLevels(request.skillTrackId);
+  
+  // Add journey type to each skill
+  return skills.map((skill) => {
+    ...skill,
+    'journeyType': journeyType
+  }).toList();
+});
+
+// Original skills provider (keep for compatibility)
 final skillsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, SkillsRequest>(
         (ref, request) async {

@@ -660,6 +660,37 @@ class JourneyService {
       return [];
     }
   }
+
+  // Add this new method to get journey type information
+  Future<Map<String, dynamic>> getJourneyType(String skillTrackId, String email) async {
+    try {
+      // Try to get the journey from the user's collection first
+      final userJourneyRef = _firestore
+          .collection('testers')
+          .doc(email)
+          .collection('skillTrack')
+          .doc(skillTrackId);
+          
+      final userJourneySnapshot = await userJourneyRef.get();
+      
+      if (userJourneySnapshot.exists) {
+        return userJourneySnapshot.data() ?? {'type': ''};
+      }
+      
+      // If not found in user's collection, try the main skillTrack collection
+      final journeyRef = _firestore.collection('skillTrack').doc(skillTrackId);
+      final journeySnapshot = await journeyRef.get();
+      
+      if (journeySnapshot.exists) {
+        return journeySnapshot.data() ?? {'type': ''};
+      }
+      
+      return {'type': ''};
+    } catch (e) {
+      print('Error fetching journey type: $e');
+      return {'type': ''};
+    }
+  }
 }
 
 final journeyServiceProvider =
