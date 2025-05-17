@@ -160,19 +160,20 @@ class LevelImage extends StatelessWidget {
 class ConnectingAnimation extends StatelessWidget {
   final bool isTransitionOdd;
   final bool shouldShow;
+  final int index;
 
   const ConnectingAnimation({
     Key? key,
     required this.isTransitionOdd,
     required this.shouldShow,
+    required this.index,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     if (!shouldShow) return const SizedBox.shrink();
 
-    final delay =
-        isTransitionOdd ? const Duration(milliseconds: 500) : Duration.zero;
+    final delay = Duration(milliseconds: (index * 300) + (isTransitionOdd ? 200 : 0));
 
     return FutureBuilder(
       future: Future.delayed(delay),
@@ -181,18 +182,16 @@ class ConnectingAnimation extends StatelessWidget {
           return const SizedBox(width: 120, height: 120);
         }
 
-        return Padding(
-          padding: const EdgeInsets.only(left: 0, right: 0, top: 5, bottom: 5),
-          child: Lottie.asset(
-            isTransitionOdd
-                ? 'assets/animations/3/data.json'
-                : 'assets/animations/1/data.json',
-            width: 140,
-            height: 140,
-            fit: BoxFit.contain,
-            frameRate: FrameRate.max,
-            repeat: true,
-          ),
+        // Animation container with 1x size ratio
+        return Lottie.asset(
+          isTransitionOdd
+              ? 'assets/animations/3/data.json'
+              : 'assets/animations/1/data.json',
+          width: 160,
+          height: 180,
+          fit: BoxFit.contain,
+          frameRate: FrameRate.max,
+          repeat: true,
         );
       },
     );
@@ -398,11 +397,23 @@ class _LevelItem extends StatelessWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            // Level content (behind)
+            // Add connecting animation behind other elements (first in stack)
+            if (!isLastItem)
+              Positioned(
+                left: isEven ? 35 : null,
+                right: !isEven ? 215 : null,
+                bottom: -80,
+                child: ConnectingAnimation(
+                  isTransitionOdd: !isEven,
+                  shouldShow: true,
+                  index: index,
+                ),
+              ),
+            // Level content (now on top of animation)
             Padding(
               padding: EdgeInsets.only(
                 top: 15,
-                bottom: 30,
+                bottom: 50,
                 left: isEven ? 8 : 16,
                 right: isEven ? 10 : 8,
               ),
@@ -492,12 +503,6 @@ class _LevelItem extends StatelessWidget {
             ),
           ],
         ),
-        // Add connecting animation if not the last item
-        if (!isLastItem)
-          ConnectingAnimation(
-            isTransitionOdd: !isEven,
-            shouldShow: true,
-          ),
       ],
     );
   }
