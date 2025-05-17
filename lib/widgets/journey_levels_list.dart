@@ -182,7 +182,7 @@ class ConnectingAnimation extends StatelessWidget {
         }
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
+          padding: const EdgeInsets.only(left: 0, right: 0, top: 5, bottom: 5),
           child: Lottie.asset(
             isTransitionOdd
                 ? 'assets/animations/3/data.json'
@@ -311,33 +311,33 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.tile != null) ...[
-              Text(
-                widget.tile!['title'] ?? 'Journey Title',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.tile!['description'] ?? 'Journey Description',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-            const Text(
-              'Skills',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            // if (widget.tile != null) ...[
+            //   Text(
+            //     widget.tile!['title'] ?? 'Journey Title',
+            //     style: const TextStyle(
+            //       color: Colors.white,
+            //       fontSize: 20,
+            //       fontWeight: FontWeight.bold,
+            //     ),
+            //   ),
+            //   const SizedBox(height: 8),
+            //   Text(
+            //     widget.tile!['description'] ?? 'Journey Description',
+            //     style: TextStyle(
+            //       color: Colors.white.withOpacity(0.7),
+            //       fontSize: 16,
+            //     ),
+            //   ),
+            //   const SizedBox(height: 24),
+            // ],
+            // const Text(
+            //   'Skills',
+            //   style: TextStyle(
+            //     color: Colors.white,
+            //     fontSize: 20,
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
             const SizedBox(height: 16),
             ...skills.map((skill) {
               return _LevelItem(
@@ -350,6 +350,8 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
                 journeyId: widget.journeyId,
                 levelId: skill['objectId'] ?? '',
                 email: widget.email,
+                index: skills.indexOf(skill),
+                isLastItem: skills.indexOf(skill) == skills.length - 1,
               );
             }).toList(),
           ],
@@ -369,6 +371,8 @@ class _LevelItem extends StatelessWidget {
   final String journeyId;
   final String levelId;
   final String email;
+  final int index;
+  final bool isLastItem;
 
   const _LevelItem({
     Key? key,
@@ -381,105 +385,119 @@ class _LevelItem extends StatelessWidget {
     required this.journeyId,
     required this.levelId,
     required this.email,
+    required this.index,
+    required this.isLastItem,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
+    final isEven = index % 2 == 0;
+    
+    return Column(
       children: [
-        // Level content (behind)
-        Padding(
-          padding: const EdgeInsets.only(
-            top: 15,
-            bottom: 30,
-            left: 8,
-          ),
-          child: Row(
-            children: [
-              // Left circular image
-              LevelImage(
-                imageUrl: imageUrl,
-                status: isLocked
-                    ? 'locked'
-                    : isCompleted
-                        ? 'completed'
-                        : 'in_progress',
-                isInProgress: isInProgress,
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Level content (behind)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 15,
+                bottom: 30,
+                left: isEven ? 8 : 16,
+                right: isEven ? 10 : 8,
               ),
-              // Right side content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 16, right: 16, top: 16, bottom: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 16,
-                        ),
-                      ),
-                      if (!isLocked) ...[
-                        const SizedBox(height: 12),
-                        BlurContainer(
-                          borderRadius: 50,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => JourneyRoadmapScreen(
-                                      // Pass tile data to new screen
-                                      ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              color: const Color.fromARGB(51, 255, 255, 255),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'View',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Colors.white,
-                                    size: 12,
-                                  ),
-                                ],
-                              ),
+              child: Row(
+                children: [
+                  if (!isEven) const Spacer(),
+                  // Left circular image
+                  LevelImage(
+                    imageUrl: imageUrl,
+                    status: isLocked
+                        ? 'locked'
+                        : isCompleted
+                            ? 'completed'
+                            : 'in_progress',
+                    isInProgress: isInProgress,
+                  ),
+                  // Right side content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, top: 16, bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                      ],
-                    ],
+                          const SizedBox(height: 4),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                          if (!isLocked) ...[
+                            const SizedBox(height: 6),
+                            BlurContainer(
+                              borderRadius: 50,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => JourneyRoadmapScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  color: const Color.fromARGB(51, 255, 255, 255),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 3),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'View',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.white,
+                                        size: 12,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+        // Add connecting animation if not the last item
+        if (!isLastItem)
+          ConnectingAnimation(
+            isTransitionOdd: !isEven,
+            shouldShow: true,
+          ),
       ],
     );
   }

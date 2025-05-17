@@ -17,9 +17,9 @@ final currentJourneyProvider =
       'imageUrl': journey['imageUrl'] ??
           journey['bigImageUrl'] ??
           '', // Use imageUrl or bigImageUrl from server
-      'subtitle':
-          journey['subtitle'] ?? 'Build habits to help you sleep soundly',
-      'title': journey['title'] ?? 'A Fabulous Night',
+      // 'subtitle':
+      //     journey['subtitle'] ?? 'Build habits to help you sleep soundly',
+      // 'title': journey['title'] ?? 'A Fabulous Night',
     };
   }
   return null;

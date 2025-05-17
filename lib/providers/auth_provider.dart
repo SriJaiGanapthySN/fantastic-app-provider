@@ -141,7 +141,7 @@ final userEmailProvider = Provider<String>((ref) {
 });
 
 // Fallback email for development
-final fallbackEmailProvider = Provider<String>((ref) => "03@gmail.com");
+final fallbackEmailProvider = Provider<String>((ref) => "test03@gmail.com");
 
 // Provider that never returns an empty email
 final safeUserEmailProvider = Provider<String>((ref) {
