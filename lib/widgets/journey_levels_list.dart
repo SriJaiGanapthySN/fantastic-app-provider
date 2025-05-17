@@ -12,6 +12,7 @@ import '../screens/journey_reveal/journeyscreenrevealtype2.dart';
 import '../screens/journey_reveal/journeyscreenrevealtype3.dart';
 import '../models/skill.dart';
 import '../models/skillTrack.dart';
+import '../services/journey_service.dart' as js;
 
 class LevelImage extends StatelessWidget {
   final String imageUrl;
@@ -386,51 +387,181 @@ class _LevelItem extends StatelessWidget {
 
   // Navigate to the appropriate screen based on journey type
   void _navigateToJourneyReveal(BuildContext context) {
-    // Debug: Show dialog with journey type info
+    // First try to get the skill level for this skill
+    final journeyService = js.JourneyService();
+    
+    // Show loading indicator
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Debug Info'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Journey Type: $journeyType'),
-            SizedBox(height: 10),
-            Text('Skill ObjectId: ${skill['objectId']}'),
-            SizedBox(height: 10),
-            Text('Skill GoalId: ${skill['goalId']}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _tryNavigateToType1(context);
-            },
-            child: Text('Try Type 1'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _tryNavigateToType2(context);
-            },
-            child: Text('Try Type 2'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _tryNavigateToType3(context);
-            },
-            child: Text('Try Type 3'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+    
+    // Get the skill goal data and detect what type it is
+    _getSkillTypeAndNavigate(context);
+  }
+  
+  Future<void> _getSkillTypeAndNavigate(BuildContext context) async {
+    try {
+      final journeyService = js.JourneyService();
+      
+      // Convert skill map to Skill object
+      final skillObj = Skill(
+        color: skill['color'] ?? '',
+        createdAt: skill['createdAt'] ?? 0,
+        goalId: skill['goalId'] ?? '',
+        iconUrl: skill['iconUrl'] ?? '',
+        iosIconUrl: skill['iosIconUrl'] ?? '',
+        objectId: skill['objectId'] ?? '',
+        position: skill['position'] ?? 0,
+        skillTrackId: skill['skillTrackId'] ?? '',
+        title: skill['title'] ?? '',
+        updatedAt: skill['updatedAt'] ?? 0,
+      );
+      
+      // Create default skillTrack
+      final defaultSkillTrack = skillTrack(
+        ctaColor: '',
+        bigImageUrl: '',
+        imageUrl: '',
+        includeInTotalProgress: false,
+        type: journeyType,
+        isReleased: false,
+        color: '',
+        skillLevelCount: 0,
+        updatedAt: DateTime.now(),
+        endTextBis: '',
+        endText: '',
+        topDecoImageUrl: '',
+        chapterDescription: '',
+        subtitle: '',
+        infoText: '',
+        createdAt: DateTime.now(),
+        title: '',
+        skillCount: 0,
+        objectId: journeyId,
+      );
+
+      // Close the loading dialog
+      Navigator.pop(context);
+      
+      // Check if it has a goalId - this likely means it's a Type 2 (Goal)
+      if (skill['goalId'] != null && skill['goalId'].toString().isNotEmpty) {
+        final goalDataResponse = await journeyService.getSkillGoal(email, skill['goalId']);
+        
+        if (goalDataResponse != null) {
+          // Create a safe goalData map with defaults for null values
+          final goalData = {
+            'goalId': goalDataResponse['goalId'] ?? skill['goalId'] ?? '',
+            'title': goalDataResponse['title'] ?? skill['title'] ?? '',
+            'objectId': goalDataResponse['objectId'] ?? skill['goalId'] ?? '',
+            'description': goalDataResponse['description'] ?? '',
+            // Add other required fields with fallbacks
+          };
+          
+          // This is a Type 2 (Goal)
+          print("Navigating to Goal screen (Type 2)");
+          print("GoalData: $goalData");
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Journeyscreenrevealtype2(
+                goalData: goalData,
+                skill: skillObj,
+                email: email,
+                skilltrack: defaultSkillTrack,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+      
+      // Check if it has an objectId that matches a skill level with a motivator type
+      final skillLevels = await journeyService.getSkillLevels(email, skillObj.objectId);
+      
+      for (final level in skillLevels) {
+        if (level.containsKey('motivatorId') && level['motivatorId'] != null) {
+          // This is a Type 3 (Motivator)
+          final motivatorData = {
+            'title': skill['title'] ?? '',
+            'contentTitle': skill['title'] ?? '',
+            'contentUrl': 'https://example.com', // Default value
+            'objectId': level['motivatorId'],
+          };
+          
+          print("Navigating to Motivator screen (Type 3)");
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Journeyscreentype3(
+                motivatorData: motivatorData,
+                skill: skillObj,
+                email: email,
+                skilltrack: defaultSkillTrack,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+      
+      // If neither of the above, assume it's Type 1 (Letter)
+      final letterData = {
+        'pagedContent': '{"pages":[{"type":"textAndMedia","text":"Welcome to your journey","media":""}]}',
+      };
+      
+      print("Navigating to Letter screen (Type 1)");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => JourneyRevealType1(
+            letterData: letterData,
+            skill: skillObj,
+            email: email,
+            skilltrack: defaultSkillTrack,
+          ),
+        ),
+      );
+    } catch (e) {
+      // Close the loading dialog if there was an error
+      Navigator.pop(context);
+      print("Error navigating: $e");
+      
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Navigation Error'),
+          content: Text('Error: $e\n\nTry using the debug buttons below:'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _tryNavigateToType1(context);
+              },
+              child: Text('Try Type 1'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _tryNavigateToType2(context);
+              },
+              child: Text('Try Type 2'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _tryNavigateToType3(context);
+              },
+              child: Text('Try Type 3'),
+            ),
+          ],
+        ),
+      );
+    }
   }
   
   void _tryNavigateToType1(BuildContext context) {
