@@ -204,7 +204,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           ),
                           const SizedBox(height: 16),
                           // All Journey Button
-
+                          JourneyListItem(
+                            onTap: () {
+                              // Handle all journey tap
+                            },
+                          ),
                           const SizedBox(height: 16),
                           // Progress Stats
                           journeyStats.when(
@@ -231,7 +235,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                   ),
                                 );
                               }
-                              // Only create one JourneyLevelsList instance
                               return JourneyLevelsList(
                                 journeyId: widget.tile?['objectId'] ?? '',
                                 email: _userEmail!,
@@ -242,7 +245,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => JourneyScreen(
-                                        tile: widget.tile, // Pass tile to new screen
+                                        tile: widget.tile,
                                       ),
                                     ),
                                   );
@@ -263,6 +266,28 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          // Bottom navigation
+          Positioned(
+            left: 5,
+            right: 5,
+            bottom: 20,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+              child: BlurContainer(
+                borderRadius: 50,
+                blur: 1,
+                color: Colors.transparent,
+                enableGlow: true,
+                glowColor: Colors.white,
+                glowIntensity: 0.09,
+                glowSpread: 0,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                  child: BottomNavBar(),
+                ),
+              ),
             ),
           ),
         ],
