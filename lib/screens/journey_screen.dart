@@ -155,22 +155,36 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           currentJourney.when(
                             data: (journey) {
                               if (journey != null) {
-                                return JourneyCard(
-                                  title: widget.tile?['title'] ?? 'No Title',
-                                  subtitle:
-                                      widget.tile?['subtitle'] ?? 'No Subtitle',
-                                  progress:
-                                      '${((widget.tile?['skillLevelCompleted'] ?? 0) / (widget.tile?['totalLevels'] ?? 1) * 100).toStringAsFixed(0)}%',
-                                  imageUrl: widget.tile?['imageUrl'] ?? '',
-                                  onTap: () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const JourneyScreen(),
-                                      ),
-                                    );
-                                  },
+                                return journeyStats.when(
+                                  data: (stats) => JourneyCard(
+                                    title: widget.tile?['title'] ?? 'No Title',
+                                    subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                                    progress: stats['completion'] ?? '0%',
+                                    imageUrl: widget.tile?['imageUrl'] ?? '',
+                                    onTap: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const JourneyScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  loading: () => const Center(child: CircularProgressIndicator()),
+                                  error: (_, __) => JourneyCard(
+                                    title: widget.tile?['title'] ?? 'No Title',
+                                    subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                                    progress: '0%',
+                                    imageUrl: widget.tile?['imageUrl'] ?? '',
+                                    onTap: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const JourneyScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 );
                               } else {
                                 return JourneyCard(

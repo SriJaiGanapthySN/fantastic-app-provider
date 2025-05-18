@@ -7,6 +7,12 @@ import '../screens/journey_screen.dart';
 import '../utils/blur_container.dart';
 import '../providers/journey_levels_provider.dart';
 import '../widgets/premium_button.dart';
+import '../screens/journey_reveal/journeyscreenrevealtype1.dart';
+import '../screens/journey_reveal/journeyscreenrevealtype2.dart';
+import '../screens/journey_reveal/journeyscreenrevealtype3.dart';
+import '../models/skill.dart';
+import '../models/skillTrack.dart';
+import '../services/journey_service.dart' as js;
 
 class LevelImage extends StatelessWidget {
   final String imageUrl;
@@ -160,19 +166,20 @@ class LevelImage extends StatelessWidget {
 class ConnectingAnimation extends StatelessWidget {
   final bool isTransitionOdd;
   final bool shouldShow;
+  final int index;
 
   const ConnectingAnimation({
     Key? key,
     required this.isTransitionOdd,
     required this.shouldShow,
+    required this.index,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     if (!shouldShow) return const SizedBox.shrink();
 
-    final delay =
-        isTransitionOdd ? const Duration(milliseconds: 500) : Duration.zero;
+    final delay = Duration(milliseconds: (index * 300) + (isTransitionOdd ? 200 : 0));
 
     return FutureBuilder(
       future: Future.delayed(delay),
@@ -181,18 +188,16 @@ class ConnectingAnimation extends StatelessWidget {
           return const SizedBox(width: 120, height: 120);
         }
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
-          child: Lottie.asset(
-            isTransitionOdd
-                ? 'assets/animations/3/data.json'
-                : 'assets/animations/1/data.json',
-            width: 140,
-            height: 140,
-            fit: BoxFit.contain,
-            frameRate: FrameRate.max,
-            repeat: true,
-          ),
+        // Animation container with 1x size ratio
+        return Lottie.asset(
+          isTransitionOdd
+              ? 'assets/animations/3/data.json'
+              : 'assets/animations/1/data.json',
+          width: 160,
+          height: 180,
+          fit: BoxFit.contain,
+          frameRate: FrameRate.max,
+          repeat: true,
         );
       },
     );
@@ -276,10 +281,11 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
   @override
   Widget build(BuildContext context) {
     final journeyService = ref.watch(journeyServiceProvider);
-
+    
+    // Revert to original implementation for loading skills
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: journeyService
-          .addSkills(widget.skillTrackId, "test03@gmail.com")
+          .addSkills(widget.skillTrackId, widget.email)
           .then((skills) => skills.map((skill) => skill.toMap()).toList()
             ..sort(
                 (a, b) => (a['position'] ?? 0).compareTo(b['position'] ?? 0))),
@@ -308,51 +314,37 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
           );
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.tile != null) ...[
-              Text(
-                widget.tile!['title'] ?? 'Journey Title',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.tile!['description'] ?? 'Journey Description',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-            const Text(
-              'Skills',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...skills.map((skill) {
-              return _LevelItem(
-                title: skill['title'] ?? 'Untitled Skill',
-                description: skill['description'] ?? '',
-                isCompleted: skill['isCompleted'] ?? false,
-                isInProgress: skill['isInProgress'] ?? false,
-                isLocked: skill['isLocked'] ?? false,
-                imageUrl: skill['iosIconUrl'] ?? '',
-                journeyId: widget.journeyId,
-                levelId: skill['objectId'] ?? '',
-                email: widget.email,
-              );
-            }).toList(),
-          ],
+        // Get the journey type once for all skills
+        return FutureBuilder<Map<String, dynamic>>(
+          future: journeyService.getJourneyType(widget.skillTrackId, widget.email),
+          builder: (context, journeySnapshot) {
+            final journeyType = journeySnapshot.data?['type'] ?? '';
+            
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                ...skills.map((skill) {
+                  return _LevelItem(
+                    title: skill['title'] ?? 'Untitled Skill',
+                    description: skill['description'] ?? '',
+                    isCompleted: skill['isCompleted'] ?? false,
+                    isInProgress: skill['isInProgress'] ?? false,
+                    isLocked: skill['isLocked'] ?? false,
+                    imageUrl: skill['iosIconUrl'] ?? '',
+                    journeyId: widget.journeyId,
+                    levelId: skill['objectId'] ?? '',
+                    email: widget.email,
+                    index: skills.indexOf(skill),
+                    isLastItem: skills.indexOf(skill) == skills.length - 1,
+                    journeyType: journeyType, // Use the journey type from the snapshot
+                    skill: skill, // Pass the entire skill object
+                    journeyTile: widget.tile, // Pass journey tile info
+                  );
+                }).toList(),
+              ],
+            );
+          }
         );
       },
     );
@@ -369,6 +361,11 @@ class _LevelItem extends StatelessWidget {
   final String journeyId;
   final String levelId;
   final String email;
+  final int index;
+  final bool isLastItem;
+  final String journeyType; // Add journey type parameter
+  final Map<String, dynamic> skill; // Add skill map parameter
+  final Map<String, dynamic>? journeyTile; // Add journey tile parameter
 
   const _LevelItem({
     Key? key,
@@ -381,104 +378,471 @@ class _LevelItem extends StatelessWidget {
     required this.journeyId,
     required this.levelId,
     required this.email,
+    required this.index,
+    required this.isLastItem,
+    required this.journeyType, // Required parameter
+    required this.skill, // Required parameter
+    this.journeyTile,
   }) : super(key: key);
+
+  // Navigate to the appropriate screen based on journey type
+  void _navigateToJourneyReveal(BuildContext context) {
+    // First try to get the skill level for this skill
+    final journeyService = js.JourneyService();
+    
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    // Get the skill goal data and detect what type it is
+    _getSkillTypeAndNavigate(context);
+  }
+  
+  Future<void> _getSkillTypeAndNavigate(BuildContext context) async {
+    try {
+      final journeyService = js.JourneyService();
+      
+      // Convert skill map to Skill object
+      final skillObj = Skill(
+        color: skill['color'] ?? '',
+        createdAt: skill['createdAt'] ?? 0,
+        goalId: skill['goalId'] ?? '',
+        iconUrl: skill['iconUrl'] ?? '',
+        iosIconUrl: skill['iosIconUrl'] ?? '',
+        objectId: skill['objectId'] ?? '',
+        position: skill['position'] ?? 0,
+        skillTrackId: skill['skillTrackId'] ?? '',
+        title: skill['title'] ?? '',
+        updatedAt: skill['updatedAt'] ?? 0,
+      );
+      
+      // Create default skillTrack
+      final defaultSkillTrack = skillTrack(
+        ctaColor: '',
+        bigImageUrl: '',
+        imageUrl: '',
+        includeInTotalProgress: false,
+        type: journeyType,
+        isReleased: false,
+        color: '',
+        skillLevelCount: 0,
+        updatedAt: DateTime.now(),
+        endTextBis: '',
+        endText: '',
+        topDecoImageUrl: '',
+        chapterDescription: '',
+        subtitle: '',
+        infoText: '',
+        createdAt: DateTime.now(),
+        title: '',
+        skillCount: 0,
+        objectId: journeyId,
+      );
+
+      // Close the loading dialog
+      Navigator.pop(context);
+      
+      // Check if it has a goalId - this likely means it's a Type 2 (Goal)
+      if (skill['goalId'] != null && skill['goalId'].toString().isNotEmpty) {
+        final goalDataResponse = await journeyService.getSkillGoal(email, skill['goalId']);
+        
+        if (goalDataResponse != null) {
+          // Create a safe goalData map with defaults for null values
+          final goalData = {
+            'goalId': goalDataResponse['goalId'] ?? skill['goalId'] ?? '',
+            'title': goalDataResponse['title'] ?? skill['title'] ?? '',
+            'objectId': goalDataResponse['objectId'] ?? skill['goalId'] ?? '',
+            'description': goalDataResponse['description'] ?? '',
+            // Add other required fields with fallbacks
+          };
+          
+          // This is a Type 2 (Goal)
+          print("Navigating to Goal screen (Type 2)");
+          print("GoalData: $goalData");
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Journeyscreenrevealtype2(
+                goalData: goalData,
+                skill: skillObj,
+                email: email,
+                skilltrack: defaultSkillTrack,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+      
+      // Check if it has an objectId that matches a skill level with a motivator type
+      final skillLevels = await journeyService.getSkillLevels(email, skillObj.objectId);
+      
+      for (final level in skillLevels) {
+        if (level.containsKey('motivatorId') && level['motivatorId'] != null) {
+          // This is a Type 3 (Motivator)
+          final motivatorData = {
+            'title': skill['title'] ?? '',
+            'contentTitle': skill['title'] ?? '',
+            'contentUrl': 'https://example.com', // Default value
+            'objectId': level['motivatorId'],
+          };
+          
+          print("Navigating to Motivator screen (Type 3)");
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Journeyscreentype3(
+                motivatorData: motivatorData,
+                skill: skillObj,
+                email: email,
+                skilltrack: defaultSkillTrack,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+      
+      // If neither of the above, assume it's Type 1 (Letter)
+      final letterData = {
+        'pagedContent': '{"pages":[{"type":"textAndMedia","text":"Welcome to your journey","media":""}]}',
+      };
+      
+      print("Navigating to Letter screen (Type 1)");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => JourneyRevealType1(
+            letterData: letterData,
+            skill: skillObj,
+            email: email,
+            skilltrack: defaultSkillTrack,
+          ),
+        ),
+      );
+    } catch (e) {
+      // Close the loading dialog if there was an error
+      Navigator.pop(context);
+      print("Error navigating: $e");
+      
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Navigation Error'),
+          content: Text('Error: $e\n\nTry using the debug buttons below:'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _tryNavigateToType1(context);
+              },
+              child: Text('Try Type 1'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _tryNavigateToType2(context);
+              },
+              child: Text('Try Type 2'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _tryNavigateToType3(context);
+              },
+              child: Text('Try Type 3'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+  
+  void _tryNavigateToType1(BuildContext context) {
+    // Convert skill map to Skill object
+    final skillObj = Skill(
+      color: skill['color'] ?? '',
+      createdAt: skill['createdAt'] ?? 0,
+      goalId: skill['goalId'] ?? '',
+      iconUrl: skill['iconUrl'] ?? '',
+      iosIconUrl: skill['iosIconUrl'] ?? '',
+      objectId: skill['objectId'] ?? '',
+      position: skill['position'] ?? 0,
+      skillTrackId: skill['skillTrackId'] ?? '',
+      title: skill['title'] ?? '',
+      updatedAt: skill['updatedAt'] ?? 0,
+    );
+    
+    // Create default skillTrack
+    final defaultSkillTrack = skillTrack(
+      ctaColor: '',
+      bigImageUrl: '',
+      imageUrl: '',
+      includeInTotalProgress: false,
+      type: 'letter',
+      isReleased: false,
+      color: '',
+      skillLevelCount: 0,
+      updatedAt: DateTime.now(),
+      endTextBis: '',
+      endText: '',
+      topDecoImageUrl: '',
+      chapterDescription: '',
+      subtitle: '',
+      infoText: '',
+      createdAt: DateTime.now(),
+      title: '',
+      skillCount: 0,
+      objectId: journeyId,
+    );
+    
+    // Default letterData for JourneyRevealType1
+    final Map<String, dynamic> letterData = {
+      'pagedContent': '{"pages":[{"type":"textAndMedia","text":"Welcome to your journey","media":""}]}',
+    };
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JourneyRevealType1(
+          letterData: letterData,
+          skill: skillObj,
+          email: email,
+          skilltrack: defaultSkillTrack,
+        ),
+      ),
+    );
+  }
+  
+  void _tryNavigateToType2(BuildContext context) {
+    // Convert skill map to Skill object
+    final skillObj = Skill(
+      color: skill['color'] ?? '',
+      createdAt: skill['createdAt'] ?? 0,
+      goalId: skill['goalId'] ?? '',
+      iconUrl: skill['iconUrl'] ?? '',
+      iosIconUrl: skill['iosIconUrl'] ?? '',
+      objectId: skill['objectId'] ?? '',
+      position: skill['position'] ?? 0,
+      skillTrackId: skill['skillTrackId'] ?? '',
+      title: skill['title'] ?? '',
+      updatedAt: skill['updatedAt'] ?? 0,
+    );
+    
+    // Create default skillTrack
+    final defaultSkillTrack = skillTrack(
+      ctaColor: '',
+      bigImageUrl: '',
+      imageUrl: '',
+      includeInTotalProgress: false,
+      type: 'goal',
+      isReleased: false,
+      color: '',
+      skillLevelCount: 0,
+      updatedAt: DateTime.now(),
+      endTextBis: '',
+      endText: '',
+      topDecoImageUrl: '',
+      chapterDescription: '',
+      subtitle: '',
+      infoText: '',
+      createdAt: DateTime.now(),
+      title: '',
+      skillCount: 0,
+      objectId: journeyId,
+    );
+    
+    // Create goalData
+    final Map<String, dynamic> goalData = {
+      'goalId': skill['goalId'] ?? '',
+      'title': skill['title'] ?? '',
+    };
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Journeyscreenrevealtype2(
+          goalData: goalData,
+          skill: skillObj,
+          email: email,
+          skilltrack: defaultSkillTrack,
+        ),
+      ),
+    );
+  }
+  
+  void _tryNavigateToType3(BuildContext context) {
+    // Convert skill map to Skill object
+    final skillObj = Skill(
+      color: skill['color'] ?? '',
+      createdAt: skill['createdAt'] ?? 0,
+      goalId: skill['goalId'] ?? '',
+      iconUrl: skill['iconUrl'] ?? '',
+      iosIconUrl: skill['iosIconUrl'] ?? '',
+      objectId: skill['objectId'] ?? '',
+      position: skill['position'] ?? 0,
+      skillTrackId: skill['skillTrackId'] ?? '',
+      title: skill['title'] ?? '',
+      updatedAt: skill['updatedAt'] ?? 0,
+    );
+    
+    // Create default skillTrack
+    final defaultSkillTrack = skillTrack(
+      ctaColor: '',
+      bigImageUrl: '',
+      imageUrl: '',
+      includeInTotalProgress: false,
+      type: 'motivator',
+      isReleased: false,
+      color: '',
+      skillLevelCount: 0,
+      updatedAt: DateTime.now(),
+      endTextBis: '',
+      endText: '',
+      topDecoImageUrl: '',
+      chapterDescription: '',
+      subtitle: '',
+      infoText: '',
+      createdAt: DateTime.now(),
+      title: '',
+      skillCount: 0,
+      objectId: journeyId,
+    );
+    
+    // Create motivatorData
+    final Map<String, dynamic> motivatorData = {
+      'title': skill['title'] ?? '',
+      'contentTitle': skill['title'] ?? '',
+      'contentUrl': 'https://example.com',
+      'objectId': skill['objectId'] ?? '',
+    };
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Journeyscreentype3(
+          motivatorData: motivatorData,
+          skill: skillObj,
+          email: email,
+          skilltrack: defaultSkillTrack,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
+    final isEven = index % 2 == 0;
+    
+    return Column(
       children: [
-        // Level content (behind)
-        Padding(
-          padding: const EdgeInsets.only(
-            top: 15,
-            bottom: 30,
-            left: 8,
-          ),
-          child: Row(
-            children: [
-              // Left circular image
-              LevelImage(
-                imageUrl: imageUrl,
-                status: isLocked
-                    ? 'locked'
-                    : isCompleted
-                        ? 'completed'
-                        : 'in_progress',
-                isInProgress: isInProgress,
-              ),
-              // Right side content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 16, right: 16, top: 16, bottom: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 16,
-                        ),
-                      ),
-                      if (!isLocked) ...[
-                        const SizedBox(height: 12),
-                        BlurContainer(
-                          borderRadius: 50,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => JourneyRoadmapScreen(
-                                      // Pass tile data to new screen
-                                      ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              color: const Color.fromARGB(51, 255, 255, 255),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'View',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Colors.white,
-                                    size: 12,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Add connecting animation behind other elements (first in stack)
+            if (!isLastItem)
+              Positioned(
+                left: isEven ? 35 : null,
+                right: !isEven ? 215 : null,
+                bottom: -80,
+                child: ConnectingAnimation(
+                  isTransitionOdd: !isEven,
+                  shouldShow: true,
+                  index: index,
                 ),
               ),
-            ],
-          ),
+            // Level content (now on top of animation)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 15,
+                bottom: 50,
+                left: isEven ? 8 : 16,
+                right: isEven ? 10 : 8,
+              ),
+              child: Row(
+                children: [
+                  if (!isEven) const Spacer(),
+                  // Left circular image
+                  LevelImage(
+                    imageUrl: imageUrl,
+                    status: isLocked
+                        ? 'locked'
+                        : isCompleted
+                            ? 'completed'
+                            : 'in_progress',
+                    isInProgress: isInProgress,
+                  ),
+                  // Right side content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, top: 16, bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                          if (!isLocked) ...[
+                            const SizedBox(height: 6),
+                            BlurContainer(
+                              borderRadius: 50,
+                              child: InkWell(
+                                onTap: () => _navigateToJourneyReveal(context),
+                                child: Container(
+                                  color: const Color.fromARGB(51, 255, 255, 255),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 3),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'View',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.white,
+                                        size: 12,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
