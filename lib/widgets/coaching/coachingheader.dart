@@ -29,6 +29,11 @@ class HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -37,34 +42,35 @@ class HeaderSection extends StatelessWidget {
           child: Image.network(
             coaching["imageUrl"],
             fit: BoxFit.cover,
-            height: 300,
+            height:
+                screenHeight * 0.35, // Responsive height instead of fixed 300
             width: double.infinity,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: screenHeight * 0.02), // Responsive spacing
         Container(
           alignment: Alignment.topLeft,
           child: Text(
             coaching["title"],
             style: TextStyle(
               color: Colors.white,
-              fontSize: 30,
+              fontSize: screenWidth * 0.07, // Responsive font size
               fontWeight: FontWeight.w800,
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: screenHeight * 0.01), // Responsive spacing
         Container(
           alignment: Alignment.topLeft,
           child: Text(
             coaching["subtitle"],
             style: TextStyle(
               color: Colors.white,
-              fontSize: 26,
+              fontSize: screenWidth * 0.06, // Responsive font size
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: screenHeight * 0.02), // Responsive spacing
         ElevatedButton.icon(
           onPressed: () {
             if (coachingData.isNotEmpty) {
@@ -74,8 +80,7 @@ class HeaderSection extends StatelessWidget {
                   builder: (context) => Coachingplay(
                     email: email,
                     coachingSeries: coaching,
-                    coachingData:
-                        coachingData.first, // Use the first coaching item
+                    coachingData: coachingData.first,
                     coachings: coachingData,
                   ),
                 ),
@@ -85,18 +90,24 @@ class HeaderSection extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: colorFromString(coaching["color"]),
-            padding: const EdgeInsets.symmetric(horizontal: 145, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.35, // Responsive horizontal padding
+              vertical: screenHeight * 0.015, // Responsive vertical padding
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          icon: const Icon(
+          icon: Icon(
             Icons.play_arrow,
-            size: 35,
+            size: screenWidth * 0.08, // Responsive icon size
           ),
-          label: const Text(
+          label: Text(
             "Play",
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: screenWidth * 0.045, // Responsive font size
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],

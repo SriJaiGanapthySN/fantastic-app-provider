@@ -13,15 +13,13 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth_page.dart';
 import 'screens/main_screen.dart';
-import 'screens/notification_tone_screen.dart';
-import 'screens/discoverscreen.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
   return FlutterLocalNotificationsPlugin();
 });
 
- void main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   tz.initializeTimeZones();
@@ -88,14 +86,13 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
-      home: Consumer(
-        builder: (context, ref, child) {
-          final email = ref.watch(safeUserEmailProvider);
-          return Discoverscreen(email: email);
-        },
-      ),
-      
-      /*
+      // home: Consumer(
+      //   builder: (context, ref, child) {
+      //     final email = ref.watch(safeUserEmailProvider);
+      //     return Discoverscreen(email: email);
+      //   },
+      // ),
+
       home: authState.isLoading
           ? const Scaffold(
               body: Center(
@@ -105,7 +102,6 @@ class MyApp extends ConsumerWidget {
           : authState.user != null
               ? MainScreen()
               : const AuthPage(),
-      */
     );
   }
 }

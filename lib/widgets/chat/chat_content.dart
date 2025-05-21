@@ -69,7 +69,6 @@ class ChatContent extends StatelessWidget {
               scrollController: scrollController,
               isLongPressing: isLongPressing,
             ),
-
             // Message input bar component
             MessageInputBar(
               isMessageBoxVisible: isMessageBoxVisible,

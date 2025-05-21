@@ -50,8 +50,17 @@ class DateState extends StateNotifier<DateTime> {
     }
   }
 
+  String getCurrentDay() {
+    return DateFormat('EEEE').format(today);
+  }
+
   String getNextDayText() {
     final nextDay = state.add(const Duration(days: 1));
     return DateFormat('EEEE').format(nextDay);
+  }
+
+  String getPreviousDayText() {
+    final previousDay = state.subtract(const Duration(days: 1));
+    return DateFormat('EEEE').format(previousDay);
   }
 }

@@ -63,7 +63,7 @@ class EmptyChatPlaceholder extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.95),
-                      fontSize: screenWidth * 0.038,
+                      fontSize: screenWidth * 0.031,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -146,7 +146,7 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
         flexibleSpace: Stack(
           children: [
             const Image(
-              image: AssetImage('assets/images/RoutinesList.png'),
+              image: AssetImage('assets/images/image.png'),
               width: double.infinity,
               fit: BoxFit.fill,
             ),

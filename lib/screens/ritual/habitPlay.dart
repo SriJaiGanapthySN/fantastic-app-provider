@@ -13,10 +13,12 @@ import '../../providers/habit_play_provider.dart';
 
 class habitPlay extends ConsumerStatefulWidget {
   final String email;
+  final int startIndex; // Add start index parameter
 
   const habitPlay({
     super.key,
     required this.email,
+    this.startIndex = 0, // Default to 0 if not specified
   });
 
   @override
@@ -37,6 +39,13 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+
+    // Set the starting index when the widget initializes
+    if (widget.startIndex > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(currentTaskIndexProvider.notifier).state = widget.startIndex;
+      });
+    }
   }
 
   void noteData(QueryDocumentSnapshot currentTask) {
@@ -103,7 +112,8 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
   // Handle skip button press
   void _onSkipPressed() {
-    ref.read(isTaskSkippedProvider.notifier).state = !ref.read(isTaskSkippedProvider);
+    ref.read(isTaskSkippedProvider.notifier).state =
+        !ref.read(isTaskSkippedProvider);
 
     // Move to the next task after a short delay
     Future.delayed(const Duration(seconds: 2), () {
@@ -129,9 +139,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   }
 
   double _calculateDynamicMaxChildSize(
-      BuildContext context,
-      Map<String, dynamic> currentTask,
-      String items) {
+      BuildContext context, Map<String, dynamic> currentTask, String items) {
     // Get screen height
     double screenHeight = MediaQuery.of(context).size.height;
 
@@ -167,8 +175,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   }
 
   double getDescriptionHeight(
-      BuildContext context,
-      Map<String, dynamic> currentTask) {
+      BuildContext context, Map<String, dynamic> currentTask) {
     String descriptionText = currentTask['descriptionHtml'] ?? '';
 
     double textHeight = (descriptionText.length / 50).ceil() *
@@ -270,7 +277,8 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
             var currentTask = tasks[currentTaskIndex];
 
             // Stop audio when the last task's animation finishes
-            if (currentTaskIndex == tasks.length - 1 && (audioState['isAnimationVisible'] ?? false)) {
+            if (currentTaskIndex == tasks.length - 1 &&
+                (audioState['isAnimationVisible'] ?? false)) {
               // Animation completion handled in _onCheckPressed
             }
 
@@ -491,10 +499,8 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                                         '',
                                                     style: {
                                                       "html": Style(
-                                                        color: Colors
-                                                            .white,
-                                                        fontSize: FontSize(
-                                                            18),
+                                                        color: Colors.white,
+                                                        fontSize: FontSize(18),
                                                         textAlign:
                                                             TextAlign.center,
                                                       ),
@@ -527,8 +533,8 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                               thickness: 1,
                                             ),
                                             Row(
-                                              mainAxisAlignment: MainAxisAlignment
-                                                  .center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
                                               children: [
                                                 // Skip Button
                                                 Column(
@@ -584,10 +590,15 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                                       height: 150,
                                                       width: 150,
                                                       child: Visibility(
-                                                        visible: audioState['isAnimationVisible'] ?? false,
-                                                        child: currentTask.containsKey("completionLottieUrl")
+                                                        visible: audioState[
+                                                                'isAnimationVisible'] ??
+                                                            false,
+                                                        child: currentTask
+                                                                .containsKey(
+                                                                    "completionLottieUrl")
                                                             ? Lottie.network(
-                                                                currentTask['completionLottieUrl'],
+                                                                currentTask[
+                                                                    'completionLottieUrl'],
                                                                 repeat: false,
                                                                 width: 150,
                                                                 height: 150,
@@ -638,15 +649,15 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                               BorderRadius.circular(15),
                                         ),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment
-                                              .start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 IconButton(
                                                   onPressed: () {
@@ -680,12 +691,10 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                                       fontWeight:
                                                           FontWeight.bold,
                                                     ),
-                                                    overflow: TextOverflow
-                                                        .visible,
-                                                    softWrap:
-                                                        true,
-                                                    textAlign: TextAlign
-                                                        .center,
+                                                    overflow:
+                                                        TextOverflow.visible,
+                                                    softWrap: true,
+                                                    textAlign: TextAlign.center,
                                                   ),
                                                 ),
                                                 IconButton(
@@ -714,8 +723,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                                     Icons.book,
                                                     color: (items.isNotEmpty)
                                                         ? Colors.white
-                                                        : Colors
-                                                            .grey,
+                                                        : Colors.grey,
                                                     size: 30,
                                                   ),
                                                 ),

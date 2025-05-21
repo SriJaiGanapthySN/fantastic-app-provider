@@ -41,31 +41,25 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final pageController = ref.watch(pageControllerProvider);
     final userEmail = ref.watch(auth.userEmailProvider);
 
-    ref.listen<int>(selectedTabProvider, (_, index) {
-      pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    });
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: PageView(
         controller: pageController,
         physics: const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
-          ref.read(selectedTabProvider.notifier).state = index;
+          // This ensures the tab updates if page changes by other means
+          if (ref.read(selectedTabProvider) != index) {
+            ref.read(selectedTabProvider.notifier).state = index;
+          }
         },
         children: [
           ChatScreen(email: "test03@gmail.com"),
           const RitualScreen(),
-          const JourneyScreen(),
           Discoverscreen(email: "test03@gmail.com"),
         ],
       ),
       floatingActionButton: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.0),
+        padding: EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
         child: BottomNavBar(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

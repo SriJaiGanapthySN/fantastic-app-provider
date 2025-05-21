@@ -1,3 +1,4 @@
+import 'package:fantastic_app_riverpod/screens/ritual/addrotinelistscreen.dart';
 import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,14 +83,32 @@ class RitualScreen extends ConsumerWidget {
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => habitPlay(
-                              email: "test03@gmail.com",
+                        // Get the list of habits first
+                        TaskServices().getUserHabits(userEmail).then((habits) {
+                          int firstUncompletedIndex = -1;
+
+                          // Find the first uncompleted habit
+                          for (int i = 0; i < habits.length; i++) {
+                            if (habits[i]['isCompleted'] == false) {
+                              firstUncompletedIndex = i;
+                              break;
+                            }
+                          }
+
+                          // If all habits are completed, start from the beginning
+                          // Otherwise start with the first uncompleted habit
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => habitPlay(
+                                email: "test03@gmail.com",
+                                startIndex: firstUncompletedIndex >= 0
+                                    ? firstUncompletedIndex
+                                    : 0,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        });
                       },
                       child: BlurContainer(
                         borderRadius: 74,

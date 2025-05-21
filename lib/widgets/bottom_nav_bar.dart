@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/nav_provider.dart';
+import '../screens/main_screen.dart';
 
 class BottomNavBar extends ConsumerWidget {
   const BottomNavBar({super.key});
@@ -23,8 +24,6 @@ class BottomNavBar extends ConsumerWidget {
           _buildNavButton(
               context, 'assets/icons/route.svg', 1, selectedIndex, ref),
           _buildNavButton(
-              context, 'assets/icons/heart.svg', 2, selectedIndex, ref),
-          _buildNavButton(
               context, 'assets/icons/search.svg', 3, selectedIndex, ref),
         ],
       ),
@@ -34,9 +33,16 @@ class BottomNavBar extends ConsumerWidget {
   Widget _buildNavButton(BuildContext context, String iconPath, int index,
       int selectedIndex, WidgetRef ref) {
     final isSelected = index == selectedIndex;
+    final pageController = ref.read(pageControllerProvider);
 
     return GestureDetector(
-      onTap: () => ref.read(selectedTabProvider.notifier).state = index,
+      onTap: () {
+        // Update the selectedTabProvider state
+        ref.read(selectedTabProvider.notifier).state = index;
+
+        // Directly control the PageView
+        pageController.jumpToPage(index);
+      },
       child: BlurContainer(
         blur: 8,
         borderRadius: 54.71,

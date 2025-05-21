@@ -1,3 +1,4 @@
+import 'package:fantastic_app_riverpod/screens/ritual/addrotinelistscreen.dart';
 import 'package:fantastic_app_riverpod/screens/ritual/habitPlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,13 @@ class _HabitListState extends ConsumerState<HabitList> {
     }
   }
 
+  Future<void> _loadHabits() async {
+    final userHabits = await TaskServices().getUserHabits("test03@gmail.com");
+    setState(() {
+      _habits = userHabits;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateState = ref.watch(dateProvider.notifier);
@@ -58,7 +66,7 @@ class _HabitListState extends ConsumerState<HabitList> {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : CarouselSlider.builder(
-            itemCount: 7,
+            itemCount: 4,
             options: CarouselOptions(
               height: MediaQuery.of(context).size.height * 0.55,
               viewportFraction: 0.75,
@@ -125,13 +133,32 @@ class _HabitListState extends ConsumerState<HabitList> {
                             ),
                             Row(
                               children: [
-                                Text(
-                                  dateState.getNextDayText(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) {
+                                      return Addrotinelistscreen(
+                                          habits: _habits,
+                                          updateHabits: _habits,
+                                          email: "test03@gmail.com",
+                                          onHabitUpdate: _loadHabits);
+                                    }));
+                                  },
+                                  child: Text(
+                                    "Add Habit",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
+                                // Text(
+                                //   dateState.getCurrentDay(),
+                                //   style: const TextStyle(
+                                //     fontWeight: FontWeight.w600,
+                                //     fontSize: 12,
+                                //   ),
+                                // ),
                                 Icon(
                                   Icons.chevron_right,
                                   color: Colors.black.withValues(alpha: 0.4),
@@ -212,13 +239,15 @@ class _HabitListState extends ConsumerState<HabitList> {
                                                       "test03@gmail.com";
 
                                                   if (!isCompleted) {
-                                                    // Navigate to task reveal when trying to complete a habit
+                                                    // Navigate to habitPlay with the specific habit index
                                                     Navigator.of(context)
                                                         .push(
                                                       MaterialPageRoute(
                                                         builder: (context) =>
                                                             habitPlay(
                                                           email: userEmail,
+                                                          startIndex:
+                                                              habitIndex, // Pass the specific habit index
                                                         ),
                                                       ),
                                                     )

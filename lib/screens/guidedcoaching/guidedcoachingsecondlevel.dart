@@ -23,6 +23,16 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
   bool _isLoading = true;
   List<Map<String, dynamic>> trainingData = [];
 
+  // Screen dimensions helper
+  late double screenHeight;
+  late double screenWidth;
+
+  // Initialize responsive sizes
+  void _initSizes(BuildContext context) {
+    screenHeight = MediaQuery.of(context).size.height;
+    screenWidth = MediaQuery.of(context).size.width;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -53,12 +63,15 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    _initSizes(context);
 
-    // Set tile height and padding dynamically based on screen size
+    // All measurements are now calculated proportionally
     final double tileHeight = screenHeight * 0.19;
     final double tilePadding = screenWidth * 0.02;
+    final double cardBorderRadius = screenWidth * 0.025;
+    final double cardElevation = screenHeight * 0.004;
+    final double shadowOpacity = 0.4;
+    final double blurHeight = screenHeight * 0.1;
 
     return Scaffold(
       body: _isLoading
@@ -72,9 +85,8 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
                   end: Alignment.bottomCenter,
                   colors: [
                     colorFromString(widget.category["color"]),
-                    Colors.transparent, // Add a second color
+                    Colors.transparent,
                   ],
-                  // stops: [0.6, 1.0], // Now matches the length of 'colors'
                 ),
               ),
               child: CustomScrollView(
@@ -91,9 +103,11 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: screenWidth * 0.05,
                       ),
                     ),
-                    iconTheme: const IconThemeData(color: Colors.white),
+                    iconTheme: IconThemeData(
+                        color: Colors.white, size: screenWidth * 0.06),
                     flexibleSpace: FlexibleSpaceBar(
                       collapseMode: CollapseMode.pin,
                       background: Stack(
@@ -110,8 +124,7 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
                             left: 0,
                             right: 0,
                             child: Container(
-                              height: screenHeight *
-                                  0.1, // Height of the blurred edge
+                              height: blurHeight,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
@@ -119,7 +132,6 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
                                   colors: [
                                     colorFromString(widget.category["color"]),
                                   ],
-                                  // stops: [0.6, 1.0], // Creates the fade effect
                                 ),
                               ),
                             ),
@@ -145,20 +157,18 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
                               children: [
                                 Container(
                                   margin: EdgeInsets.symmetric(
-                                      vertical:
-                                          tilePadding), // Optional spacing between tiles
+                                      vertical: tilePadding),
                                   child: Material(
-                                    elevation:
-                                        8, // Controls the shadow intensity
-                                    borderRadius: BorderRadius.circular(
-                                        10), // Matches the tile's border radius
-                                    shadowColor: Colors.black.withOpacity(
-                                        0.4), // Shadow color and transparency
+                                    elevation: cardElevation,
+                                    borderRadius:
+                                        BorderRadius.circular(cardBorderRadius),
+                                    shadowColor:
+                                        Colors.black.withOpacity(shadowOpacity),
                                     child: Container(
                                         height: tileHeight,
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(
-                                              10), // Ensure shadow follows rounded corners
+                                              cardBorderRadius),
                                         ),
                                         child: Guidedcoachingtile(
                                             url: training['imageUrl'] ??

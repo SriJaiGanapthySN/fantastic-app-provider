@@ -158,29 +158,34 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                 return journeyStats.when(
                                   data: (stats) => JourneyCard(
                                     title: widget.tile?['title'] ?? 'No Title',
-                                    subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                                    subtitle: widget.tile?['subtitle'] ??
+                                        'No Subtitle',
                                     progress: stats['completion'] ?? '0%',
                                     imageUrl: widget.tile?['imageUrl'] ?? '',
                                     onTap: () {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const JourneyScreen(),
+                                          builder: (context) =>
+                                              const JourneyScreen(),
                                         ),
                                       );
                                     },
                                   ),
-                                  loading: () => const Center(child: CircularProgressIndicator()),
+                                  loading: () => const Center(
+                                      child: CircularProgressIndicator()),
                                   error: (_, __) => JourneyCard(
                                     title: widget.tile?['title'] ?? 'No Title',
-                                    subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                                    subtitle: widget.tile?['subtitle'] ??
+                                        'No Subtitle',
                                     progress: '0%',
                                     imageUrl: widget.tile?['imageUrl'] ?? '',
                                     onTap: () {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const JourneyScreen(),
+                                          builder: (context) =>
+                                              const JourneyScreen(),
                                         ),
                                       );
                                     },
@@ -280,28 +285,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-          // Bottom navigation
-          Positioned(
-            left: 5,
-            right: 5,
-            bottom: 20,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-              child: BlurContainer(
-                borderRadius: 50,
-                blur: 1,
-                color: Colors.transparent,
-                enableGlow: true,
-                glowColor: Colors.white,
-                glowIntensity: 0.09,
-                glowSpread: 0,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                  child: BottomNavBar(),
-                ),
-              ),
             ),
           ),
         ],

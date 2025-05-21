@@ -69,7 +69,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         ScrollDirection.idle) {
       // Check if user is near bottom
       final nearBottom = _scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 100;
+          _scrollController.position.maxScrollExtent - 500;
 
       ref.read(chatProvider.notifier).updateScrollBehavior(
             userIsScrolling: true,
