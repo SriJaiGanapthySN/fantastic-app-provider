@@ -537,9 +537,9 @@ class _CoachingplayState extends State<Coachingplay> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 251, 251, 251),
+        backgroundColor: Colors.black,
         actions: [
           Container(
             margin: EdgeInsets.only(right: 20),
@@ -659,21 +659,21 @@ class _CoachingplayState extends State<Coachingplay> {
                         data: htmlContent,
                         style: {
                           "body": Style(
-                            color: const Color.fromARGB(255, 2, 2, 2),
+                            color: const Color.fromARGB(255, 249, 249, 249),
                             fontSize: FontSize(18),
                             lineHeight: LineHeight(1.5),
                           ),
                           "p": Style(
-                            color: const Color.fromARGB(255, 0, 0, 0),
+                            color: const Color.fromARGB(255, 249, 249, 249),
                             fontSize: FontSize(18),
                           ),
                           "h1": Style(
-                            color: const Color.fromARGB(255, 0, 0, 0),
+                            color: const Color.fromARGB(255, 249, 249, 249),
                             fontSize: FontSize(22),
                             fontWeight: FontWeight.bold,
                           ),
                           "h2": Style(
-                            color: const Color.fromARGB(255, 0, 0, 0),
+                            color: const Color.fromARGB(255, 249, 249, 249),
                             fontSize: FontSize(20),
                             fontWeight: FontWeight.bold,
                           ),
