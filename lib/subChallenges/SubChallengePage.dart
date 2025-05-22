@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'TimePage.dart';
-// Removed unused import: import 'package:flutter/widgets.dart'; // Material already includes this
+import 'TimePage.dart'; // Assuming TimePage.dart exists and is correct
 
 // --- Hex to Color Function (Keep as is) ---
 Color hexToColor(String hexString, {String alpha = 'FF', Color defaultColor = Colors.white}) {
@@ -13,7 +12,6 @@ Color hexToColor(String hexString, {String alpha = 'FF', Color defaultColor = Co
     try {
       return Color(int.parse("0x$hexString"));
     } catch (e) {
-      // Use debugPrint instead of print for Flutter apps
       debugPrint("Error parsing hex color '$hexString': $e");
       return defaultColor;
     }
@@ -31,25 +29,22 @@ class ChallengeDetailScreen extends StatelessWidget {
     super.key,
   });
 
-  // --- Helper function to show the dialog ---
+  // --- Helper function to show the "Why" dialog (Unchanged from previous responsive version) ---
   void _showWhyDialog(BuildContext context) {
-    // Define the teal color used in the dialog (adjust if needed)
-    const Color dialogPrimaryColor = Color(0xFF009688); // A standard Teal
-    const Color dialogTextColor = Color(0xFF616161); // Dark Grey for body text
-    final String whyDescription = challengeData['whyDescription'] ??
-        "Taking on this challenge helps build positive habits and improve well-being.";
+    const Color dialogPrimaryColor = Color(0xFF009688);
+    const Color dialogTextColor = Color(0xFF616161);
 
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) { // Use a different context name
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0), // Rounded corners
+            borderRadius: BorderRadius.circular(16.0),
           ),
           backgroundColor: Colors.white,
-          titlePadding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 10.0), // Adjust padding
+          titlePadding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 10.0),
           contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-          actionsPadding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 20.0), // Adjust padding
+          actionsPadding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 20.0),
           title: const Text(
             "Why am I doing this?",
             style: TextStyle(
@@ -58,7 +53,7 @@ class ChallengeDetailScreen extends StatelessWidget {
               fontSize: 20.0,
             ),
           ),
-          content: SingleChildScrollView( // In case text is long
+          content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +62,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                   challengeData['subtitle'] ?? 'Complete the challenge.',
                   style: const TextStyle(fontSize: 15.5, color: dialogTextColor, height: 1.4),
                 ),
-                const SizedBox(height: 15.0), // Space between paragraphs
+                const SizedBox(height: 15.0),
                 Text(
                   challengeData['whyDescription'] ??
                       "Taking on this challenge helps build positive habits and improve well-being.",
@@ -76,17 +71,17 @@ class ChallengeDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          actionsAlignment: MainAxisAlignment.center, // Center the action button
+          actionsAlignment: MainAxisAlignment.center,
           actions: <Widget>[
             TextButton(
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               ),
               child: const Row(
-                mainAxisSize: MainAxisSize.min, // Prevent Row from expanding
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.thumb_up_alt_outlined, color: dialogPrimaryColor, size: 20), // Thumbs up icon
-                  SizedBox(width: 8.0), // Space between icon and text
+                  Icon(Icons.thumb_up_alt_outlined, color: dialogPrimaryColor, size: 20),
+                  SizedBox(width: 8.0),
                   Text(
                     "OK, GOT IT",
                     style: TextStyle(
@@ -99,7 +94,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                 ],
               ),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
+                Navigator.of(dialogContext).pop();
               },
             ),
           ],
@@ -107,100 +102,92 @@ class ChallengeDetailScreen extends StatelessWidget {
       },
     );
   }
-  // --- End Helper function ---
 
+  // --- Helper function to show the "Download" dialog (Unchanged from previous responsive version) ---
   void _showDownloadDialog(BuildContext context) {
-    // Define the pink color used in the dialog
-    const Color dialogHeaderColor = Color(0xFFE91E63); // Material Pink
-    const Color dialogTitleColor = Color(0xFFD81B60); // Darker Pink for Title/Button
-    const Color dialogTextColor = Color(0xFF424242); // Dark Grey for body text
+    const Color dialogHeaderColor = Color(0xFFE91E63);
+    const Color dialogTitleColor = Color(0xFFD81B60);
+    const Color dialogTextColor = Color(0xFF424242);
 
     showDialog(
       context: context,
-      // barrierDismissible: false, // Optional: Prevent dismissing by tapping outside
       builder: (BuildContext dialogContext) {
-        // Use Dialog for more control over padding and shape than AlertDialog
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0), // Match previous dialog
-          ),
-          elevation: 0, // Optional: remove shadow if needed
-          backgroundColor: Colors.transparent, // Make dialog background transparent
-          child: ClipRRect( // Clip content to rounded shape
             borderRadius: BorderRadius.circular(16.0),
-            child: Container( // Use container to manage structure
-              color: Colors.white, // White background for the main content area
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16.0),
+            child: Container(
+              color: Colors.white,
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Fit content height
-                crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children horizontally
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- Header Section (Pink Background + Image) ---
                   Container(
-                    color: dialogHeaderColor, // Pink background
-                    padding: const EdgeInsets.symmetric(vertical: 25.0), // Padding above/below image
+                    color: dialogHeaderColor,
+                    padding: const EdgeInsets.symmetric(vertical: 25.0),
                     child: Center(
-                      // Placeholder for the cloud/map image
-                      // Replace with your actual Image.asset widget when available
                       child: Image.asset(
-                        'assets/images/download_placeholder.png', // <<<--- REPLACE WITH YOUR IMAGE PATH
-                        height: 80, // Adjust height as needed
+                        'assets/images/download_placeholder.png',
+                        height: 80,
                         errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.cloud_download_outlined, // Fallback Icon
+                          Icons.cloud_download_outlined,
                           size: 80,
                           color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-
-                  // --- Content Section (White Background) ---
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 20.0), // Padding for text and button
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start, // Align text left
-                      children: [
-                        const Text(
-                          "Almost there!",
-                          style: TextStyle(
-                            color: dialogTitleColor, // Use the pinkish color
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20.0,
-                          ),
-                        ),
-                        const SizedBox(height: 12.0),
-                        const Text(
-                          "Looks like we need to download this content before you begin your next adventure. We promise it'll be quick!",
-                          style: TextStyle(
-                            fontSize: 15.5,
-                            color: dialogTextColor,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 25.0), // Space before button
-
-                        // --- Download Button ---
-                        Align( // Align button to the right
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                    padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 20.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Almost there!",
+                            style: TextStyle(
+                              color: dialogTitleColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20.0,
                             ),
-                            child: const Text(
-                              "DOWNLOAD NOW",
-                              style: TextStyle(
-                                color: dialogTitleColor, // Use the pinkish color
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.0,
-                                letterSpacing: 0.5,
+                          ),
+                          const SizedBox(height: 12.0),
+                          const Text(
+                            "Looks like we need to download this content before you begin your next adventure. We promise it'll be quick!",
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              color: dialogTextColor,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 25.0),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                               ),
+                              child: const Text(
+                                "DOWNLOAD NOW",
+                                style: TextStyle(
+                                  color: dialogTitleColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.0,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              onPressed: () {
+                                _showStopChallengeDialog(context);
+                              },
                             ),
-                            onPressed: () {
-                              _showStopChallengeDialog(context);
-                            },
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -211,12 +198,11 @@ class ChallengeDetailScreen extends StatelessWidget {
       },
     );
   }
-  // --- End "Download" Dialog Helper ---
 
+  // --- Helper function to show the "Stop Challenge" dialog (Unchanged from previous responsive version) ---
   void _showStopChallengeDialog(BuildContext context) {
-    // Define the colors used in the dialog
-    const Color dialogTitleColor = Color(0xFF26A69A); // Tealish color for title/main button
-    const Color dialogTextColor = Color(0xFF424242); // Dark Grey for body text
+    const Color dialogTitleColor = Color(0xFF26A69A);
+    const Color dialogTextColor = Color(0xFF424242);
     const Color secondaryButtonColor = Color(0xFF757575);
     final String imageUrl = challengeData['imageUrl'] ?? '';
     final String title = challengeData['title'] ?? '';
@@ -234,103 +220,94 @@ class ChallengeDetailScreen extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16.0),
             child: Container(
-              color: Colors.white, // White background for the content area
+              color: Colors.white,
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Fit content height
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- Header Section (Image) ---
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 25.0), // Adjust padding as needed
+                    padding: const EdgeInsets.symmetric(vertical: 25.0),
                     child: Center(
-                      // Placeholder for the journey map image
-                      // Replace with your actual Image.asset widget
                       child: Image.asset(
-                        'assets/images/journey_map_placeholder.png', // <<<--- REPLACE WITH YOUR IMAGE PATH
-                        height: 80, // Adjust height as needed
+                        'assets/images/journey_map_placeholder.png',
+                        height: 80,
                         errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.map_outlined, // Fallback Icon
+                          Icons.map_outlined,
                           size: 80,
-                          color: Colors.grey, // Placeholder color
+                          color: Colors.grey,
                         ),
                       ),
                     ),
                   ),
-
-                  // --- Content Section (White Background) ---
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 24.0), // Adjust top padding
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end, // Align text left
-                      children: [
-                        const Text(
-                          "Ready to stop your challenge?",
-                          style: TextStyle(
-                            color: dialogTitleColor, // Use the tealish color
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20.0,
-                          ),
-                        ),
-                        const SizedBox(height: 12.0),
-                        const Text(
-                          "If you join a new challenge or journey, your current challenge will be reset. You can restart your current challenge from the beginning at any time.",
-                          style: TextStyle(
-                            fontSize: 15.5,
-                            color: dialogTextColor,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 25.0), // Space before buttons
-
-                        // --- Action Buttons ---
-                        // Use a Column aligned to the end for stacked right-aligned buttons
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), // Adjust padding
-                                // Add minimum size to ensure tap target area if needed
-                                // minimumSize: Size(88, 36),
-                              ),
-                              child: const Text(
-                                "STOP CHALLENGE",
-                                style: TextStyle(
-                                  color: dialogTitleColor, // Tealish color
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => ChallengeTimeScreen(imageUrl: imageUrl,title: title,objectId: objectId,)));
-                              },
+                    padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 24.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            "Ready to stop your challenge?",
+                            style: TextStyle(
+                              color: dialogTitleColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20.0,
                             ),
-                            const SizedBox(height: 8.0), // Space between buttons
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), // Adjust padding
-                              ),
-                              child: const Text(
-                                "DON'T SWITCH",
-                                style: TextStyle(
-                                  color: secondaryButtonColor, // Grey color
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              onPressed: () {
-                                // Just close the dialog
-                                debugPrint("Don't Switch tapped!");
-                                Navigator.of(dialogContext).pop();
-                                Navigator.of(context).pop();
-                              },
+                          ),
+                          const SizedBox(height: 12.0),
+                          const Text(
+                            "If you join a new challenge or journey, your current challenge will be reset. You can restart your current challenge from the beginning at any time.",
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              color: dialogTextColor,
+                              height: 1.4,
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(height: 25.0),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
+                                child: const Text(
+                                  "STOP CHALLENGE",
+                                  style: TextStyle(
+                                    color: dialogTitleColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.0,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChallengeTimeScreen(imageUrl: imageUrl,title: title,objectId: objectId,)));
+                                },
+                              ),
+                              const SizedBox(height: 8.0),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
+                                child: const Text(
+                                  "DON'T SWITCH",
+                                  style: TextStyle(
+                                    color: secondaryButtonColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.0,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  debugPrint("Don't Switch tapped!");
+                                  Navigator.of(dialogContext).pop();
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -346,9 +323,6 @@ class ChallengeDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String title = challengeData['title'] ?? 'Challenge Detail';
-    // Extract the 'why' description - provide a default if missing
-    final String whyDescription = challengeData['whyDescription'] ??
-        "Taking on this challenge helps build positive habits and improve well-being."; // Default Text
     final String description = challengeData['chapterDescription'] ?? 'No description available.';
     final String imageUrl = challengeData['imageUrl'] ?? '';
     final String goalSubtitle = challengeData['subtitle'] ?? 'Complete the challenge.';
@@ -369,7 +343,7 @@ class ChallengeDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // --- Top Section: Tag and Close Button ---
+            // --- Top Section: Tag and Close Button --- (Stays fixed at the top)
             Padding(
               padding: const EdgeInsets.only(top: 15.0, left: 20.0, right: 15.0),
               child: SizedBox(
@@ -400,31 +374,44 @@ class ChallengeDetailScreen extends StatelessWidget {
                 ]),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Original spacing
 
-            // --- Title and Description ---
+            // --- Title --- (Stays fixed below top section)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: titleTextColor, height: 1.3)),
-                  const SizedBox(height: 12.0),
-                  Text(description, style: TextStyle(fontSize: 16, color: bodyTextColor, height: 1.4)),
-                ],
+              child: Text( // Title text directly
+                title,
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: titleTextColor, height: 1.3),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12.0), // Original spacing between title and description text
+
+            // --- SCROLLABLE Description Section ---
+            Expanded( // Allows this section to take available vertical space and scroll
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Horizontal padding for description
+                child: Text(
+                  description,
+                  style: TextStyle(fontSize: 16, color: bodyTextColor, height: 1.4),
+                ),
+              ),
+            ),
+            // This SizedBox was originally after the Padding that contained both Title and Description.
+            // It provides space before the image or the bottom bar if no image.
             const Spacer(),
-            // --- Image (Conditional Display) ---
-            if(hasValidImageUrl) // Use if statement for cleaner conditional rendering
+
+
+            // --- Image (Conditional Display) --- (Stays fixed below scrollable description)
+            if (hasValidImageUrl)
               Padding(
-                padding: const EdgeInsets.only(top: 10.0), // Add some space if image is present
+                // The SizedBox(height: 20.0) above provides the primary spacing.
+                // The original Padding(top: 10.0) for the image adds to this.
+                padding: const EdgeInsets.only(top: 10.0),
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
-                  height: 200, // Adjust height as needed
+                  height: 200, // Fixed height as per original
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
                     return Container(
@@ -448,24 +435,21 @@ class ChallengeDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+            // If no image, the SizedBox(height: 20.0) above provides spacing before the bottom container.
+            // The Expanded widget for the description handles pushing the bottom container down.
 
-            // Use Spacer to push the bottom content down
-
-
-
-            // --- Fixed White Bottom Container ---
+            // --- Fixed White Bottom Container --- (Stays fixed at the screen bottom)
             Container(
               color: Colors.white,
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20.0, 30.0, 20.0, 20.0), // Adjust bottom padding if needed
+              padding: const EdgeInsets.fromLTRB(20.0, 30.0, 20.0, 20.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Goal Section ---
                   Row(
                     children: [
-                      Icon(Icons.flag_outlined, color: primaryActionColor, size: 22), // Changed to outlined flag
+                      Icon(Icons.flag_outlined, color: primaryActionColor, size: 22),
                       const SizedBox(width: 8.0),
                       Text("Goal", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: primaryActionColor)),
                     ],
@@ -476,8 +460,6 @@ class ChallengeDetailScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 16, color: bodyTextColor.withOpacity(0.9), height: 1.4),
                   ),
                   const SizedBox(height: 30.0),
-
-                  // --- WHY Button ---
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: secondaryButtonBg,
@@ -485,10 +467,9 @@ class ChallengeDetailScreen extends StatelessWidget {
                       elevation: 0,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                      padding: const EdgeInsets.symmetric(vertical: 12), // Ensure consistent padding
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    // Call the dialog function on press
-                    onPressed: () => _showWhyDialog(context), // Pass the build context
+                    onPressed: () => _showWhyDialog(context),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -507,8 +488,6 @@ class ChallengeDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15.0),
-
-                  // --- Begin Button ---
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryActionColor,
@@ -516,9 +495,9 @@ class ChallengeDetailScreen extends StatelessWidget {
                       elevation: 1,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                      padding: const EdgeInsets.symmetric(vertical: 12), // Ensure consistent padding
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    onPressed: () => _showDownloadDialog(context), // Use debugPrint
+                    onPressed: () => _showDownloadDialog(context),
                     child: const Text("BEGIN THE CHALLENGE!",
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.5)),
                   ),
