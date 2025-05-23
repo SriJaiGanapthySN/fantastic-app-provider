@@ -1,3 +1,4 @@
+import 'package:fantastic_app_riverpod/screens/auth_page.dart';
 import 'package:fantastic_app_riverpod/screens/ritual/addrotinelistscreen.dart';
 import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
@@ -25,18 +26,46 @@ final dailyTasksStreamProvider =
 });
 
 class RitualScreen extends ConsumerWidget {
-  const RitualScreen({super.key});
+  const RitualScreen({super.key, required this.currentUserEmail});
+
+  final String currentUserEmail;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Get email from auth provider or use fallback for development
-    final userEmail = ref.watch(userEmailProvider);
-    final fallbackEmail = ref.read(fallbackEmailProvider);
-    final effectiveEmail = userEmail.isNotEmpty ? userEmail : fallbackEmail;
+    // Get the authenticated user's email - prefer passed email if available
+    final providedEmail = ref.watch(userEmailProvider);
 
-    print('RitualScreen using email: $effectiveEmail');
+    // Use provided email, with extra validation to prevent empty strings
+    final email =
+        currentUserEmail.isNotEmpty ? currentUserEmail : providedEmail;
 
-    final tasksAsyncValue = ref.watch(dailyTasksStreamProvider(effectiveEmail));
+    // If no valid email is available, show appropriate UI
+    if (email.isEmpty) {
+      print('No valid email available in RitualScreen');
+      // Consider showing a message or redirecting to login
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Please sign in to access your rituals'),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to login screen
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) {
+                  return const AuthPage();
+                }));
+              },
+              child: Text('Sign In'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    print('RitualScreen using email: $email');
+
     final currentTaskIndex = ref.watch(currentTaskIndexProvider);
     final isTaskSnoozed = ref.watch(isTaskSnoozedProvider);
     final isTaskSkipped = ref.watch(isTaskSkippedProvider);
@@ -65,7 +94,9 @@ class RitualScreen extends ConsumerWidget {
             children: [
               const SizedBox(height: 64),
               const AlarmWidget(),
-              const HabitList(),
+              HabitList(
+                email: email, // Use the validated email
+              ),
               Padding(
                 padding:
                     const EdgeInsets.only(bottom: 112.0, left: 16, right: 16),
@@ -84,7 +115,9 @@ class RitualScreen extends ConsumerWidget {
                     GestureDetector(
                       onTap: () {
                         // Get the list of habits first
-                        TaskServices().getUserHabits(userEmail).then((habits) {
+                        TaskServices()
+                            .getUserHabits(email) // Use validated email
+                            .then((habits) {
                           int firstUncompletedIndex = -1;
 
                           // Find the first uncompleted habit
@@ -101,7 +134,7 @@ class RitualScreen extends ConsumerWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => habitPlay(
-                                email: "test03@gmail.com",
+                                email: email, // Use validated email
                                 startIndex: firstUncompletedIndex >= 0
                                     ? firstUncompletedIndex
                                     : 0,

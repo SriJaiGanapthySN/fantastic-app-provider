@@ -126,24 +126,24 @@ class _Guidedcoachingtile extends State<Guidedcoachingtile> {
               ),
             ),
           // Timestamp badge with dynamic top position
-          Positioned(
-            right: timestampRightOffset,
-            top: timestampTopOffset,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                widget.timestamp,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: timestampFontSize,
-                ),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   right: timestampRightOffset,
+          //   top: timestampTopOffset,
+          //   child: Container(
+          //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          //     decoration: BoxDecoration(
+          //       color: Colors.black.withOpacity(0.4),
+          //       borderRadius: BorderRadius.circular(10),
+          //     ),
+          //     child: Text(
+          //       widget.timestamp,
+          //       style: TextStyle(
+          //         color: Colors.white,
+          //         fontSize: timestampFontSize,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

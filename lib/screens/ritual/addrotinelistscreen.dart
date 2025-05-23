@@ -24,19 +24,24 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
   int taskCount = 0; // Total habits added by the user
   List<Map<String, dynamic>> allHabits = []; // All habits from the database
   List<Map<String, dynamic>> sublist = []; // Habits added by the user
+  late String safeEmail; // Safe email that's never empty
 
   @override
   void initState() {
     super.initState();
+    // Ensure we have a valid email
+    safeEmail = widget.email;
+    print('AddRoutineListScreen: Using email: $safeEmail');
     fetchData(); // Fetch data on initialization
   }
 
   // Fetch all habits and user habits
   Future<void> fetchData() async {
     try {
+      print('Fetching habits for email: $safeEmail'); // Debug log
       final habits = await TaskServices().getHabits(); // Get all habits
       final userHabits =
-          await TaskServices().getUserHabits(widget.email); // Get user habits
+          await TaskServices().getUserHabits(safeEmail); // Get user habits
 
       setState(() {
         allHabits = habits;
@@ -58,6 +63,8 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
 
   // Toggle habit addition/removal
   void toggleHabit(String habitId) {
+    print('Toggle habit $habitId for email: $safeEmail'); // Debug log
+
     if (isHabitAdded(habitId)) {
       // Remove habit
       setState(() {
@@ -65,7 +72,7 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
         taskCount = sublist.length;
       });
 
-      TaskServices().removeHabit(habitId, widget.email).then((_) {
+      TaskServices().removeHabit(habitId, safeEmail).then((_) {
         widget.onHabitUpdate();
       }).catchError((error) {
         setState(() {
@@ -83,7 +90,7 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
         taskCount = sublist.length;
       });
 
-      TaskServices().addHabits(widget.email, habitId).then((_) {
+      TaskServices().addHabits(safeEmail, habitId).then((_) {
         widget.onHabitUpdate();
       }).catchError((error) {
         setState(() {

@@ -60,18 +60,37 @@ class TaskServices {
 
   Future<List<Map<String, dynamic>>> getUserHabits(String email) async {
     try {
-      print('TaskServices: Fetching habits for user: $email');
-      QuerySnapshot snapshot = await _firestore
-          .collection('testers')
-          .doc(email)
-          .collection('habits')
-          .get();
+      // Validate email
+      if (email == null || email.trim().isEmpty) {
+        print('TaskServices: Invalid email provided: "$email"');
+        return []; // Return empty list for invalid email
+      }
 
-      print('TaskServices: Got ${snapshot.docs.length} habit documents');
+      print('TaskServices: Fetching habits for user: $email');
+
+      // Check if the tester document exists, if not create it
+      DocumentSnapshot testerDoc =
+          await _firestore.collection('testers').doc(email).get();
+      if (!testerDoc.exists) {
+        print('TaskServices: Creating new tester document for email: $email');
+        await _firestore.collection('testers').doc(email).set({
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Get habits collection reference
+      CollectionReference habitsRef =
+          _firestore.collection('testers').doc(email).collection('habits');
+
+      // Check if habits collection exists and has documents
+      QuerySnapshot habitsSnapshot = await habitsRef.get();
+
+      print('TaskServices: Got ${habitsSnapshot.docs.length} habit documents');
 
       // Convert the snapshot to a List of Maps
       List<Map<String, dynamic>> habits = [];
-      for (var doc in snapshot.docs) {
+      for (var doc in habitsSnapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         // Ensure objectId is available
         if (!data.containsKey('objectId') && doc.id != null) {
@@ -91,65 +110,130 @@ class TaskServices {
 
   Future<void> addHabits(String email, String id) async {
     try {
+      // Validate email and id
+      if (email == null || email.trim().isEmpty) {
+        print('TaskServices: Cannot add habit - Invalid email: "$email"');
+        return;
+      }
+
+      if (id == null || id.trim().isEmpty) {
+        print('TaskServices: Cannot add habit - Invalid habit ID: "$id"');
+        return;
+      }
+
+      print('TaskServices: Adding habit $id for user: $email');
+
       // Reference to the document path '/skillGoal/{id}'
-      final skillDocRef = _firestore.collection('habits').doc(id);
-      // await skillDocRef.update({'isReleased': false});
+      final habitDocRef = _firestore.collection('habits').doc(id);
+
       // Fetch the document snapshot
-      final docSnapshot = await skillDocRef.get();
+      final docSnapshot = await habitDocRef.get();
 
       // Check if the document exists
       if (docSnapshot.exists) {
         // Get the document data
-        final skillData = docSnapshot.data() as Map<String, dynamic>;
+        final habitData = docSnapshot.data() as Map<String, dynamic>;
 
-        // Reference to the target path '/testers/{email}/skillGoal/{id}'
-        final userSkillLevelPath =
+        // Check if tester document exists, if not create it
+        DocumentSnapshot testerDoc =
+            await _firestore.collection('testers').doc(email).get();
+        if (!testerDoc.exists) {
+          print('TaskServices: Creating new tester document for email: $email');
+          await _firestore.collection('testers').doc(email).set({
+            'email': email,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Reference to the target path '/testers/{email}/habits/{id}'
+        final userHabitsRef =
             _firestore.collection('testers').doc(email).collection('habits');
 
-        // Add the document data to the target path
-
-        final updatedSkillData = {
-          ...skillData,
+        // Add the document data to the target path with updated fields
+        final updatedHabitData = {
+          ...habitData,
           'isCompleted': false,
         };
-        await userSkillLevelPath.doc(id).set(updatedSkillData);
+        await userHabitsRef.doc(id).set(updatedHabitData);
 
-        print('Document $id added to /testers/$email/habit');
+        print('Habit $id added to /testers/$email/habits');
       } else {
-        print('Document with id $id does not exist in /habit.');
+        print('Habit with id $id does not exist in /habits collection.');
       }
     } catch (e) {
-      print('Error fetching and adding skills: $e');
+      print('Error adding habit: $e');
     }
   }
 
   Future<void> removeHabit(String id, String userEmail) async {
-    await _firestore
-        .collection('testers')
-        .doc(userEmail)
-        .collection('habits')
-        .where('objectId', isEqualTo: id)
-        .get()
-        .then((value) {
-      for (var element in value.docs) {
-        element.reference.delete();
+    try {
+      // Validate email and id
+      if (userEmail == null || userEmail.trim().isEmpty) {
+        print(
+            'TaskServices: Cannot remove habit - Invalid email: "$userEmail"');
+        return;
       }
-    });
+
+      if (id == null || id.trim().isEmpty) {
+        print('TaskServices: Cannot remove habit - Invalid habit ID: "$id"');
+        return;
+      }
+
+      print('TaskServices: Removing habit $id for user: $userEmail');
+
+      await _firestore
+          .collection('testers')
+          .doc(userEmail)
+          .collection('habits')
+          .where('objectId', isEqualTo: id)
+          .get()
+          .then((value) {
+        for (var element in value.docs) {
+          element.reference.delete();
+        }
+      });
+
+      print(
+          'TaskServices: Successfully removed habit $id for user: $userEmail');
+    } catch (e) {
+      print('TaskServices: Error removing habit: $e');
+    }
   }
 
   Future<void> updateHabitStatus(
       bool iscompleted, String id, String userEmail) async {
-    await FirebaseFirestore.instance
-        .collection('testers')
-        .doc(userEmail)
-        .collection('habits')
-        .where('objectId', isEqualTo: id)
-        .get()
-        .then((value) {
-      for (var element in value.docs) {
-        element.reference.update({'isCompleted': iscompleted});
+    try {
+      // Validate parameters
+      if (userEmail == null || userEmail.trim().isEmpty) {
+        print(
+            'TaskServices: Cannot update habit - Invalid email: "$userEmail"');
+        return;
       }
-    });
+
+      if (id == null || id.trim().isEmpty) {
+        print('TaskServices: Cannot update habit - Invalid habit ID: "$id"');
+        return;
+      }
+
+      print(
+          'TaskServices: Updating habit $id status to $iscompleted for user: $userEmail');
+
+      await FirebaseFirestore.instance
+          .collection('testers')
+          .doc(userEmail)
+          .collection('habits')
+          .where('objectId', isEqualTo: id)
+          .get()
+          .then((value) {
+        for (var element in value.docs) {
+          element.reference.update({'isCompleted': iscompleted});
+        }
+      });
+
+      print('TaskServices: Successfully updated habit status');
+    } catch (e) {
+      print('TaskServices: Error updating habit status: $e');
+    }
   }
 
   Stream<List<DocumentSnapshot>> getAddTasks(String userEmail) async* {

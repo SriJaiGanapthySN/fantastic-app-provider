@@ -9,7 +9,9 @@ import '../utils/blur_container.dart';
 import '../services/task_services.dart';
 
 class HabitList extends ConsumerStatefulWidget {
-  const HabitList({super.key});
+  const HabitList({super.key, required this.email});
+
+  final String email;
 
   @override
   ConsumerState<HabitList> createState() => _HabitListState();
@@ -17,25 +19,37 @@ class HabitList extends ConsumerStatefulWidget {
 
 class _HabitListState extends ConsumerState<HabitList> {
   final int initialPage = 3;
-  final TaskServices _taskServices =
-      TaskServices(); // Create TaskServices instance
+  final TaskServices _taskServices = TaskServices();
   List<Map<String, dynamic>> _habits = [];
   bool _isLoading = true;
+  late String email;
 
   @override
   void initState() {
     super.initState();
+    email = widget.email;
+
+    if (email.isEmpty) {
+      print('Warning: Empty email provided to HabitList');
+      // Consider adding a fallback behavior here
+    } else {
+      print('HabitList initialized with email: $email');
+    }
+
     _fetchHabits();
   }
 
   Future<void> _fetchHabits() async {
     try {
-      // Replace with actual user email from your authentication system
-      // You might want to get this from a provider or auth service
-      final userEmail =
-          "test03@gmail.com"; // Example email, replace with actual user email
+      if (email.isEmpty) {
+        setState(() {
+          _habits = [];
+          _isLoading = false;
+        });
+        return;
+      }
 
-      final habits = await _taskServices.getUserHabits(userEmail);
+      final habits = await _taskServices.getUserHabits(email);
       setState(() {
         _habits = habits;
         _isLoading = false;
@@ -49,7 +63,7 @@ class _HabitListState extends ConsumerState<HabitList> {
   }
 
   Future<void> _loadHabits() async {
-    final userHabits = await TaskServices().getUserHabits("test03@gmail.com");
+    final userHabits = await TaskServices().getUserHabits(email);
     setState(() {
       _habits = userHabits;
     });
@@ -61,6 +75,16 @@ class _HabitListState extends ConsumerState<HabitList> {
     // DO NOT REMOVE currentDate
     // ignore: unused_local_variable
     final currentDate = ref.watch(dateProvider);
+
+    // If no valid email, show appropriate message
+    if (email.isEmpty) {
+      return Center(
+        child: Text(
+          'Please sign in to view your habits',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -139,7 +163,7 @@ class _HabitListState extends ConsumerState<HabitList> {
                                       return Addrotinelistscreen(
                                           habits: _habits,
                                           updateHabits: _habits,
-                                          email: "test03@gmail.com",
+                                          email: widget.email,
                                           onHabitUpdate: _loadHabits);
                                     }));
                                   },
@@ -234,9 +258,6 @@ class _HabitListState extends ConsumerState<HabitList> {
                                               onChanged:
                                                   (bool? newValue) async {
                                                 if (newValue != null) {
-                                                  final userEmail =
-                                                      "test03@gmail.com";
-
                                                   if (!isCompleted) {
                                                     // Navigate to habitPlay with the specific habit index
                                                     Navigator.of(context)
@@ -244,7 +265,8 @@ class _HabitListState extends ConsumerState<HabitList> {
                                                       MaterialPageRoute(
                                                         builder: (context) =>
                                                             habitPlay(
-                                                          email: userEmail,
+                                                          email:
+                                                              email, // Use safe email
                                                           startIndex:
                                                               habitIndex, // Pass the specific habit index
                                                         ),
@@ -260,7 +282,7 @@ class _HabitListState extends ConsumerState<HabitList> {
                                                         .updateHabitStatus(
                                                             false,
                                                             objectId,
-                                                            userEmail);
+                                                            email); // Use safe email
                                                     _fetchHabits();
                                                   }
                                                 }

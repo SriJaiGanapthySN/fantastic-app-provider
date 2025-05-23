@@ -208,7 +208,7 @@ class _VerticalStackedCardScreenState extends State<VerticalStackedCardScreen> {
                             image: exercise.containsKey('duration')
                                 ? NetworkImage(exercise['imageUrl']!)
                                 : NetworkImage(exercise['bigImageUrl']!),
-                            fit: BoxFit.cover,
+                            fit: BoxFit.fill,
                           ),
                         ),
                         child: Stack(

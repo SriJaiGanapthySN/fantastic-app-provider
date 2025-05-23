@@ -39,8 +39,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final pageController = ref.watch(pageControllerProvider);
-    // Use the new currentEmailProvider to get the email
-    final userEmail = ref.watch(auth.currentEmailProvider);
+    // Use the utility function to get the current user email
+    final userEmail = auth.getCurrentUserEmail(ref);
+    
+    // Log the email being used
+    print('MainScreen: Using email: $userEmail for all screens');
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -54,9 +57,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           }
         },
         children: [
-          ChatScreen(email: userEmail),
-          RitualScreen(),
-          Discoverscreen(email: userEmail),
+          ChatScreen(email: userEmail),  // Pass email to ChatScreen
+          RitualScreen(currentUserEmail: userEmail),  // Pass email to RitualScreen
+          Discoverscreen(email: userEmail),  // Pass email to DiscoverScreen
         ],
       ),
       floatingActionButton: const Padding(

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/app_user.dart';
 import '../repos/auth_repo.dart';
 import '../repos/firebase_auth_repo.dart';
@@ -27,6 +28,7 @@ class AuthState {
 // AuthNotifier extends StateNotifier to manage authentication
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepo authRepo;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   AuthNotifier({required this.authRepo}) : super(const AuthState()) {
     checkAuth();
@@ -47,6 +49,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await authRepo.loginWithEmailAndPassword(email, password);
       state = state.copyWith(user: user, isLoading: false);
+      // Removed the call to _addUserToTesters(user) here
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
@@ -64,12 +67,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signInWithGoogle() async {
-    state = state.copyWith(isLoading: true);
+    state =
+        state.copyWith(isLoading: true, error: null); // Clear previous errors
     try {
+      print('Starting Google Sign-In process');
       final user = await authRepo.signInWithGoogle();
-      state = state.copyWith(user: user, isLoading: false);
+      if (user != null) {
+        print('Google Sign-In successful');
+        state = state.copyWith(user: user, isLoading: false);
+      } else {
+        print('Google Sign-In returned null user');
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Google Sign-In failed: No user data returned',
+        );
+      }
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      print('Google Sign-In error: ${e.toString()}');
+      state = state.copyWith(
+        error: 'Google Sign-In failed: ${e.toString()}',
+        isLoading: false,
+      );
     }
   }
 
@@ -119,14 +137,22 @@ final currentUserProvider = FutureProvider<AppUser?>((ref) async {
   return authRepo.getCurrentUser();
 });
 
-// Provider for the current user's email
+// Provider for the current user's email - improved to handle authentication state
 final userEmailProvider = Provider<String>((ref) {
   final userAsync = ref.watch(currentUserProvider);
 
   return userAsync.when(
     data: (user) {
-      final email = user?.email ?? '';
-      print('Current user email from provider: $email');
+      if (user == null) {
+        print('Warning: No authenticated user found');
+        return '';
+      }
+      final email = user.email ?? '';
+      if (email.isEmpty) {
+        print('Warning: Authenticated user has empty email');
+      } else {
+        print('Current user email from provider: $email');
+      }
       return email;
     },
     loading: () {
@@ -140,19 +166,6 @@ final userEmailProvider = Provider<String>((ref) {
   );
 });
 
-// Fallback email for development
-final fallbackEmailProvider = Provider<String>((ref) => "test03@gmail.com");
-
-// Provider that never returns an empty email
-final safeUserEmailProvider = Provider<String>((ref) {
-  final userEmail = ref.watch(userEmailProvider);
-  final fallbackEmail = ref.watch(fallbackEmailProvider);
-
-  final email = userEmail.isNotEmpty ? userEmail : fallbackEmail;
-  print('Safe email provider returning: $email');
-  return email;
-});
-
 // Email Storage class to store and provide the current email
 class EmailStorage {
   final String _email;
@@ -161,11 +174,14 @@ class EmailStorage {
 
   // Getter to retrieve the stored email
   String get email => _email;
+
+  // Check if email is valid and available
+  bool get hasValidEmail => _email.isNotEmpty;
 }
 
-// Provider for EmailStorage that uses safeUserEmailProvider
+// Provider for EmailStorage that uses userEmailProvider directly
 final emailStorageProvider = Provider<EmailStorage>((ref) {
-  final email = ref.watch(safeUserEmailProvider);
+  final email = ref.watch(userEmailProvider);
   return EmailStorage(email);
 });
 
@@ -173,3 +189,13 @@ final emailStorageProvider = Provider<EmailStorage>((ref) {
 final currentEmailProvider = Provider<String>((ref) {
   return ref.watch(emailStorageProvider).email;
 });
+
+// Utility function to check if user has valid email
+final hasValidEmailProvider = Provider<bool>((ref) {
+  return ref.watch(emailStorageProvider).hasValidEmail;
+});
+
+// Utility function to get current user email from anywhere
+String getCurrentUserEmail(WidgetRef ref) {
+  return ref.read(currentEmailProvider);
+}

@@ -24,7 +24,7 @@ class BottomNavBar extends ConsumerWidget {
           _buildNavButton(
               context, 'assets/icons/route.svg', 1, selectedIndex, ref),
           _buildNavButton(
-              context, 'assets/icons/search.svg', 3, selectedIndex, ref),
+              context, 'assets/icons/search.svg', 2, selectedIndex, ref),
         ],
       ),
     );
@@ -47,8 +47,8 @@ class BottomNavBar extends ConsumerWidget {
         blur: 8,
         borderRadius: 54.71,
         color: isSelected ? Colors.white : Colors.black.withAlpha(51),
-        width: 64,
-        height: 64,
+        width: 50,
+        height: 50,
         child: Center(
           child: SvgPicture.asset(
             iconPath,

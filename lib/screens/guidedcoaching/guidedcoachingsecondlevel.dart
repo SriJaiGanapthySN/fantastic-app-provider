@@ -175,8 +175,7 @@ class _GuidedcoachingsecondlevelState extends State<Guidedcoachingsecondlevel> {
                                                 'assets/images/default.jpg', // Fallback image
                                             title:
                                                 training['name'] ?? 'No Title',
-                                            timestamp:
-                                                '${5 ?? 'N/A'} min', // Duration from data
+                                            timestamp: '', // Duration from data
                                             color: training["color"],
                                             subtitle: training["subtitle"],
                                             onTap: () {
