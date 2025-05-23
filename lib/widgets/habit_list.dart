@@ -7,7 +7,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/_providers.dart';
 import '../utils/blur_container.dart';
 import '../services/task_services.dart';
-import '../screens/ritual/taskreveal.dart'; // Add import for task reveal screen
 
 class HabitList extends ConsumerStatefulWidget {
   const HabitList({super.key});

@@ -152,3 +152,24 @@ final safeUserEmailProvider = Provider<String>((ref) {
   print('Safe email provider returning: $email');
   return email;
 });
+
+// Email Storage class to store and provide the current email
+class EmailStorage {
+  final String _email;
+
+  EmailStorage(this._email);
+
+  // Getter to retrieve the stored email
+  String get email => _email;
+}
+
+// Provider for EmailStorage that uses safeUserEmailProvider
+final emailStorageProvider = Provider<EmailStorage>((ref) {
+  final email = ref.watch(safeUserEmailProvider);
+  return EmailStorage(email);
+});
+
+// Convenience function to get email as a string
+final currentEmailProvider = Provider<String>((ref) {
+  return ref.watch(emailStorageProvider).email;
+});

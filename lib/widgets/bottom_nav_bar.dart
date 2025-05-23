@@ -15,7 +15,7 @@ class BottomNavBar extends ConsumerWidget {
     return BlurContainer(
       blur: 17.51,
       borderRadius: 54.71,
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

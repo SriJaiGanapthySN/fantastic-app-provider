@@ -39,7 +39,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final pageController = ref.watch(pageControllerProvider);
-    final userEmail = ref.watch(auth.userEmailProvider);
+    // Use the new currentEmailProvider to get the email
+    final userEmail = ref.watch(auth.currentEmailProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -53,9 +54,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           }
         },
         children: [
-          ChatScreen(email: "test03@gmail.com"),
-          const RitualScreen(),
-          Discoverscreen(email: "test03@gmail.com"),
+          ChatScreen(email: userEmail),
+          RitualScreen(),
+          Discoverscreen(email: userEmail),
         ],
       ),
       floatingActionButton: const Padding(
