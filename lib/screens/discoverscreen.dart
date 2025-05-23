@@ -2,6 +2,7 @@
 
 import 'package:fantastic_app_riverpod/OnBoarding/Screens/onBoard1.dart';
 import 'package:fantastic_app_riverpod/profile/profile.dart';
+import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/providers/discover_provider.dart';
 import 'package:fantastic_app_riverpod/setting/settingPage.dart';
 import 'package:fantastic_app_riverpod/subChallenges/SubChallengeScreen.dart';
@@ -48,8 +49,6 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
 
   // Handle button press using the provider
   Future<void> _handleButtonPress(int index) async {
-
-
     if (index == 0) {
       ref.read(discoverUIStateProvider.notifier).selectButton(index);
       if (ref.read(journeysProvider).journeys.isEmpty) {
@@ -66,14 +65,12 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
         ref.read(activitiesProvider.notifier).fetchCategories();
       }
     } else if (index == 3) {
-
       final challenges = ref.read(challengesProvider).challenges;
 
       if (challenges.isEmpty) {
         await ref.read(challengesProvider.notifier).fetchChallenges();
         final updatedChallenges = ref.read(challengesProvider).challenges;
         ref.read(journeysProvider.notifier).fetchJourneys();
-
 
         Navigator.push(
           context,
@@ -88,7 +85,7 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
           ref.read(journeysProvider.notifier).fetchJourneys();
         }
       } else {
-          ref.read(journeysProvider.notifier).fetchJourneys();
+        ref.read(journeysProvider.notifier).fetchJourneys();
 
         Navigator.push(
           context,
@@ -96,7 +93,7 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
             builder: (context) => ChallengeScreen(cardData: challenges),
           ),
         );
-          ref.read(discoverUIStateProvider.notifier).selectButton(0);
+        ref.read(discoverUIStateProvider.notifier).selectButton(0);
       }
       if (ref.read(journeysProvider).journeys.isEmpty) {
         ref.read(journeysProvider.notifier).fetchJourneys();
@@ -212,6 +209,32 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                   );
                 },
               ),
+              ListTile(
+                leading: Icon(Icons.exit_to_app, color: Colors.indigo),
+                title: Text('Logout'),
+                onTap: () async {
+                  // Clear all user-specific data
+                  await ref.read(authProvider.notifier).logout();
+
+                  // Force a refresh of providers that may cache user data
+                  ref.invalidate(userEmailProvider);
+                  ref.invalidate(currentEmailProvider);
+                  ref.invalidate(emailStorageProvider);
+
+                  // Reset any other user-specific providers
+                  ref.invalidate(journeysProvider);
+                  ref.invalidate(coachingProvider);
+                  ref.invalidate(activitiesProvider);
+                  ref.invalidate(challengesProvider);
+
+                  // Close the drawer and navigate to login screen
+                  Navigator.pop(context);
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/', // Replace with your login route
+                    (route) => false,
+                  );
+                },
+              ),
               Divider(),
             ],
           ),
@@ -236,7 +259,9 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
               children: [
                 Discoverbuttons(
                     handleButtonPress: _handleButtonPress,
-                    selectedButtonIndex: uiState.selectedButtonIndex==3?0:uiState.selectedButtonIndex),
+                    selectedButtonIndex: uiState.selectedButtonIndex == 3
+                        ? 0
+                        : uiState.selectedButtonIndex),
                 SizedBox(height: screenHeight * 0.09),
                 Discoverstrip(currentData: currentData, email: widget.email)
               ],

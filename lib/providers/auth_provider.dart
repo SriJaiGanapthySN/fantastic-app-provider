@@ -111,8 +111,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await authRepo.logout();
-    state = const AuthState();
+    state = state.copyWith(isLoading: true);
+    try {
+      await authRepo.logout();
+
+      // Ensure user state is completely reset
+      state = const AuthState();
+
+      print('User successfully logged out');
+    } catch (e) {
+      print('Error during logout: ${e.toString()}');
+      // Still reset the state even if there's an error
+      state = const AuthState();
+    }
   }
 }
 

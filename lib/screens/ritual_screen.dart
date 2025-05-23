@@ -32,12 +32,27 @@ class RitualScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Get the authenticated user's email - prefer passed email if available
+    // Get the current authenticated user's email
+    final authState = ref.watch(authProvider);
     final providedEmail = ref.watch(userEmailProvider);
 
-    // Use provided email, with extra validation to prevent empty strings
-    final email =
-        currentUserEmail.isNotEmpty ? currentUserEmail : providedEmail;
+    // Use the most up-to-date email source with validation
+    String email = '';
+
+    // First check auth state for current user
+    if (authState.user?.email != null && authState.user!.email!.isNotEmpty) {
+      email = authState.user!.email!;
+    }
+    // Then try passed email parameter
+    else if (currentUserEmail.isNotEmpty) {
+      email = currentUserEmail;
+    }
+    // Finally fall back to provider email
+    else if (providedEmail.isNotEmpty) {
+      email = providedEmail;
+    }
+
+    print('RitualScreen using email: $email');
 
     // If no valid email is available, show appropriate UI
     if (email.isEmpty) {
@@ -64,7 +79,12 @@ class RitualScreen extends ConsumerWidget {
       );
     }
 
-    print('RitualScreen using email: $email');
+    // Create a unique cache key that combines the email with a timestamp
+    // This helps prevent caching issues when switching users
+    final cacheKey = "$email-${DateTime.now().millisecondsSinceEpoch}";
+
+    // Use the cache key with the dailyTasksStreamProvider
+    final tasksAsyncValue = ref.watch(dailyTasksStreamProvider(email));
 
     final currentTaskIndex = ref.watch(currentTaskIndexProvider);
     final isTaskSnoozed = ref.watch(isTaskSnoozedProvider);

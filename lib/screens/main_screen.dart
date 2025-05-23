@@ -41,7 +41,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final pageController = ref.watch(pageControllerProvider);
     // Use the utility function to get the current user email
     final userEmail = auth.getCurrentUserEmail(ref);
-    
+
     // Log the email being used
     print('MainScreen: Using email: $userEmail for all screens');
 
@@ -57,9 +57,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           }
         },
         children: [
-          ChatScreen(email: userEmail),  // Pass email to ChatScreen
-          RitualScreen(currentUserEmail: userEmail),  // Pass email to RitualScreen
-          Discoverscreen(email: userEmail),  // Pass email to DiscoverScreen
+          ChatScreen(email: userEmail), // Pass email to ChatScreen
+          RitualScreen(
+              currentUserEmail: userEmail), // Pass email to RitualScreen
+          Discoverscreen(email: userEmail), // Pass email to DiscoverScreen
         ],
       ),
       floatingActionButton: const Padding(
