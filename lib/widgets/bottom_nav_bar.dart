@@ -15,7 +15,6 @@ class BottomNavBar extends ConsumerWidget {
     return BlurContainer(
       blur: 17.51,
       borderRadius: 54.71,
-      padding: const EdgeInsets.all(2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -44,7 +43,9 @@ class BottomNavBar extends ConsumerWidget {
     final iconSize = buttonSize * 0.48; // 48% of button size
     final blurValue = screenWidth * 0.02; // 2% of screen width
     final borderRadiusValue = buttonSize * 0.75; // 75% of button size
-    final alphaValue = (screenWidth * 0.13).clamp(40, 80).toInt(); // Responsive alpha with min/max bounds
+    final alphaValue = (screenWidth * 0.13)
+        .clamp(40, 80)
+        .toInt(); // Responsive alpha with min/max bounds
 
     return GestureDetector(
       onTap: () {

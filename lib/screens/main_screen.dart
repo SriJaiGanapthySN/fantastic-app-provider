@@ -64,7 +64,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ],
       ),
       floatingActionButton: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        padding: EdgeInsets.symmetric(horizontal: 25.0),
         child: BottomNavBar(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
