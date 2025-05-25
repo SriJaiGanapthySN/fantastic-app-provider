@@ -35,6 +35,17 @@ class BottomNavBar extends ConsumerWidget {
     final isSelected = index == selectedIndex;
     final pageController = ref.read(pageControllerProvider);
 
+    // Get screen dimensions for responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Make all measurements responsive
+    final buttonSize = screenWidth * 0.13; // 13% of screen width
+    final iconSize = buttonSize * 0.48; // 48% of button size
+    final blurValue = screenWidth * 0.02; // 2% of screen width
+    final borderRadiusValue = buttonSize * 0.75; // 75% of button size
+    final alphaValue = (screenWidth * 0.13).clamp(40, 80).toInt(); // Responsive alpha with min/max bounds
+
     return GestureDetector(
       onTap: () {
         // Update the selectedTabProvider state
@@ -44,11 +55,11 @@ class BottomNavBar extends ConsumerWidget {
         pageController.jumpToPage(index);
       },
       child: BlurContainer(
-        blur: 8,
-        borderRadius: 54.71,
-        color: isSelected ? Colors.white : Colors.black.withAlpha(51),
-        width: 50,
-        height: 50,
+        blur: blurValue,
+        borderRadius: borderRadiusValue,
+        color: isSelected ? Colors.white : Colors.black.withAlpha(alphaValue),
+        width: buttonSize,
+        height: buttonSize,
         child: Center(
           child: SvgPicture.asset(
             iconPath,
@@ -56,8 +67,8 @@ class BottomNavBar extends ConsumerWidget {
               isSelected ? Colors.black : Colors.white,
               BlendMode.srcIn,
             ),
-            width: 24,
-            height: 24,
+            width: iconSize,
+            height: iconSize,
           ),
         ),
       ),

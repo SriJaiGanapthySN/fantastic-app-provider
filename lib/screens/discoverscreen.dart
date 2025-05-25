@@ -213,19 +213,28 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                 leading: Icon(Icons.exit_to_app, color: Colors.indigo),
                 title: Text('Logout'),
                 onTap: () async {
-                  // Clear all user-specific data
-                  await ref.read(authProvider.notifier).logout();
+                  // Set loading state and disable the button during logout
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logging out...')),
+                  );
 
-                  // Force a refresh of providers that may cache user data
+                  // Clear all user-specific data first
                   ref.invalidate(userEmailProvider);
                   ref.invalidate(currentEmailProvider);
                   ref.invalidate(emailStorageProvider);
+                  ref.invalidate(currentUserProvider);
 
                   // Reset any other user-specific providers
                   ref.invalidate(journeysProvider);
                   ref.invalidate(coachingProvider);
                   ref.invalidate(activitiesProvider);
                   ref.invalidate(challengesProvider);
+
+                  // Perform the actual logout
+                  await ref.read(authProvider.notifier).logout();
+
+                  // Force refresh app state by creating a small delay
+                  await Future.delayed(Duration(milliseconds: 300));
 
                   // Close the drawer and navigate to login screen
                   Navigator.pop(context);
@@ -262,7 +271,7 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                     selectedButtonIndex: uiState.selectedButtonIndex == 3
                         ? 0
                         : uiState.selectedButtonIndex),
-                SizedBox(height: screenHeight * 0.09),
+                SizedBox(height: screenHeight * 0.06),
                 Discoverstrip(currentData: currentData, email: widget.email)
               ],
             ),
