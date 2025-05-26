@@ -179,7 +179,12 @@ class ConnectingAnimation extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!shouldShow) return const SizedBox.shrink();
 
+    // Calculate a staggered delay based on index
     final delay = Duration(milliseconds: (index * 300) + (isTransitionOdd ? 200 : 0));
+    
+    // Get screen dimensions for dynamic positioning
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return FutureBuilder(
       future: Future.delayed(delay),
@@ -188,13 +193,13 @@ class ConnectingAnimation extends StatelessWidget {
           return const SizedBox(width: 120, height: 120);
         }
 
-        // Animation container with 1x size ratio
+        // Animation container with dynamic dimensions
         return Lottie.asset(
           isTransitionOdd
               ? 'assets/animations/3/data.json'
               : 'assets/animations/1/data.json',
-          width: 160,
-          height: 180,
+          width: screenWidth * 0.4, // 40% of screen width
+          height: screenHeight * 0.25, // 25% of screen height
           fit: BoxFit.contain,
           frameRate: FrameRate.max,
           repeat: true,
@@ -740,6 +745,10 @@ class _LevelItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEven = index % 2 == 0;
     
+    // Get screen dimensions for dynamic positioning
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Column(
       children: [
         Stack(
@@ -748,16 +757,17 @@ class _LevelItem extends StatelessWidget {
             // Add connecting animation behind other elements (first in stack)
             if (!isLastItem)
               Positioned(
-                left: isEven ? 35 : null,
-                right: !isEven ? 215 : null,
-                bottom: -80,
+                // Use dynamic positioning to center the animation
+                left: isEven ? screenWidth * 0.25 : null, // Center horizontally from left
+                right: !isEven ? screenWidth * 0.25 : null, // Center horizontally from right
+                bottom: -screenHeight * 0.1, // Position based on screen height
                 child: ConnectingAnimation(
                   isTransitionOdd: !isEven,
                   shouldShow: true,
                   index: index,
                 ),
               ),
-            // Level content (now on top of animation)
+            // Level content (now on top of animation) - restructured vertically
             Padding(
               padding: EdgeInsets.only(
                 top: 15,
@@ -765,80 +775,85 @@ class _LevelItem extends StatelessWidget {
                 left: isEven ? 8 : 16,
                 right: isEven ? 10 : 8,
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (!isEven) const Spacer(),
-                  // Left circular image
-                  LevelImage(
-                    imageUrl: imageUrl,
-                    status: isLocked
-                        ? 'locked'
-                        : isCompleted
-                            ? 'completed'
-                            : 'in_progress',
-                    isInProgress: isInProgress,
-                  ),
-                  // Right side content
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 16, right: 16, top: 16, bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  // Title and description at the top
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            description,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 16,
-                            ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          description,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 16,
                           ),
-                          if (!isLocked) ...[
-                            const SizedBox(height: 6),
-                            BlurContainer(
-                              borderRadius: 50,
-                              child: InkWell(
-                                onTap: () => _navigateToJourneyReveal(context),
-                                child: Container(
-                                  color: const Color.fromARGB(51, 255, 255, 255),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 3),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Text(
-                                        'View',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: Colors.white,
-                                        size: 12,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
+                  // Circle image in the middle
+                  Center(
+                    child: LevelImage(
+                      imageUrl: imageUrl,
+                      status: isLocked
+                          ? 'locked'
+                          : isCompleted
+                              ? 'completed'
+                              : 'in_progress',
+                      isInProgress: isInProgress,
+                    ),
+                  ),
+                  // View button at the bottom
+                  if (!isLocked)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Center(
+                        child: BlurContainer(
+                          borderRadius: 50,
+                          child: InkWell(
+                            onTap: () => _navigateToJourneyReveal(context),
+                            child: Container(
+                              color: const Color.fromARGB(51, 255, 255, 255),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 3),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'View',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
