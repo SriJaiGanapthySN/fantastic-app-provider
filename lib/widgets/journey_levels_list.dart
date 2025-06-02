@@ -1,9 +1,13 @@
 import 'package:fantastic_app_riverpod/providers/journey_provider.dart';
 import 'package:fantastic_app_riverpod/screens/journey_path.dart';
+import 'package:fantastic_app_riverpod/screens/journey_reveal/journeyScreenRevealType7.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 // import '../screens/journey_screen.dart'; // Assuming not used directly here
+import '../screens/journey_reveal/journeyScreenRevealType4.dart';
+import '../screens/journey_reveal/journeyScreenRevealType5.dart';
+import '../screens/journey_reveal/journeyScreenRevealType6.dart';
 import '../utils/blur_container.dart';
 // import '../providers/journey_levels_provider.dart'; // Assuming not used directly here
 // import '../widgets/premium_button.dart'; // Assuming not used directly here
@@ -428,8 +432,8 @@ class _LevelItem extends StatelessWidget {
                 goalDataResponse['objectId']?.toString() ?? skillObj.goalId,
             'description': goalDataResponse['description']?.toString() ?? '',
           };
-          if (Navigator.canPop(context)) Navigator.pop(context);
-          print("Navigating to Goal screen (Type 2)");
+            // if (Navigator.canPop(context)) Navigator.pop(context);
+          print("Navigating to Goal screen $goalData");
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -452,25 +456,33 @@ class _LevelItem extends StatelessWidget {
 
       if(level!=null && level['type']=="GOAL"){
         final goalDataResponse =
-        await journeyService.getSkillGoal(email, level['goalId']);
-        final goalData = {
-          'goalId': goalDataResponse?['goalId']?.toString() ?? skillObj.goalId,
-          'title': goalDataResponse?['title']?.toString() ?? skillObj.title,
-          'objectId':
-          goalDataResponse?['objectId']?.toString() ?? skillObj.goalId,
-          'description': goalDataResponse?['description']?.toString() ?? '',
-        };
+        await journeyService.getSkillGoalByDocumentId( level['goalId'].toString());
 
+        Map<String, dynamic> mappedDataFromGoalResponse = {
+          "completionRateGoal": goalDataResponse?["completionRateGoal"],
+          "createdAt": goalDataResponse?["createdAt"],
+          "description": goalDataResponse?["description"],
+          "habitIds": goalDataResponse?["habitIds"],
+          "objectId": goalDataResponse?["objectId"],
+          "removePreviousGoalHabits": goalDataResponse?["removePreviousGoalHabits"],
+          "ritualType": goalDataResponse?["ritualType"],
+          "skillTrackId": goalDataResponse?["skillTrackId"],
+          "title": goalDataResponse?["title"],
+          "type": goalDataResponse?["type"],
+          "updatedAt": goalDataResponse?["updatedAt"],
+          "value": goalDataResponse?["value"],
+          "goalId" :goalDataResponse?["objectId"]
+        };
+        print(mappedDataFromGoalResponse);
         //if (Navigator.canPop(context)) Navigator.pop(context);
         print("Navigating to Goal screen (Type 2)");
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Journeyscreenrevealtype2(
-              goalData: goalData,
+            builder: (context) => Journeyscreenrevealtype7(
+              goalData: mappedDataFromGoalResponse,
               skill: skillObj,
               email: email,
-              skilltrack: _createSkillTrackForType('goal'),
             ),
           ),
         );
@@ -534,6 +546,107 @@ class _LevelItem extends StatelessWidget {
               skill: skillObj,
               email: email,
               skilltrack: _createSkillTrackForType('letter'), // Or 'content'
+            ),
+          ),
+        );
+        return;
+      }else if (level != null && level['type'] == "CONTENT_AUDIO"){
+        final audioData = {
+          'contentUrl': level['contentUrl']?.toString() ?? '',
+          'headline': level['headline']?.toString() ?? skillObj.title,
+          'headlineImageUrl': level['headlineImageUrl']?.toString() ?? '',
+          'contentTitle': level['contentTitle']?.toString() ?? skillObj.title,
+          'contentReadingTime': level['contentReadingTime']?.toString() ?? '',
+          'objectId': level['objectId']?.toString() ?? skillObj.objectId,
+          'createdAt': (level['createdAt'] as num?)?.toInt(),
+          'updatedAt': (level['updatedAt'] as num?)?.toInt(),
+          'type': level['type']?.toString() ?? "CONTENT",
+          'skillId': level['skillId']?.toString() ?? skillObj.objectId,
+          'skillTrackId':
+          level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
+          'position': (level['position'] as num?)?.toInt(),
+          'goalId':
+          level['goalId']?.toString() ?? '', // Include goalId if present
+          'audioUrl':level['audioUrl']?.toString()?? " ",
+        };
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => JourneyRevealScreenType4(
+               journeyrevealtype4: audioData,
+            ),
+          ),
+        );
+        return;
+      }else if (level != null && level['type'] == "UNIQUE_DAY"){
+        final Map<String, dynamic> createdDataMap = {
+          'createdAt': (level['createdAt'] as num?)?.toInt() ?? " ",
+          'description': level['description']?.toString() ?? " ",
+          'objectId': level['objectId']?.toString() ?? " ",
+          'removePreviousGoalHabits': level['removePreviousGoalHabits'] as bool? ?? " ",
+          'ritualType': level['ritualType']?.toString() ?? " ",
+          'skillTrackId': level['skillTrackId']?.toString() ?? " ",
+          'title': level['title']?.toString() ?? " ",
+          'type': level['type']?.toString() ?? " ",
+          'updatedAt': (level['updatedAt'] as num?)?.toInt() ?? " ",
+          'value': (level['value'] as num?)?.toInt() ?? " ",
+          'habitIds': (level['habitIds'] as List<dynamic>?)
+              ?.map<String>((e) => e.toString())
+              .toList() ??" ",
+        };
+        // dynamic habitIdsRaw = level['habitIds'];
+        // String? habitIdToFetch;
+        //
+        // if (habitIdsRaw is List && habitIdsRaw.isNotEmpty) {
+        //   // Ensure the first element is not null before calling toString()
+        //   if (habitIdsRaw[0] != null) {
+        //     habitIdToFetch = habitIdsRaw[0].toString();
+        //   }
+        // }
+        // if (habitIdToFetch != null) {
+        //   print("Fetching habit with ID (from level['habitIds'][0]): $habitIdToFetch");
+        //   final habit = await journeyService.getHabit(email, habitIdToFetch);
+        //   // Now 'habit' contains the result. Do something with it.
+        //   // e.g., print(habit);
+        // } else {
+        //   print("Error: 'habitIds' is not a list, is empty, or its first element is null in 'level' data.");
+        //   // Handle the case where the ID cannot be obtained
+        // }
+        //
+        // final habitMap = {
+        //
+        // };
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DataDisplayScreen(
+              dataMap: createdDataMap,
+              email: email,
+            ),
+          ),
+        );
+        return;
+      }else if (level != null && (level['type'] == "MOTIVATOR_PAGED"||level['type'] == "CONTENT_PAGED") ){
+        final Map<String, String> createdDataMap = {
+          'contentTitle': level['contentTitle']?.toString() ?? "",
+          'contentUrl': level['contentUrl']?.toString() ?? "",
+          'createdAt': level['createdAt']?.toString() ?? "", // Number from level (if present) or sourceData becomes string, or ""
+          'headline': level['headline']?.toString() ?? "",
+          'headlineImageUrl': level['headlineImageUrl']?.toString() ?? "",
+          'objectId': level['objectId']?.toString() ?? "",
+          'pagedContent': level['pagedContent']?.toString() ?? "",
+          'position': level['position']?.toString() ?? "", // Number from level (if present) or sourceData becomes string, or ""
+          'skillId': level['skillId']?.toString() ?? "",
+          'skillTrackId': level['skillTrackId']?.toString() ?? "",
+          'type': level['type']?.toString() ?? "",
+          'updatedAt': level['updatedAt']?.toString() ?? "", // Number from level (if present) or sourceData becomes string, or ""
+        };
+        print(createdDataMap['pagedContent']);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MotivatorScreen(
+              data: createdDataMap,
             ),
           ),
         );

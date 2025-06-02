@@ -452,6 +452,45 @@ class JourneyService {
     }
   }
 
+  Future<Map<String, dynamic>?> getSkillGoalByDocumentId(
+      String goalDocumentId, // Renamed for clarity, this is the Document ID
+          //{String? email} // Optional: if you might need it for other logic, or remove if truly unused
+      ) async {
+    try {
+      // Reference to the 'skillGoal' collection
+      final skillGoalCollectionRef = _firestore.collection('skillGoal');
+
+      // Reference to the specific document using its ID
+      final DocumentReference docRef = skillGoalCollectionRef.doc(goalDocumentId);
+
+      // Get the document snapshot
+      final DocumentSnapshot docSnapshot = await docRef.get();
+
+      // Check if the document exists
+      if (!docSnapshot.exists) {
+        print('No skillGoal document found with ID: $goalDocumentId');
+        return null;
+      }else{
+        print('Fetch Successfull skillGoal document found with ID: $goalDocumentId');
+      }
+
+      // Get the data from the document.
+      // docSnapshot.data() returns an Object? which needs to be cast.
+      // Firestore data is typically Map<String, dynamic>.
+      final skillGoalData = docSnapshot.data() as Map<String, dynamic>?;
+
+      // Optionally, if you want to include the document ID in the returned map:
+      // if (skillGoalData != null) {
+      //   skillGoalData['id'] = docSnapshot.id; // The key 'id' can be whatever you prefer
+      // }
+
+      return skillGoalData;
+    } catch (e) {
+      print('Error fetching skillGoal by document ID "$goalDocumentId": $e');
+      return null;
+    }
+  }
+
 
   Future<Map<String, dynamic>?> getSkillLevel(
       String email, String goalId) async {
@@ -721,6 +760,36 @@ class JourneyService {
     } catch (e) {
       print('Error fetching journey type: $e');
       return {'type': ''};
+    }
+  }
+
+  Future<void> trackJourneyInteraction(String email, String journeyId) async {
+    try {
+      final userJourneyInteractionsRef = _firestore
+          .collection('testers')
+          .doc(email)
+          .collection('journey_interactions')
+          .doc(journeyId);
+
+      // Get the journey details
+      final journeyDoc = await _firestore.collection('skillTrack').doc(journeyId).get();
+      final journeyData = journeyDoc.data();
+
+      if (journeyData != null) {
+        await userJourneyInteractionsRef.set({
+          'journeyId': journeyId,
+          'journeyTitle': journeyData['title'],
+          'lastInteractionAt': FieldValue.serverTimestamp(),
+          'interactionCount': FieldValue.increment(1),
+          'type': journeyData['type'],
+          'skillCount': journeyData['skillCount'],
+          'levelsCompleted': journeyData['levelsCompleted'] ?? 0,
+        }, SetOptions(merge: true));
+
+        print('Journey interaction tracked successfully for journey: $journeyId');
+      }
+    } catch (e) {
+      print('Error tracking journey interaction: $e');
     }
   }
 }

@@ -162,7 +162,15 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                         'No Subtitle',
                                     progress: stats['completion'] ?? '0%',
                                     imageUrl: widget.tile?['imageUrl'] ?? '',
-                                    onTap: () {
+                                    onTap: () async {
+                                      // Track the journey interaction
+                                      if (_userEmail != null && journey['objectId'] != null) {
+                                        await _journeyService.trackJourneyInteraction(
+                                          _userEmail!,
+                                          journey['objectId'],
+                                        );
+                                      }
+                                      
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -180,7 +188,15 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                         'No Subtitle',
                                     progress: '0%',
                                     imageUrl: widget.tile?['imageUrl'] ?? '',
-                                    onTap: () {
+                                    onTap: () async {
+                                      // Track the journey interaction even for error state
+                                      if (_userEmail != null && widget.tile?['objectId'] != null) {
+                                        await _journeyService.trackJourneyInteraction(
+                                          _userEmail!,
+                                          widget.tile!['objectId'],
+                                        );
+                                      }
+                                      
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -199,7 +215,15 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                       'Begin your path to self-improvement',
                                   progress: '0%',
                                   imageUrl: widget.tile?['imageUrl'] ?? null,
-                                  onTap: () {
+                                  onTap: () async {
+                                    // Track the journey interaction for new journey
+                                    if (_userEmail != null && widget.tile?['objectId'] != null) {
+                                      await _journeyService.trackJourneyInteraction(
+                                        _userEmail!,
+                                        widget.tile!['objectId'],
+                                      );
+                                    }
+                                    
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
