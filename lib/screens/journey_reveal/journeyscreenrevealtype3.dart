@@ -1,241 +1,210 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:http/http.dart' as http;
-import '../journey_screen.dart';
-import '../../models/skill.dart';
-import '../../models/skillTrack.dart';
-import '../../services/journey_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http; // Import the http package
 
 class Journeyscreentype3 extends StatefulWidget {
-  final Map motivatorData;
-  final Skill skill;
-  final String email;
-  final skillTrack skilltrack;
+  final Map<String, dynamic> motivatorData;
 
   const Journeyscreentype3({
-    super.key,
+    Key? key,
     required this.motivatorData,
-    required this.skill,
-    required this.email,
-    required this.skilltrack,
-  });
+  }) : super(key: key);
 
   @override
   State<Journeyscreentype3> createState() => _Journeyscreentype3State();
 }
 
 class _Journeyscreentype3State extends State<Journeyscreentype3> {
-  final JourneyService _journeyService = JourneyService();
-  String? content;
-  bool isLoading = true;
-  String? errorMessage;
+  String? _resolvedHtmlContent;
+  bool _isLoadingContent = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    fetchContent();
+    _loadContent();
   }
 
-  Future<void> fetchContent() async {
-    try {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
+  Future<void> _loadContent() async {
+    // Ensure motivatorData and contentUrl are not null
+    if (widget.motivatorData == null) {
+      if (mounted) {
+        setState(() {
+          _resolvedHtmlContent = '<p>Error: Motivator data is null.</p>';
+          _isLoadingContent = false;
+        });
+      }
+      return;
+    }
 
-      final response = await http.get(Uri.parse(widget.motivatorData['contentUrl']));
-      
-      setState(() {
-        isLoading = false;
+    final dynamic contentSource = widget.motivatorData['contentUrl'];
+
+    if (contentSource == null || contentSource is! String || contentSource.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _resolvedHtmlContent = '<p>No content available.</p>';
+          _isLoadingContent = false;
+        });
+      }
+      return;
+    }
+
+    String contentUrlString = contentSource as String;
+
+    // Check if it's a URL that needs fetching
+    if (contentUrlString.trim().toLowerCase().startsWith('http://') ||
+        contentUrlString.trim().toLowerCase().startsWith('https://')) {
+      try {
+        final response = await http.get(Uri.parse(contentUrlString));
         if (response.statusCode == 200) {
-          content = response.body;
+          if (mounted) {
+            setState(() {
+              _resolvedHtmlContent = response.body;
+              _isLoadingContent = false;
+            });
+          }
         } else {
-          errorMessage = 'Failed to load content: ${response.statusCode}';
+          if (mounted) {
+            setState(() {
+              _errorMessage = 'Failed to load content (Status: ${response.statusCode})';
+              _resolvedHtmlContent = '<p>Error: $_errorMessage</p>';
+              _isLoadingContent = false;
+            });
+          }
         }
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        errorMessage = 'Error loading content: $e';
-      });
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Error fetching content: $e';
+            _resolvedHtmlContent = '<p>Error: $_errorMessage</p>';
+            _isLoadingContent = false;
+          });
+        }
+      }
+    } else {
+      // Assume it's direct HTML content
+      if (mounted) {
+        setState(() {
+          _resolvedHtmlContent = contentUrlString;
+          _isLoadingContent = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    // Extracting data with fallbacks - ensure motivatorData is not null first
+    final String headlineImageUrl = widget.motivatorData['headlineImageUrl'] ?? '';
+    final String headline = widget.motivatorData['headline'] ?? 'No Headline';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.motivatorData['title'] ?? 'Motivator'),
+        backgroundColor: Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back, color: Colors.black54),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.motivatorData['headlineImageUrl'] != null)
-                  Image.network(
-                    widget.motivatorData['headlineImageUrl'],
-                    fit: BoxFit.cover,
-                    height: screenHeight * 0.25,
-                    width: screenWidth,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: screenHeight * 0.25,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.error),
-                      );
-                    },
-                  ),
-                SizedBox(height: screenHeight * 0.02),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-                  child: Text(
-                    widget.motivatorData['contentTitle'] ?? 'Content Title',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.07,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                if (isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else if (errorMessage != null)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        errorMessage!,
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-                    child: Html(
-                      data: content ?? '<p>No content available</p>',
-                      style: {
-                        "html": Style(
-                          fontSize: FontSize(screenWidth * 0.045),
-                          lineHeight: LineHeight(1.6),
-                          color: Colors.black87,
-                        ),
-                        "p": Style(
-                          fontSize: FontSize(screenWidth * 0.045),
-                          color: Colors.black87,
-                          textAlign: TextAlign.justify,
-                        ),
-                        "ul": Style(
-                          padding: HtmlPaddings.only(left: screenWidth * 0.04),
-                        ),
-                        "li": Style(
-                          fontSize: FontSize(screenWidth * 0.045),
-                          color: Colors.black87,
-                        ),
-                      },
-                    ),
-                  ),
-                SizedBox(height: screenHeight * 0.1),
-              ],
-            ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.share, color: Colors.black54),
+            onPressed: () {
+              print("Share button pressed for ${widget.motivatorData['objectId']}");
+              // Implement share functionality
+            },
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Material(
-              elevation: 10,
-              shadowColor: Colors.black.withOpacity(0.6),
-              child: Container(
-                color: Colors.grey.shade300,
-                padding: EdgeInsets.symmetric(
-                  vertical: screenHeight * 0.02,
-                  horizontal: screenWidth * 0.04,
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            if (headlineImageUrl.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: headlineImageUrl,
+                fit: BoxFit.cover,
+                height: 250,
+                placeholder: (context, url) => Container(
+                  height: 250,
+                  color: Colors.grey[300],
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.04,
-                  ),
-                  child: ElevatedButton(
-                    onPressed: isLoading
-                        ? null
-                        : () async {
-                            try {
-                              setState(() {
-                                isLoading = true;
-                                errorMessage = null;
-                              });
-
-                              await _journeyService.updateMotivator(
-                                true,
-                                widget.motivatorData['objectId'],
-                                widget.email,
-                                widget.skill.objectId,
-                                widget.skilltrack.objectId,
-                              );
-
-                              setState(() {
-                                isLoading = false;
-                              });
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const JourneyScreen(),
-                                ),
-                              );
-                            } catch (e) {
-                              setState(() {
-                                isLoading = false;
-                                errorMessage = 'Error updating motivator: $e';
-                              });
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 13, 173, 32),
-                      padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 10,
-                      shadowColor: Colors.black.withOpacity(0.8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: screenWidth * 0.06,
-                        ),
-                        SizedBox(width: screenWidth * 0.02),
-                        Text(
-                          'Done! What Next',
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.05,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                errorWidget: (context, url, error) => Container(
+                  height: 250,
+                  color: Colors.grey[300],
+                  child: Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey[600])),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 16.0),
+              child: Text(
+                headline,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: _isLoadingContent
+                  ? Center(child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ))
+                  : Html(
+                data: _resolvedHtmlContent ?? '<p>Content not available.</p>', // Fallback for safety
+                style: {
+                  "p": Style(
+                    fontSize: FontSize(16.0),
+                    lineHeight: LineHeight.em(1.5),
+                    color: Colors.black.withOpacity(0.75),
+                  ),
+                  // You can add more styles for other HTML tags if needed
+                  "a": Style(
+                    color: Theme.of(context).colorScheme.secondary, // Example: make links use accent color
+                    textDecoration: TextDecoration.underline,
+                  ),
+                  "h1": Style(fontSize: FontSize(22.0), fontWeight: FontWeight.bold),
+                  "h2": Style(fontSize: FontSize(20.0), fontWeight: FontWeight.w600),
+                  // Add other tags as needed
+                },
+              ),
+            ),
+            SizedBox(height: 80), // Space for the button at the bottom
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
+        color: Theme.of(context).scaffoldBackgroundColor, // Or Colors.white
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF1DE9B6), // Teal color
+            padding: EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            textStyle: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ],
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Done! What\'s next? ', style: TextStyle(color: Colors.white)),
+              Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

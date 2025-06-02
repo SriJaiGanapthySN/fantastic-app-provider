@@ -452,6 +452,38 @@ class JourneyService {
     }
   }
 
+
+  Future<Map<String, dynamic>?> getSkillLevel(
+      String email, String goalId) async {
+    try {
+      // Reference to the user's skillGoal collection
+      print("Currently searching for :$goalId");
+      final userSkillLevelPath =
+      _firestore.collection('skillLevel');
+
+      // Query to get documents where 'objectId' matches the given goalId
+      final querySnapshot =
+      await userSkillLevelPath.where('skillId', isEqualTo: goalId).get();
+
+      // Check if any documents are found
+      if (querySnapshot.docs.isEmpty) {
+        print('No level found with objectId: $goalId');
+        return null;
+      }else{
+        print("Found the skillLevel :$goalId");
+      }
+
+      // Since objectId should be unique, we expect one document
+      final skillLevel =
+      querySnapshot.docs.first.data() as Map<String, dynamic>;
+
+      return skillLevel;
+    } catch (e) {
+      print('Error fetching skill levels: $e');
+      return null;
+    }
+  }
+
   Future<bool> updateGoalCompletion(String userEmail, String id,
       String skillLevelId, String skillId, String skillTrackId) async {
     try {
