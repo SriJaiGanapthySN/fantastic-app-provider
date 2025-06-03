@@ -73,8 +73,20 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
       );
     }
 
-    final currentJourney = ref.watch(currentJourneyProvider(_userEmail!));
-    final journeyStats = ref.watch(journeyStatsProvider(_userEmail!));
+    // Debug: Log tile data being passed to journey screen
+    print('=== JOURNEY SCREEN TILE DATA DEBUG ===');
+    print('widget.tile: ${widget.tile}');
+    print('widget.tile objectId: ${widget.tile?['objectId']}');
+    print('widget.tile title: ${widget.tile?['title']}');
+    
+    final journeyId = widget.tile?['objectId'] ?? '6Gr4B9SkA3'; // Use default journey ID for testing
+    print('Final journeyId being used: $journeyId');
+    print('=========================================');
+    
+    final journeyStats = ref.watch(journeyStatsProvider(JourneyStatsRequest(
+      userEmail: _userEmail!,
+      journeyId: journeyId,
+    )));
     final allJourneys = ref.watch(allJourneysProvider(_userEmail!));
 
     return Scaffold(
@@ -162,89 +174,64 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          // Current Journey Card
-                          currentJourney.when(
-                            data: (journey) {
-                              if (journey != null) {
-                                return journeyStats.when(
-                                  data: (stats) => JourneyCard(
-                                    title: widget.tile?['title'] ?? 'No Title',
-                                    subtitle: widget.tile?['subtitle'] ??
-                                        'No Subtitle',
-                                    progress: stats['completion'] ?? '0%',
-                                    imageUrl: widget.tile?['imageUrl'] ?? '',
-                                    onTap: () {
-                                      _journeyService.logJourneyScreenInteraction(
-                                        _userEmail!,
-                                        widget.tile?['objectId'] ?? '',
-                                        'journey_card_tap',
-                                      );
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const JourneyScreen(),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  loading: () => const Center(
-                                      child: CircularProgressIndicator()),
-                                  error: (_, __) => JourneyCard(
-                                    title: widget.tile?['title'] ?? 'No Title',
-                                    subtitle: widget.tile?['subtitle'] ??
-                                        'No Subtitle',
-                                    progress: '0%',
-                                    imageUrl: widget.tile?['imageUrl'] ?? '',
-                                    onTap: () {
-                                      _journeyService.logJourneyScreenInteraction(
-                                        _userEmail!,
-                                        widget.tile?['objectId'] ?? '',
-                                        'journey_card_tap',
-                                      );
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const JourneyScreen(),
-                                        ),
-                                      );
-                                    },
+                          // Current Journey Card - Use tile data directly instead of currentJourneyProvider
+                          journeyStats.when(
+                            data: (stats) => JourneyCard(
+                              title: widget.tile?['title'] ?? 'No Title',
+                              subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                              progress: stats['levelCompletion'] ?? '0%',
+                              imageUrl: widget.tile?['imageUrl'] ?? '',
+                              onTap: () {
+                                _journeyService.logJourneyScreenInteraction(
+                                  _userEmail!,
+                                  widget.tile?['objectId'] ?? '',
+                                  'journey_card_tap',
+                                );
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => JourneyScreen(tile: widget.tile),
                                   ),
                                 );
-                              } else {
-                                return JourneyCard(
-                                  title: widget.tile?['title'] ??
-                                      'Start Your Journey',
-                                  subtitle: widget.tile?['subtitle'] ??
-                                      'Begin your path to self-improvement',
-                                  progress: '0%',
-                                  imageUrl: widget.tile?['imageUrl'] ?? null,
-                                  onTap: () {
-                                    _journeyService.logJourneyScreenInteraction(
-                                      _userEmail!,
-                                      widget.tile?['objectId'] ?? '',
-                                      'journey_card_tap',
-                                    );
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const JourneyScreen(),
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                            },
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
+                              },
                             ),
-                            error: (error, stack) => Center(
-                              child: Text(
-                                'Error loading journey: $error',
-                                style: const TextStyle(color: Colors.white),
-                              ),
+                            loading: () => JourneyCard(
+                              title: widget.tile?['title'] ?? 'No Title',
+                              subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                              progress: '0%',
+                              imageUrl: widget.tile?['imageUrl'] ?? '',
+                              onTap: () {
+                                _journeyService.logJourneyScreenInteraction(
+                                  _userEmail!,
+                                  widget.tile?['objectId'] ?? '',
+                                  'journey_card_tap',
+                                );
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => JourneyScreen(tile: widget.tile),
+                                  ),
+                                );
+                              },
+                            ),
+                            error: (error, stack) => JourneyCard(
+                              title: widget.tile?['title'] ?? 'No Title',
+                              subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                              progress: '0%',
+                              imageUrl: widget.tile?['imageUrl'] ?? '',
+                              onTap: () {
+                                _journeyService.logJourneyScreenInteraction(
+                                  _userEmail!,
+                                  widget.tile?['objectId'] ?? '',
+                                  'journey_card_tap',
+                                );
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => JourneyScreen(tile: widget.tile),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -262,17 +249,45 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           const SizedBox(height: 16),
                           // Progress Stats
                           journeyStats.when(
-                            data: (stats) => StatsCard(
-                              completionValue: stats['levelCompletion'] ?? '0%',
-                              eventsValue: stats['eventsCompleted'] ?? '0',
-                              skillCompletionValue: stats['skillCompletion'],
-                              userEmail: _userEmail,
+                            data: (stats) => Column(
+                              children: [
+                                StatsCard(
+                                  completionValue: stats['levelCompletion'] ?? '0%',
+                                  eventsValue: stats['eventsCompleted'] ?? '0',
+                                  skillCompletionValue: stats['skillCompletion'],
+                                  userEmail: _userEmail,
+                                ),
+                              ],
                             ),
                             loading: () => const Center(
                                 child: CircularProgressIndicator()),
-                            error: (_, __) => const Center(
-                              child: Text('Error loading stats',
-                                  style: TextStyle(color: Colors.white)),
+                            error: (error, stack) => Column(
+                              children: [
+                                Center(
+                                  child: Text(
+                                    'Error loading stats: $error',
+                                    style: const TextStyle(color: Colors.red),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: Text(
+                                    'Journey ID: $journeyId',
+                                    style: const TextStyle(color: Colors.yellow, fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: Text(
+                                    'User: $_userEmail',
+                                    style: const TextStyle(color: Colors.yellow, fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 32),

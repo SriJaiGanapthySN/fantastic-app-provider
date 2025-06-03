@@ -157,35 +157,75 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
   Future<void> _handleDailyCompletion() async {
     if (skillGoalData == null || _hasCompletedTaskForToday) return;
 
-    int currentRate = skillGoalData!["completionRateGoal"] ?? 0;
-    int totalValue = skillGoalData!["value"] ?? 0;
-
-    if (currentRate >= totalValue) return;
-
     // setState for _isLoadingCompletionAction is handled by _performAndUpdateGoal
-    int newRate = currentRate + 1;
-    bool success = await _performAndUpdateGoal(newRate, widget.email, widget.goalData["goalId"]);
+    setState(() {
+      _isLoadingCompletionAction = true;
+      errorMessage = null;
+    });
 
-    if (success && mounted) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_getPrefsKey(), _getTodayDateString());
+    try {
+      print('=== DAILY COMPLETION - FETCHING FRESH DATA ===');
       
-      // Log the daily completion
-      await _journeyService.logJourneyScreenInteraction(
-        widget.email,
-        widget.skilltrack.objectId,
-        'daily_goal_completion',
-      );
+      // CRITICAL FIX: Fetch fresh data from database before calculating increment
+      // The UI data might be stale, so we need the actual current rate from DB
+      final freshGoalData = await _journeyService.getSkillGoal(widget.email, widget.goalData["goalId"]);
       
-      setState(() {
-        _hasCompletedTaskForToday = true;
-        _isLoadingCompletionAction = false; // Action complete
-      });
-    } else if (mounted) {
-      // Error message would have been set by _performAndUpdateGoal, it also sets _isLoadingCompletionAction = false on error
-      // So, we only need to ensure it's false if somehow not set by _performAndUpdateGoal's error path
-      if (_isLoadingCompletionAction) {
-        setState(() { _isLoadingCompletionAction = false; });
+      if (freshGoalData == null) {
+        setState(() {
+          _isLoadingCompletionAction = false;
+          errorMessage = 'Could not fetch current goal data';
+        });
+        return;
+      }
+      
+      final currentRateInDB = (freshGoalData["completionRateGoal"] as num?)?.toInt() ?? 0;
+      final totalValue = (freshGoalData["value"] as num?)?.toInt() ?? 0;
+      
+      print('Fresh data from DB: currentRate=$currentRateInDB, target=$totalValue');
+      print('UI data was: currentRate=${skillGoalData!["completionRateGoal"] ?? 0}');
+      
+      if (currentRateInDB >= totalValue) {
+        setState(() {
+          _isLoadingCompletionAction = false;
+          errorMessage = 'Goal already completed';
+        });
+        return;
+      }
+
+      final newRate = currentRateInDB + 1;  // Calculate based on FRESH database data
+      print('Calculated newRate: $currentRateInDB + 1 = $newRate');
+      
+      bool success = await _performAndUpdateGoal(newRate, widget.email, widget.goalData["goalId"]);
+
+      if (success && mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_getPrefsKey(), _getTodayDateString());
+        
+        // Log the daily completion
+        await _journeyService.logJourneyScreenInteraction(
+          widget.email,
+          widget.skilltrack.objectId,
+          'daily_goal_completion',
+        );
+        
+        setState(() {
+          _hasCompletedTaskForToday = true;
+          _isLoadingCompletionAction = false; // Action complete
+        });
+      } else if (mounted) {
+        // Error message would have been set by _performAndUpdateGoal, it also sets _isLoadingCompletionAction = false on error
+        // So, we only need to ensure it's false if somehow not set by _performAndUpdateGoal's error path
+        if (_isLoadingCompletionAction) {
+          setState(() { _isLoadingCompletionAction = false; });
+        }
+      }
+    } catch (e) {
+      print('❌ Error in _handleDailyCompletion: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingCompletionAction = false;
+          errorMessage = 'Error processing daily completion: $e';
+        });
       }
     }
   }

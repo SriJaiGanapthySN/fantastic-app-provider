@@ -13,6 +13,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth_page.dart';
 import 'screens/main_screen.dart';
+import 'screens/test_screen.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
