@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import 'package:video_player/video_player.dart';
 import '../providers/journey_provider.dart';
+import '../providers/discover_provider.dart';
+import '../providers/nav_provider.dart';
 import '../widgets/journey_card.dart';
 import '../widgets/journey_list_item.dart';
 import '../widgets/stats_card.dart';
@@ -243,7 +245,12 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                 widget.tile?['objectId'] ?? '',
                                 'all_journey_tap',
                               );
-                              // Handle all journey tap
+                              // Navigate to discovery screen with journey tab selected
+                              // Set journey tab as selected in discovery screen
+                              ref.read(discoverUIStateProvider.notifier).selectButton(0);
+                              // Navigate to discovery screen (index 2 in main screen)
+                              ref.read(selectedTabProvider.notifier).state = 2;
+                              Navigator.pop(context); // Go back to main screen
                             },
                           ),
                           const SizedBox(height: 16),

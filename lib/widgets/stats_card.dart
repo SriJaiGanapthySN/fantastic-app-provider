@@ -35,60 +35,108 @@ class StatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     _logStatsView();
     
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Calculate dynamic dimensions
+    final cardHeight = screenHeight * 0.09; // 9% of screen height
+    final cardWidth = screenWidth - 32; // Full width minus padding
+    final borderRadius = screenWidth * 0.07; // 7% of screen width
+    final padding = screenWidth * 0.015; // 1.5% of screen width
+    final valueFontSize = screenWidth * 0.06; // 6% of screen width
+    final labelFontSize = screenWidth * 0.035; // 3.5% of screen width
+    final dividerWidth = screenWidth * 0.001; // 0.1% of screen width
+    final spacing = screenWidth * 0.01; // 1% of screen width
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: cardWidth,
+      height: cardHeight,
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(borderRadius),
+        color: Colors.white.withOpacity(0.05),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Progress Stats',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatItem('Level Completion', completionValue),
-              _buildStatItem('Events Achieved', eventsValue),
-              if (skillCompletionValue != null)
-                _buildStatItem('Skill Completion', skillCompletionValue!),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: padding),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius * 0.85),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color.fromARGB(0, 255, 255, 255).withOpacity(0.1),
+              const Color.fromARGB(0, 255, 255, 255).withOpacity(0.1),
             ],
           ),
-        ],
+          border: Border.all(
+            color: Colors.white.withOpacity(0),
+            width: dividerWidth,
+          ),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      completionValue,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: valueFontSize,
+                        fontWeight: FontWeight.w400,
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: spacing * 0.4),
+                    Text(
+                      'Completed',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: labelFontSize,
+                        height: 1.4,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              VerticalDivider(
+                color: Colors.white.withOpacity(0.2),
+                width: dividerWidth,
+                thickness: dividerWidth,
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      eventsValue,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: valueFontSize,
+                        fontWeight: FontWeight.w400,
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: spacing * 0.4),
+                    Text(
+                      'Levels Achieved',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: labelFontSize,
+                        height: 1.4,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 } 
