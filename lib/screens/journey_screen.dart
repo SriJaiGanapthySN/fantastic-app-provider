@@ -189,12 +189,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                   widget.tile?['objectId'] ?? '',
                                   'journey_card_tap',
                                 );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => JourneyScreen(tile: widget.tile),
-                                  ),
-                                );
                               },
                             ),
                             loading: () => JourneyCard(
@@ -208,12 +202,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                   widget.tile?['objectId'] ?? '',
                                   'journey_card_tap',
                                 );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => JourneyScreen(tile: widget.tile),
-                                  ),
-                                );
                               },
                             ),
                             error: (error, stack) => JourneyCard(
@@ -226,12 +214,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                   _userEmail!,
                                   widget.tile?['objectId'] ?? '',
                                   'journey_card_tap',
-                                );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => JourneyScreen(tile: widget.tile),
-                                  ),
                                 );
                               },
                             ),
@@ -319,14 +301,6 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                     _userEmail!,
                                     widget.tile?['objectId'] ?? '',
                                     'level_tap',
-                                  );
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => JourneyScreen(
-                                        tile: widget.tile,
-                                      ),
-                                    ),
                                   );
                                 },
                               );
