@@ -487,37 +487,58 @@ class JourneyService {
   Future<bool> updateGoalCompletion(String userEmail, String id,
       String skillLevelId, String skillId, String skillTrackId) async {
     try {
-      // Perform the Firestore update for the specific user email and skill level ID
-      await FirebaseFirestore.instance
+      // Create a batch write to ensure all updates are atomic
+      final batch = _firestore.batch();
+      
+      // Update goal completion
+      final goalRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillGoal')
-          .doc(id) // Assuming 'id' is the document ID for the skill level
-          .update({'isCompleted': true});
+          .doc(id);
+      batch.update(goalRef, {'isCompleted': true});
 
-      await FirebaseFirestore.instance
+      // Update skill level completion
+      final skillLevelRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillLevel')
-          .doc(
-              skillLevelId) // Assuming 'id' is the document ID for the skill level
-          .update({'isCompleted': true});
+          .doc(skillLevelId);
+      batch.update(skillLevelRef, {'isCompleted': true});
 
-      await FirebaseFirestore.instance
+      // Update skill completion count
+      final skillRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skill')
-          .doc(skillId) // Assuming 'skillId' is the document ID for the skill
-          .update({'skillLevelCompleted': FieldValue.increment(1)});
+          .doc(skillId);
+      batch.update(skillRef, {'skillLevelCompleted': FieldValue.increment(1)});
 
-      await FirebaseFirestore.instance
+      // Update journey track completion
+      final skillTrackRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillTrack')
-          .doc(
-              skillTrackId) // Assuming 'skillId' is the document ID for the skill
-          .update({'levelsCompleted': FieldValue.increment(1)});
+          .doc(skillTrackId);
+      batch.update(skillTrackRef, {'levelsCompleted': FieldValue.increment(1)});
 
+      // Log user interaction
+      final userInteractionRef = _firestore
+          .collection('testers')
+          .doc(userEmail)
+          .collection('userInteractions')
+          .doc();
+      batch.set(userInteractionRef, {
+        'type': 'goal_completion',
+        'goalId': id,
+        'skillLevelId': skillLevelId,
+        'skillId': skillId,
+        'skillTrackId': skillTrackId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Commit all updates
+      await batch.commit();
       return true;
     } catch (e) {
       print("Error updating task: $e");
@@ -528,29 +549,49 @@ class JourneyService {
   Future<bool> updateOneTime(bool isAdded, String id, String userEmail,
       String skillId, String skillTrackId) async {
     try {
-      // Perform the Firestore update for the specific user email and skill level ID
-      await FirebaseFirestore.instance
+      // Create a batch write to ensure all updates are atomic
+      final batch = _firestore.batch();
+      
+      // Update skill level completion
+      final skillLevelRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillLevel')
-          .doc(id) // Assuming 'id' is the document ID for the skill level
-          .update({'isCompleted': true});
+          .doc(id);
+      batch.update(skillLevelRef, {'isCompleted': true});
 
-      await FirebaseFirestore.instance
+      // Update skill completion count
+      final skillRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skill')
-          .doc(skillId) // Assuming 'skillId' is the document ID for the skill
-          .update({'skillLevelCompleted': FieldValue.increment(1)});
+          .doc(skillId);
+      batch.update(skillRef, {'skillLevelCompleted': FieldValue.increment(1)});
 
-      await FirebaseFirestore.instance
+      // Update journey track completion
+      final skillTrackRef = _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillTrack')
-          .doc(
-              skillTrackId) // Assuming 'skillId' is the document ID for the skill
-          .update({'levelsCompleted': FieldValue.increment(1)});
+          .doc(skillTrackId);
+      batch.update(skillTrackRef, {'levelsCompleted': FieldValue.increment(1)});
 
+      // Log user interaction
+      final userInteractionRef = _firestore
+          .collection('testers')
+          .doc(userEmail)
+          .collection('userInteractions')
+          .doc();
+      batch.set(userInteractionRef, {
+        'type': 'one_time_completion',
+        'skillLevelId': id,
+        'skillId': skillId,
+        'skillTrackId': skillTrackId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Commit all updates
+      await batch.commit();
       return true;
     } catch (e) {
       print("Error updating task: $e");
@@ -579,41 +620,58 @@ class JourneyService {
   Future<bool> updateMotivator(bool isAdded, String id, String userEmail,
       String skillId, String skillTrackId) async {
     try {
-      // Perform the Firestore update for the specific user email and skill level ID
+      // Create a batch write to ensure all updates are atomic
+      final batch = _firestore.batch();
 
-      final skillLevelDoc = await FirebaseFirestore.instance
+      final skillLevelDoc = await _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillLevel')
-          .doc(id) // Assuming 'id' is the document ID for the skill level
+          .doc(id)
           .get();
 
-// Check if the document exists and `isCompleted` is false
       if (skillLevelDoc.exists &&
           !(skillLevelDoc.data()?['isCompleted'] ?? true)) {
-        // Update 'isCompleted' to true
-        await FirebaseFirestore.instance
+        // Update skill level completion
+        final skillLevelRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skillLevel')
-            .doc(id)
-            .update({'isCompleted': true});
+            .doc(id);
+        batch.update(skillLevelRef, {'isCompleted': true});
 
-        // Increment 'skillLevelCompleted' in the skill document
-        await FirebaseFirestore.instance
+        // Update skill completion count
+        final skillRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skill')
-            .doc(skillId) // Assuming 'skillId' is the document ID for the skill
-            .update({'skillLevelCompleted': FieldValue.increment(1)});
+            .doc(skillId);
+        batch.update(skillRef, {'skillLevelCompleted': FieldValue.increment(1)});
 
-        await FirebaseFirestore.instance
+        // Update journey track completion
+        final skillTrackRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skillTrack')
-            .doc(
-                skillTrackId) // Assuming 'skillId' is the document ID for the skill
-            .update({'levelsCompleted': FieldValue.increment(1)});
+            .doc(skillTrackId);
+        batch.update(skillTrackRef, {'levelsCompleted': FieldValue.increment(1)});
+
+        // Log user interaction
+        final userInteractionRef = _firestore
+            .collection('testers')
+            .doc(userEmail)
+            .collection('userInteractions')
+            .doc();
+        batch.set(userInteractionRef, {
+          'type': 'motivator_completion',
+          'skillLevelId': id,
+          'skillId': skillId,
+          'skillTrackId': skillTrackId,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+        // Commit all updates
+        await batch.commit();
       } else {
         print("Skill level is already completed or does not exist.");
       }
@@ -721,6 +779,34 @@ class JourneyService {
     } catch (e) {
       print('Error fetching journey type: $e');
       return {'type': ''};
+    }
+  }
+
+  // Add new method to track journey screen interactions
+  Future<void> logJourneyScreenInteraction(
+    String userEmail,
+    String journeyId,
+    String action, {
+    Map<String, Object>? additionalData,
+  }) async {
+    try {
+      final data = <String, Object>{
+        'journeyId': journeyId,
+        'action': action,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+      
+      if (additionalData != null) {
+        data.addAll(additionalData);
+      }
+      
+      await _firestore
+          .collection('testers')
+          .doc(userEmail)
+          .collection('journeyInteractions')
+          .add(data);
+    } catch (e) {
+      print("Error logging journey screen interaction: $e");
     }
   }
 }

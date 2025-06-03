@@ -39,6 +39,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
         setState(() {});
       });
     _loadUserEmail();
+    _logJourneyScreenInteraction();
   }
 
   Future<void> _loadUserEmail() async {
@@ -46,6 +47,16 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
     setState(() {
       _userEmail = "test03@gmail.com";
     });
+  }
+
+  Future<void> _logJourneyScreenInteraction() async {
+    if (_userEmail != null && widget.tile != null) {
+      await _journeyService.logJourneyScreenInteraction(
+        _userEmail!,
+        widget.tile!['objectId'] ?? '',
+        'screen_view',
+      );
+    }
   }
 
   @override
@@ -163,6 +174,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                     progress: stats['completion'] ?? '0%',
                                     imageUrl: widget.tile?['imageUrl'] ?? '',
                                     onTap: () {
+                                      _journeyService.logJourneyScreenInteraction(
+                                        _userEmail!,
+                                        widget.tile?['objectId'] ?? '',
+                                        'journey_card_tap',
+                                      );
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -181,6 +197,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                     progress: '0%',
                                     imageUrl: widget.tile?['imageUrl'] ?? '',
                                     onTap: () {
+                                      _journeyService.logJourneyScreenInteraction(
+                                        _userEmail!,
+                                        widget.tile?['objectId'] ?? '',
+                                        'journey_card_tap',
+                                      );
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -200,6 +221,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                   progress: '0%',
                                   imageUrl: widget.tile?['imageUrl'] ?? null,
                                   onTap: () {
+                                    _journeyService.logJourneyScreenInteraction(
+                                      _userEmail!,
+                                      widget.tile?['objectId'] ?? '',
+                                      'journey_card_tap',
+                                    );
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -225,6 +251,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           // All Journey Button
                           JourneyListItem(
                             onTap: () {
+                              _journeyService.logJourneyScreenInteraction(
+                                _userEmail!,
+                                widget.tile?['objectId'] ?? '',
+                                'all_journey_tap',
+                              );
                               // Handle all journey tap
                             },
                           ),
@@ -232,8 +263,10 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           // Progress Stats
                           journeyStats.when(
                             data: (stats) => StatsCard(
-                              completionValue: stats['completion'] ?? 0,
-                              eventsValue: stats['eventsAchieved'] ?? 0,
+                              completionValue: stats['levelCompletion'] ?? '0%',
+                              eventsValue: stats['eventsCompleted'] ?? '0',
+                              skillCompletionValue: stats['skillCompletion'],
+                              userEmail: _userEmail,
                             ),
                             loading: () => const Center(
                                 child: CircularProgressIndicator()),
@@ -260,6 +293,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                 tile: widget.tile,
                                 skillTrackId: widget.tile?['objectId'] ?? '',
                                 onLevelTap: (levelId) {
+                                  _journeyService.logJourneyScreenInteraction(
+                                    _userEmail!,
+                                    widget.tile?['objectId'] ?? '',
+                                    'level_tap',
+                                  );
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(

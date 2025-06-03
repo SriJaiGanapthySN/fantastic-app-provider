@@ -32,26 +32,47 @@ final allJourneysProvider =
   return journeyService.fetchUserJourneys(email);
 });
 
-final journeyStatsProvider =
-    FutureProvider.family<Map<String, dynamic>, String>((ref, email) async {
-  final journeyService = ref.watch(journeyServiceProvider);
-  final journeys = await journeyService.fetchUserJourneys(email);
+final journeyStatsProvider = StreamProvider.family<Map<String, dynamic>, String>((ref, userEmail) async* {
+  final journeyService = JourneyService();
+  final journeys = await journeyService.fetchUserJourneys(userEmail);
+  
+  int totalLevels = 0;
+  int completedLevels = 0;
+  int totalSkills = 0;
+  int completedSkills = 0;
+  int eventsCompleted = 0;
 
-  final totalLevels = journeys.fold<int>(
-      0, (sum, journey) => sum + ((journey['skillLevelCount'] ?? 0) as int));
+  for (final journey in journeys) {
+    final journeyLevels = (journey['skillLevelCount'] as num?)?.toInt() ?? 0;
+    final completedJourneyLevels = (journey['levelsCompleted'] as num?)?.toInt() ?? 0;
+    final journeySkills = (journey['skillCount'] as num?)?.toInt() ?? 0;
+    final completedJourneySkills = (journey['skillsCompleted'] as num?)?.toInt() ?? 0;
+    final journeyEvents = (journey['eventsCompleted'] as num?)?.toInt() ?? 0;
 
-  final completedLevels = journeys.fold<int>(
-      0, (sum, journey) => sum + ((journey['levelsCompleted'] ?? 0) as int));
+    totalLevels += journeyLevels;
+    completedLevels += completedJourneyLevels;
+    totalSkills += journeySkills;
+    completedSkills += completedJourneySkills;
+    eventsCompleted += journeyEvents;
+  }
 
-  final completion = totalLevels > 0
-      ? (completedLevels / totalLevels * 100).toStringAsFixed(0)
-      : '0';
+  final levelCompletion = totalLevels > 0 
+      ? '${((completedLevels / totalLevels) * 100).toStringAsFixed(0)}%'
+      : '0%';
+      
+  final skillCompletion = totalSkills > 0
+      ? '${((completedSkills / totalSkills) * 100).toStringAsFixed(0)}%'
+      : '0%';
 
-  return {
-    'completion': '$completion%',
+  yield {
+    'levelCompletion': levelCompletion,
+    'skillCompletion': skillCompletion,
+    'eventsCompleted': eventsCompleted.toString(),
     'totalLevels': totalLevels,
     'completedLevels': completedLevels,
-    'eventsAchieved': '$completedLevels/$totalLevels'
+    'totalSkills': totalSkills,
+    'completedSkills': completedSkills,
+    'lastUpdated': DateTime.now().toIso8601String(),
   };
 });
 

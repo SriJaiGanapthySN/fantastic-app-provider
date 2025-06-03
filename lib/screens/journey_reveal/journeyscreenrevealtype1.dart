@@ -6,6 +6,7 @@ import 'package:flutter_html/flutter_html.dart'; // For rendering HTML
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:http/http.dart' as http; // For fetching HTML content
 import 'dart:convert'; // For jsonDecode if pagedContent is used as fallback
+import 'package:fantastic_app_riverpod/services/journey_service.dart';
 
 // AppColors class to hold color constants
 class AppColors {
@@ -46,9 +47,14 @@ class _JourneyRevealType1State extends State<JourneyRevealType1> {
 
   static const String _flourishAssetPath = 'assets/images/decorative_flourish.png'; // Ensure this asset exists
 
+  final JourneyService _journeyService = JourneyService();
+  DateTime? _contentViewStartTime;
+
   @override
   void initState() {
     super.initState();
+    _contentViewStartTime = DateTime.now();
+    _logContentView();
     if (widget.email.isNotEmpty) {
       if (widget.email.contains('@')) {
         _userName = widget.email.split('@').first;
@@ -171,11 +177,52 @@ class _JourneyRevealType1State extends State<JourneyRevealType1> {
     }
   }
 
+  Future<void> _logContentView() async {
+    await _journeyService.logJourneyScreenInteraction(
+      widget.email,
+      widget.skilltrack.objectId,
+      'content_view',
+      additionalData: {
+        'contentId': widget.letterData['objectId'],
+        'contentTitle': widget.letterData['contentTitle'],
+        'contentType': 'letter',
+      },
+    );
+  }
+
   @override
   void dispose() {
+    if (_contentViewStartTime != null) {
+      final viewDuration = DateTime.now().difference(_contentViewStartTime!);
+      _journeyService.logJourneyScreenInteraction(
+        widget.email,
+        widget.skilltrack.objectId,
+        'content_view_end',
+        additionalData: {
+          'contentId': widget.letterData['objectId'],
+          'contentTitle': widget.letterData['contentTitle'],
+          'contentType': 'letter',
+          'viewDurationSeconds': viewDuration.inSeconds,
+        },
+      );
+    }
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handleDone() async {
+    await _journeyService.logJourneyScreenInteraction(
+      widget.email,
+      widget.skilltrack.objectId,
+      'content_complete',
+      additionalData: {
+        'contentId': widget.letterData['objectId'],
+        'contentTitle': widget.letterData['contentTitle'],
+        'contentType': 'letter',
+      },
+    );
+    Navigator.of(context).pop();
   }
 
   @override
@@ -399,7 +446,7 @@ class _JourneyRevealType1State extends State<JourneyRevealType1> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                         textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                       ),
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: _handleDone,
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

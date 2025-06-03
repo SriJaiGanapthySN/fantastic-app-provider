@@ -13,6 +13,7 @@ import '../screens/journey_reveal/journeyscreenrevealtype3.dart';
 import '../models/skill.dart';
 import '../models/skillTrack.dart';
 import '../services/journey_service.dart' as js;
+import 'package:flutter_svg/flutter_svg.dart';
 
 // Helper function for robust date parsing
 DateTime _parseJourneyDate(dynamic dateValue, DateTime defaultValue) {
@@ -347,8 +348,9 @@ class _LevelItem extends StatelessWidget {
   final String overallJourneyTrackType;
   final Map<String, dynamic> skill;
   final Map<String, dynamic>? journeyTile;
+  final js.JourneyService _journeyService = js.JourneyService();
 
-  const _LevelItem({
+  _LevelItem({
     Key? key,
     required this.title,
     required this.description,
@@ -366,7 +368,19 @@ class _LevelItem extends StatelessWidget {
     this.journeyTile,
   }) : super(key: key);
 
-  void _navigateToJourneyReveal(BuildContext context) {
+  void _navigateToJourneyReveal(BuildContext context) async {
+    // Log the level navigation interaction
+    await _journeyService.logJourneyScreenInteraction(
+      email,
+      journeyId,
+      'level_navigation',
+      additionalData: {
+        'levelId': levelId,
+        'skillId': skill['objectId'],
+        'skillTitle': skill['title'],
+      },
+    );
+    
     _getSkillTypeAndNavigate(context);
   }
 

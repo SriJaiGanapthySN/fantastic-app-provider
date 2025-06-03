@@ -1,17 +1,40 @@
 import 'package:flutter/material.dart';
+import '../services/journey_service.dart';
 
 class StatsCard extends StatelessWidget {
   final String completionValue;
   final String eventsValue;
+  final String? skillCompletionValue;
+  final JourneyService _journeyService = JourneyService();
+  final String? userEmail;
 
-  const StatsCard({
+  StatsCard({
     Key? key,
     required this.completionValue,
     required this.eventsValue,
+    this.skillCompletionValue,
+    this.userEmail,
   }) : super(key: key);
+
+  void _logStatsView() {
+    if (userEmail != null) {
+      _journeyService.logJourneyScreenInteraction(
+        userEmail!,
+        'stats_view',
+        'stats_card_view',
+        additionalData: {
+          'completionValue': completionValue,
+          'eventsValue': eventsValue,
+          if (skillCompletionValue != null) 'skillCompletionValue': skillCompletionValue!,
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    _logStatsView();
+    
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     
@@ -30,55 +53,70 @@ class StatsCard extends StatelessWidget {
       height: cardHeight,
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
         borderRadius: BorderRadius.circular(borderRadius),
-        color: Colors.white.withOpacity(0.05),
       ),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: padding),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(borderRadius * 0.85),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color.fromARGB(0, 255, 255, 255).withOpacity(0.1),
-              const Color.fromARGB(0, 255, 255, 255).withOpacity(0.1),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.white.withOpacity(0),
-            width: dividerWidth,
-          ),
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      completionValue,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: valueFontSize,
-                        fontWeight: FontWeight.w400,
-                        height: 1.1,
-                      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    completionValue,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: valueFontSize,
+                      fontWeight: FontWeight.w400,
+                      height: 1.1,
                     ),
-                    SizedBox(height: spacing * 0.4),
-                    Text(
-                      'Completion',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: labelFontSize,
-                        height: 1.4,
-                        fontWeight: FontWeight.w400,
-                      ),
+                  ),
+                  SizedBox(height: spacing * 0.4),
+                  Text(
+                    'Level Completion',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: labelFontSize,
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
+            VerticalDivider(
+              color: Colors.white.withOpacity(0.2),
+              width: dividerWidth,
+              thickness: dividerWidth,
+            ),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    eventsValue,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: valueFontSize,
+                      fontWeight: FontWeight.w400,
+                      height: 1.1,
+                    ),
+                  ),
+                  SizedBox(height: spacing * 0.4),
+                  Text(
+                    'Events Achieved',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: labelFontSize,
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (skillCompletionValue != null) ...[
               VerticalDivider(
                 color: Colors.white.withOpacity(0.2),
                 width: dividerWidth,
@@ -89,7 +127,7 @@ class StatsCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      eventsValue,
+                      skillCompletionValue!,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: valueFontSize,
@@ -99,7 +137,7 @@ class StatsCard extends StatelessWidget {
                     ),
                     SizedBox(height: spacing * 0.4),
                     Text(
-                      'Event\'s Achieved',
+                      'Skill Completion',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.7),
                         fontSize: labelFontSize,
@@ -111,7 +149,7 @@ class StatsCard extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );

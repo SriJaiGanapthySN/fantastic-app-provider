@@ -169,6 +169,14 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
     if (success && mounted) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_getPrefsKey(), _getTodayDateString());
+      
+      // Log the daily completion
+      await _journeyService.logJourneyScreenInteraction(
+        widget.email,
+        widget.skilltrack.objectId,
+        'daily_goal_completion',
+      );
+      
       setState(() {
         _hasCompletedTaskForToday = true;
         _isLoadingCompletionAction = false; // Action complete
@@ -191,6 +199,14 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
     if (success && mounted) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_getPrefsKey()); // Clear the daily completion marker for the new cycle
+      
+      // Log the goal restart
+      await _journeyService.logJourneyScreenInteraction(
+        widget.email,
+        widget.skilltrack.objectId,
+        'goal_restart',
+      );
+      
       setState(() {
         _hasCompletedTaskForToday = false; // Reset daily completion status
         _isLoadingCompletionAction = false; // Action complete
@@ -205,7 +221,6 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
 
   Future<void> completeGoal(String email, String id, String skillLevelId,
       String skillId, String skillTrackId) async {
-    // ... (your existing completeGoal logic - unchanged)
     try {
       setState(() {
         isLoading = true;
@@ -215,19 +230,30 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
       final updated = await _journeyService.updateGoalCompletion(
           email, id, skillLevelId, skillId, skillTrackId);
 
-      setState(() {
-        isLoading = false;
-        if (updated) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const JourneyScreen(),
-            ),
-          );
-        } else {
+      if (updated) {
+        // Log the goal completion
+        await _journeyService.logJourneyScreenInteraction(
+          email,
+          skillTrackId,
+          'goal_completion',
+        );
+        
+        setState(() {
+          isLoading = false;
+        });
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const JourneyScreen(),
+          ),
+        );
+      } else {
+        setState(() {
+          isLoading = false;
           errorMessage = 'Failed to complete goal';
-        }
-      });
+        });
+      }
     } catch (e) {
       setState(() {
         isLoading = false;
