@@ -106,10 +106,36 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
     super.dispose();
   }
 
+  // Helper methods for responsive sizing
+  double getResponsiveWidth(BuildContext context, double percentage) {
+    return MediaQuery.of(context).size.width * percentage;
+  }
+
+  double getResponsiveHeight(BuildContext context, double percentage) {
+    return MediaQuery.of(context).size.height * percentage;
+  }
+
+  double getResponsiveFontSize(BuildContext context, double baseSize) {
+    // Base the font size on the width for consistency
+    double screenWidth = MediaQuery.of(context).size.width;
+    return baseSize * screenWidth / 375; // 375 is baseline for iPhone X
+  }
+
+  double getResponsivePadding(BuildContext context, double value) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    return value * screenWidth / 375;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
+      padding: EdgeInsets.symmetric(
+        vertical: getResponsivePadding(context, 3),
+        horizontal: getResponsivePadding(context, 10),
+      ),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Stack(
@@ -123,11 +149,11 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                       ? "assets/animations/QnA/2. Circle/data.json"
                       : 'assets/animations/All Lottie/Glowing Star/Image Preload Gradient.json',
                   width: widget.isQuestion
-                      ? MediaQuery.of(context).size.width * 0.65
-                      : MediaQuery.of(context).size.width * 0.8,
+                      ? getResponsiveWidth(context, 0.65)
+                      : getResponsiveWidth(context, 0.8),
                   height: widget.isQuestion
-                      ? MediaQuery.of(context).size.height * 0.25
-                      : MediaQuery.of(context).size.height * 0.3,
+                      ? getResponsiveHeight(context, 0.25)
+                      : getResponsiveHeight(context, 0.3),
                   fit: BoxFit.cover,
                   repeat: true,
                 ),
@@ -135,27 +161,35 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
             if (isBoxVisible) ...[
               Lottie.asset(
                 "assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json",
-                width: MediaQuery.of(context).size.width * 0.87,
-                height: MediaQuery.of(context).size.height * 0.33,
+                width: getResponsiveWidth(context, 0.87),
+                height: getResponsiveHeight(context, 0.33),
                 fit: BoxFit.fill,
                 repeat: false,
               ),
               Lottie.asset(
                 "assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json",
-                width: MediaQuery.of(context).size.width * 0.87,
-                height: MediaQuery.of(context).size.height * 0.33,
+                width: getResponsiveWidth(context, 0.87),
+                height: getResponsiveHeight(context, 0.33),
                 fit: BoxFit.fill,
                 repeat: repeatGlow,
               ),
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 12, left: 18, right: 12),
+                  padding: EdgeInsets.only(
+                    top: getResponsivePadding(context, 12),
+                    left: getResponsivePadding(context, 18),
+                    right: getResponsivePadding(context, 12),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        margin: EdgeInsets.only(top: 10, left: 5, right: 10),
+                        margin: EdgeInsets.only(
+                          top: getResponsivePadding(context, 10),
+                          left: getResponsivePadding(context, 5),
+                          right: getResponsivePadding(context, 10),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
@@ -175,7 +209,7 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                                   textStyle: TextStyle(
                                 fontFamily: "Original",
                                 letterSpacing: 1,
-                                fontSize: 14,
+                                fontSize: getResponsiveFontSize(context, 14),
                                 color: Colors.white,
                               )),
                               textAlign: TextAlign.left,
@@ -185,11 +219,17 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                               maxLines: 8,
                             ),
                             Container(
-                              margin: EdgeInsets.only(top: 10, left: 10),
+                              margin: EdgeInsets.only(
+                                top: getResponsivePadding(context, 10),
+                                left: getResponsivePadding(context, 10),
+                              ),
                               child: CardImageSection(
                                 imageController: imageController,
                                 opacity: opacity,
                                 applyBlur: applyBlur,
+                                getResponsiveWidth: getResponsiveWidth,
+                                getResponsiveHeight: getResponsiveHeight,
+                                getResponsiveFontSize: getResponsiveFontSize,
                               ),
                             ),
                           ],
@@ -211,12 +251,18 @@ class CardImageSection extends StatelessWidget {
   final AnimationController imageController;
   final double opacity;
   final bool applyBlur;
+  final Function(BuildContext, double) getResponsiveWidth;
+  final Function(BuildContext, double) getResponsiveHeight;
+  final Function(BuildContext, double) getResponsiveFontSize;
 
   const CardImageSection({
     super.key,
     required this.imageController,
     required this.opacity,
     required this.applyBlur,
+    required this.getResponsiveWidth,
+    required this.getResponsiveHeight,
+    required this.getResponsiveFontSize,
   });
 
   @override
@@ -225,15 +271,15 @@ class CardImageSection extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(getResponsiveWidth(context, 0.032)), // ~12 on 375 width
           child: AnimatedOpacity(
             duration: Duration(milliseconds: 100),
             curve: Curves.easeInOut,
             opacity: ((opacity - 0.3) <= 0.0) ? 0 : opacity - 0.3,
             child: Image.asset(
               'assets/images/login.jpg',
-              width: MediaQuery.of(context).size.width * 0.7,
-              height: 200,
+              width: getResponsiveWidth(context, 0.7),
+              height: getResponsiveHeight(context, 0.2), // ~200px on 1000px height
               fit: BoxFit.cover,
             ),
           ),
@@ -260,15 +306,15 @@ class CardImageSection extends StatelessWidget {
               opacity: 0.26,
               child: Image.asset(
                 'assets/images/blur.jpeg',
-                height: MediaQuery.of(context).size.height * 0.07,
+                height: getResponsiveHeight(context, 0.07),
                 fit: BoxFit.cover,
               ),
             ),
           ),
         Positioned(
-          bottom: 10,
-          left: 20,
-          right: 20,
+          bottom: getResponsiveHeight(context, 0.01), // ~10px on 1000px height
+          left: getResponsiveWidth(context, 0.053), // ~20px on 375px width
+          right: getResponsiveWidth(context, 0.053), // ~20px on 375px width
           child: AnimatedOpacity(
             duration: Duration(milliseconds: 800),
             curve: Curves.easeIn,
@@ -277,13 +323,13 @@ class CardImageSection extends StatelessWidget {
               animation: imageController,
               builder: (context, child) {
                 return Transform.translate(
-                  offset: Offset(0, imageController.value < 0.8 ? 20 : 0),
+                  offset: Offset(0, imageController.value < 0.8 ? getResponsiveHeight(context, 0.02) : 0), // ~20px on 1000px height
                   child: Text(
                     "Dolphins Doing a Backflip in the Ocean",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: getResponsiveFontSize(context, 18),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
