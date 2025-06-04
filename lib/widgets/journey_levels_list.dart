@@ -442,7 +442,6 @@ class _LevelItem extends StatelessWidget {
                 goalDataResponse['objectId']?.toString() ?? skillObj.goalId,
             'description': goalDataResponse['description']?.toString() ?? '',
           };
-          if (Navigator.canPop(context)) Navigator.pop(context);
           print("Navigating to Goal screen (Type 2)");
           Navigator.push(
             context,
@@ -475,7 +474,6 @@ class _LevelItem extends StatelessWidget {
           'description': goalDataResponse?['description']?.toString() ?? '',
         };
 
-        //if (Navigator.canPop(context)) Navigator.pop(context);
         print("Navigating to Goal screen (Type 2)");
         Navigator.push(
           context,
@@ -791,7 +789,6 @@ class _LevelItem extends StatelessWidget {
             skill['description']?.toString() ?? 'Debug goal description.',
       };
 
-      //if (Navigator.canPop(context)) Navigator.pop(context);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -842,7 +839,7 @@ class _LevelItem extends StatelessWidget {
         }
       }
 
-      if (Navigator.canPop(context)) Navigator.pop(context);
+      if (Navigator.canPop(context)) Navigator.pop(context); // Close loading dialog only
 
       if (foundMotivatorLevel != null) {
         final String motivatorItemObjectId =
