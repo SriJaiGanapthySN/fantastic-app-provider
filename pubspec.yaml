@@ -112,7 +112,6 @@ flutter:
     - assets/images/onboardingImages/
     - assets/images/Habit/
     - assets/animations/audio.json
-    - assets/animations/challenge.json
     - assets/images/bgdiscover.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -120,10 +120,13 @@ class ChallengeScreen extends StatelessWidget {
               // Cross button at top
               Align(
                 alignment: Alignment.topLeft,
-                child: Padding( // Added padding for better touch area
-                  padding: const EdgeInsets.only(top: 40.0, right: 16.0), // Adjust padding as needed
+                child: Padding(
+                  // Added padding for better touch area
+                  padding: const EdgeInsets.only(
+                      top: 40.0, right: 16.0), // Adjust padding as needed
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 28),
+                    icon: const Icon(Icons.arrow_back,
+                        color: Colors.black87, size: 28),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
@@ -135,23 +138,23 @@ class ChallengeScreen extends StatelessWidget {
               // The card layout (moved inside the second Column)
             ],
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Lottie.asset(
-              'assets/animations/challenge.json', // your lottie file path
-              fit: BoxFit.cover,
-              repeat: true,
-            ),
-          ),
+          // Positioned(
+          //   bottom: 0,
+          //   left: 0,
+          //   right: 0,
+          //   child: Lottie.asset(
+          //     'assets/animations/challenge.json', // your lottie file path
+          //     fit: BoxFit.cover,
+          //     repeat: true,
+          //   ),
+          // ),
           Column(
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.10),
               // Use the defined handleButtonPress and set default index to 1
               ChallengeButton(
                 handleButtonPress: handleButtonPress, // Pass the method here
-                selectedButtonIndex: 0,            // Default index is 1
+                selectedButtonIndex: 0, // Default index is 1
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.15),
               Expanded(child: CardLayout(cardData: cardData)),
