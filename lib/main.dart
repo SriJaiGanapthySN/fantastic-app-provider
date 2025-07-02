@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -23,8 +24,11 @@ final notificationPluginProvider =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  tz.initializeTimeZones();
+  // Initialize Firebase first to ensure auth persistence works correctly
   await _initializeFirebase();
+
+  // Initialize timezone data
+  tz.initializeTimeZones();
 
   try {
     String timezoneName = await FlutterTimezone.getLocalTimezone();
@@ -78,6 +82,13 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+
+    // Add debug log to verify auth state on app start
+    if (kDebugMode) {
+      print(
+          'MyApp build - Auth state: ${authState.user != null ? 'Logged in' : 'Not logged in'}');
+      print('User email: ${authState.user?.email ?? 'No email'}');
+    }
 
     return MaterialApp(
       title: 'Fantastic App',

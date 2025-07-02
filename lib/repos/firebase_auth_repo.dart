@@ -12,6 +12,48 @@ class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
+  // Constructor to set persistence
+  FirebaseAuthRepo() {
+    _setPersistence();
+    _setupAuthListener();
+  }
+
+  // Auth state listener
+  void _setupAuthListener() {
+    firebaseAuth.authStateChanges().listen((User? user) {
+      if (kDebugMode) {
+        if (user != null) {
+          print(
+              'Auth state changed: User is signed in with email: ${user.email}');
+        } else {
+          print('Auth state changed: User is signed out');
+        }
+      }
+    });
+  }
+
+  // Set Firebase Auth persistence to ensure login persists across app restarts
+  Future<void> _setPersistence() async {
+    try {
+      // For web platforms
+      if (kIsWeb) {
+        await firebaseAuth.setPersistence(Persistence.LOCAL);
+      }
+      // Mobile platforms have persistence enabled by default with CACHE persistence
+
+      if (kDebugMode) {
+        print('Firebase Auth persistence set successfully');
+
+        // Check if a user is already signed in
+        if (firebaseAuth.currentUser != null) {
+          print('User already signed in: ${firebaseAuth.currentUser?.email}');
+        }
+      }
+    } catch (e) {
+      _logError('Error setting persistence', e);
+    }
+  }
+
   @override
   Future<AppUser?> getCurrentUser() async {
     //Get logged in user from firebase.
@@ -22,32 +64,79 @@ class FirebaseAuthRepo implements AuthRepo {
       return null;
     }
 
-    //Fetch user document from firestore.
-    DocumentSnapshot userDoc =
-        await firebaseFirestore.collection("users").doc(firebaseUser.uid).get();
+    try {
+      //Fetch user document from firestore.
+      DocumentSnapshot userDoc = await firebaseFirestore
+          .collection("users")
+          .doc(firebaseUser.uid)
+          .get();
 
-    //Check if user doc exists
-    if (!userDoc.exists) {
-      return null;
+      //Check if user doc exists
+      if (!userDoc.exists) {
+        return null;
+      }
+
+      //User exists
+      return AppUser(
+        uid: firebaseUser.uid,
+        email: firebaseUser.email!,
+        name: userDoc['name'],
+      );
+    } catch (e) {
+      _logError('Error getting current user data', e);
+      // If we can't get Firestore data but have Firebase Auth user,
+      // return basic user info to keep them logged in
+      return AppUser(
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? 'No email',
+        name: firebaseUser.displayName ?? 'User',
+      );
     }
-
-    //User exists
-    return AppUser(
-      uid: firebaseUser.uid,
-      email: firebaseUser.email!,
-      name: userDoc['name'],
-    );
   }
 
   @override
   Future<AppUser?> loginWithEmailAndPassword(
       String email, String password) async {
     try {
+      if (kDebugMode) {
+        print('Attempting email login for: $email');
+      }
+
       UserCredential userCredential =
           await firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Verify the user is logged in
+      if (userCredential.user == null) {
+        throw Exception('Login successful but no user returned');
+      }
+
+      if (kDebugMode) {
+        print('Email login successful for: ${userCredential.user!.email}');
+      }
+
+      // Get complete user data from Firestore
+      try {
+        DocumentSnapshot userDoc = await firebaseFirestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (userDoc.exists) {
+          return AppUser(
+            uid: userCredential.user!.uid,
+            email: userCredential.user!.email ?? 'No email',
+            name: userDoc['name'] ?? userCredential.user!.displayName ?? 'User',
+          );
+        }
+      } catch (e) {
+        _logError('Error getting user data from Firestore', e);
+        // Continue with basic user info even if Firestore fails
+      }
+
+      // Fallback to basic user info if Firestore data not available
       return AppUser(
         uid: userCredential.user!.uid,
         email: userCredential.user!.email ?? 'No email',

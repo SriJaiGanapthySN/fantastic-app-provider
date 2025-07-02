@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import '../repos/auth_repo.dart';
 import '../repos/firebase_auth_repo.dart';
@@ -29,29 +32,93 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepo authRepo;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  StreamSubscription<User?>? _authSubscription;
 
   AuthNotifier({required this.authRepo}) : super(const AuthState()) {
+    // Check auth state immediately when app starts
     checkAuth();
+
+    // Listen for auth state changes
+    _listenToAuthChanges();
+  }
+
+  void _listenToAuthChanges() {
+    _authSubscription = _auth.authStateChanges().listen((User? user) {
+      if (user == null && state.user != null) {
+        // User has been signed out
+        state = const AuthState();
+      } else if (user != null && state.user == null) {
+        // User has signed in but state doesn't reflect it
+        checkAuth();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> checkAuth() async {
     state = state.copyWith(isLoading: true);
     try {
       final user = await authRepo.getCurrentUser();
+      if (user != null) {
+        print('User is already logged in: ${user.email}');
+      } else {
+        print('No user is currently logged in');
+      }
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
+      print('Error checking authentication state: ${e.toString()}');
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true);
+    state =
+        state.copyWith(isLoading: true, error: null); // Clear previous errors
     try {
+      print('Starting email login process for: $email');
       final user = await authRepo.loginWithEmailAndPassword(email, password);
-      state = state.copyWith(user: user, isLoading: false);
-      // Removed the call to _addUserToTesters(user) here
+      if (user != null) {
+        print('Email login successful for: ${user.email}');
+        state = state.copyWith(user: user, isLoading: false);
+
+        // Verify login persistence
+        Future.delayed(const Duration(seconds: 1), () {
+          _verifyAuthState();
+        });
+      } else {
+        print('Email login returned null user');
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Login failed: No user data returned',
+        );
+      }
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      print('Email login error: ${e.toString()}');
+      state = state.copyWith(
+        error: e.toString(),
+        isLoading: false,
+      );
+    }
+  }
+
+  // Helper method to verify authentication state
+  Future<void> _verifyAuthState() async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        print(
+            'Auth verification: User is still logged in with email: ${currentUser.email}');
+      } else {
+        print('Auth verification: No user is logged in');
+      }
+    } catch (e) {
+      print('Error verifying auth state: ${e.toString()}');
     }
   }
 
@@ -119,8 +186,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Then complete the logout process
       await authRepo.logout();
 
-      // Clear any remaining cached data
-      // This ensures no persistent state remains after logout
+      // Additional step to verify logout was successful
+      await checkAuth();
+
       print('User successfully logged out');
     } catch (e) {
       print('Error during logout: ${e.toString()}');
