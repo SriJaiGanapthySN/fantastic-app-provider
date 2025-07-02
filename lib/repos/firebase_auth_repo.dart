@@ -175,13 +175,24 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<AppUser?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
+      // Sign out first to clear previous Google account selection
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+
+      // Now sign in with the account picker shown
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      // Handle case where user cancels the sign-in
+      if (googleUser == null) {
+        throw Exception('Google sign-in was canceled by user');
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth?.accessToken,
-        idToken: googleAuth?.idToken,
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
 
       UserCredential userCredential =
