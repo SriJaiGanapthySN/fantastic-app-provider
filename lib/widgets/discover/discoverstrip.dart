@@ -1,6 +1,8 @@
 import 'package:fantastic_app_riverpod/widgets/discover/addDiscoveryTile.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Add this import for ImageFilter
+import 'dart:ui';
+
+import 'package:lottie/lottie.dart'; // Add this import for ImageFilter
 
 class Discoverstrip extends StatelessWidget {
   Discoverstrip({super.key, required this.currentData, required this.email});
@@ -16,6 +18,14 @@ class Discoverstrip extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     return Stack(
       children: [
+        Positioned(
+          bottom: 0,
+          child: Lottie.asset(
+            "assets/animations/disbottom.json", // your lottie file path
+            fit: BoxFit.cover,
+            repeat: true,
+          ),
+        ),
         // The scrollable content
         SingleChildScrollView(
           controller: _scrollController,

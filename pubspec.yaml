@@ -114,6 +114,7 @@ flutter:
     - assets/animations/audio.json
     - assets/animations/challenge.json
     - assets/images/bgdiscover.jpeg
+    - assets/animations/disbottom.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
