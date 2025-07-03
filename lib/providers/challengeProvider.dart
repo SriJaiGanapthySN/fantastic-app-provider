@@ -13,6 +13,8 @@ class SkillLevel {
   final String skillTrackId;
   final String? type;
   final int? updatedAt;
+  final String? contentTitle;
+  final String? contentReadingTime;
 
   SkillLevel({
     required this.id,
@@ -26,6 +28,8 @@ class SkillLevel {
     required this.skillTrackId,
     this.type,
     this.updatedAt,
+    this.contentTitle,
+    this.contentReadingTime,
   });
 
   // Factory from Firestore DocumentSnapshot
@@ -46,6 +50,8 @@ class SkillLevel {
       skillTrackId: data['skillTrackId'] as String? ?? '',
       type: data['type'] as String?,
       updatedAt: data['updatedAt'] as int?,
+      contentTitle: data['contentTitle'] as String?,
+      contentReadingTime: data['contentReadingTime'] as String?,
     );
   }
 
@@ -62,6 +68,8 @@ class SkillLevel {
       'skillTrackId': skillTrackId,
       'type': type,
       'updatedAt': updatedAt,
+      'contentTitle': contentTitle,
+      'contentReadingTime': contentReadingTime,
     };
   }
 }

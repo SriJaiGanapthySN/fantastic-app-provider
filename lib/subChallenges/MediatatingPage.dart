@@ -4,12 +4,14 @@ import 'package:webview_flutter/webview_flutter.dart'; // Import WebView
 import 'package:http/http.dart' as http;             // Import HTTP client
 import 'dart:async';                                // For TimeoutException
 import 'package:html/parser.dart' as html_parser;      // For parsing HTML
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 
 // TODO: Ensure these are correctly defined and imported
 import '../providers/challengeProvider.dart'; // Needed for getSkillLevelByTrackId and SkillLevel model
 import 'MeditateTask.dart'; // Assuming GoalScreen is here
 
-class MeditationActionScreen extends StatefulWidget {
+class MeditationActionScreen extends ConsumerStatefulWidget {
   final String imageUrl; // Background image URL (Remains separate)
   final String objectId; // ID to fetch SkillLevel details
 
@@ -20,10 +22,10 @@ class MeditationActionScreen extends StatefulWidget {
   });
 
   @override
-  State<MeditationActionScreen> createState() => _MeditationActionScreenState();
+  ConsumerState<MeditationActionScreen> createState() => _MeditationActionScreenState();
 }
 
-class _MeditationActionScreenState extends State<MeditationActionScreen> {
+class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen> {
   bool _isPlaying = false;
   final DraggableScrollableController _sheetController = DraggableScrollableController();
 
@@ -38,85 +40,62 @@ class _MeditationActionScreenState extends State<MeditationActionScreen> {
   bool _contentLoadAttempted = false;
   String? _htmlContentError; // Stores error related to initial fetch or HTML processing/loading
 
-  // --- Static UI Text (Keep if needed) ---
-  final String title = "Your First Action";
-  final String subtitle = "Create a Meditation Habit";
-  final String durationText = "(2 minutes)";
-  final String letterDate = "December 25, 2024";
-  final String letterReadTime = "3 min";
-  final String letterSalutation = "Dear Reader,";
+  // --- For Done Button Animation ---
+  bool _showDoneButton = false;
 
   @override
   void initState() {
     super.initState();
-    print('MeditationActionScreen initState for objectId: ${widget.objectId}');
-
-    // --- Initialize WebViewController ---
+    _sheetController.addListener(_handleSheetSizeChange);
+    _skillLevelFuture = getSkillLevelByTrackId(widget.objectId);
+    // WebViewController setup is unchanged
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000)) // Transparent background
+      ..setBackgroundColor(const Color(0x00000000))
       ..setNavigationDelegate(
         NavigationDelegate(
-          onProgress: (int progress) {/* Optional: Update progress indicator */},
-          onPageStarted: (String url) {
-            // May fire for the base URL of loadHtmlString
-          },
+          onProgress: (int progress) {},
+          onPageStarted: (String url) {},
           onPageFinished: (String url) {
-            print("WebView finished loading base content.");
-            // This confirms the cleaned HTML is loaded, now set loading to false
-            if (mounted) {
-              setState(() { _isWebViewLoading = false; });
-            }
+            if (mounted) setState(() { _isWebViewLoading = false; });
           },
           onWebResourceError: (WebResourceError error) {
-            // This might catch errors for resources *within* the HTML (images, etc.)
-            // But the problematic file:/// links should have been removed.
-            print('WebView Resource Error (post-cleaning): ${error.description} URL: ${error.url}');
-            if (mounted) {
-              // Only set error if critical or no other error exists yet
-              if (_htmlContentError == null) {
-                setState(() {
-                  _htmlContentError = "Error loading content elements";
-                  _isWebViewLoading = false; // Stop loading on resource error too
-                });
-              }
+            if (mounted && _htmlContentError == null) {
+              setState(() {
+                _htmlContentError = "Error loading content elements";
+                _isWebViewLoading = false;
+              });
             }
           },
           onNavigationRequest: (NavigationRequest request) {
-            return NavigationDecision.navigate; // Allow loading other resources
+            return NavigationDecision.navigate;
           },
         ),
       );
-
-    // Fetch initial skill level data using the objectId
-    _skillLevelFuture = getSkillLevelByTrackId(widget.objectId);
-
-    // After skill data is fetched, attempt to fetch and process HTML content
-    _skillLevelFuture.then((skillLevel) {
-      if (!mounted) return; // Widget disposed?
-
+    // Fetch and load HTML after SkillLevel is fetched
+    _skillLevelFuture.then((skillLevel) async {
+      if (!mounted) return;
       if (skillLevel?.contentUrl != null) {
         final contentUrl = skillLevel!.contentUrl!;
         Uri? parsedUri = Uri.tryParse(contentUrl);
-        // Validate the URL before proceeding
         if (contentUrl.isNotEmpty && parsedUri != null && (parsedUri.isScheme("http") || parsedUri.isScheme("https"))) {
-          print('SkillLevel data fetched, now fetching HTML from $contentUrl');
-          _fetchAndLoadHtml(contentUrl); // Start the HTML fetch & process
+          await _fetchAndLoadHtml(contentUrl);
         } else {
-          print('SkillLevel data fetched, but invalid contentUrl: $contentUrl');
           setState(() { _htmlContentError = "Invalid content URL found."; _isWebViewLoading = false; });
         }
       } else {
-        print('SkillLevel fetch complete, but no contentUrl found or skillLevel is null.');
         setState(() { _htmlContentError = "Content details not available."; _isWebViewLoading = false; });
       }
     }).catchError((error) {
-      // Handle errors during the initial SkillLevel fetch
-      print('Error fetching initial skill level data: $error');
-      if (mounted) {
-        setState(() { _htmlContentError = "Failed to load details."; _isWebViewLoading = false; });
-      }
+      if (mounted) setState(() { _htmlContentError = "Failed to load details."; _isWebViewLoading = false; });
     });
+  }
+
+  void _handleSheetSizeChange() {
+    final isAtMax = (_sheetController.size >= _maxSheetSize - 0.01);
+    if (isAtMax != _showDoneButton) {
+      setState(() { _showDoneButton = isAtMax; });
+    }
   }
 
   // --- Fetches HTML, removes problematic links, and loads it ---
@@ -139,10 +118,19 @@ class _MeditationActionScreenState extends State<MeditationActionScreen> {
 
       if (response.statusCode == 200) {
         String originalHtml = response.body;
+        // Personalize with user name
+        final userEmail = ref.read(userEmailProvider);
+        String userName = 'Friend';
+        if (userEmail != null && userEmail.contains('@')) {
+          userName = userEmail.split('@')[0];
+        } else if (userEmail != null) {
+          userName = userEmail;
+        }
+        String personalizedHtml = originalHtml.replaceAll('{{NAME}}', userName);
         print('HTML content fetched successfully, removing local asset links...');
 
         // 2. Remove problematic file:/// links
-        String cleanedHtml = _removeLocalAssetLinks(originalHtml);
+        String cleanedHtml = _removeLocalAssetLinks(personalizedHtml);
 
         print('HTML link removal complete, loading cleaned content into WebView.');
 
@@ -197,12 +185,10 @@ class _MeditationActionScreenState extends State<MeditationActionScreen> {
     }
   }
 
-
   @override
   void dispose() {
+    _sheetController.removeListener(_handleSheetSizeChange);
     _sheetController.dispose();
-    // It's generally good practice to clean up controllers, though WebViewController might handle itself
-    // Consider adding: _webViewController = null; or similar if needed.
     super.dispose();
   }
 
@@ -212,139 +198,173 @@ class _MeditationActionScreenState extends State<MeditationActionScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true, // Allow body content behind AppBar
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton( icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.of(context).pop(), ),
-        actions: [
-          IconButton( icon: const Icon(Icons.equalizer_rounded, color: Colors.white), onPressed: () { /* Action */ },),
-          IconButton( icon: const Icon(Icons.share_outlined, color: Colors.white), onPressed: () { /* Action */ },),
-          IconButton( icon: const Icon(Icons.check, color: Colors.white), onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> GoalScreen(skillTrackId: widget.objectId,))); }, ),
-          IconButton( icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () { /* Action */ },),
-        ],
-      ),
-      body: Stack(
-        children: [
-          // 1. Background Image (Uses direct imageUrl)
-          Positioned.fill(
-            child: Image.network(
-              widget.imageUrl,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator(color: Colors.white)),
-              errorBuilder: (context, error, stackTrace) => Container(color: Colors.blueGrey[800], child: const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60))),
-            ),
-          ),
+    return FutureBuilder<SkillLevel?>(
+      future: _skillLevelFuture,
+      builder: (context, snapshot) {
+        final skillLevel = snapshot.data;
+        // Personalize headline and duration
+        final userEmail = ref.read(userEmailProvider);
+        String userName = 'Friend';
+        if (userEmail != null && userEmail.contains('@')) {
+          userName = userEmail.split('@')[0];
+        } else if (userEmail != null) {
+          userName = userEmail;
+        }
+        final String title = skillLevel?.contentTitle ?? "...";
+        final String subtitle = (skillLevel?.headline ?? "...").replaceAll('{{NAME}}', userName);
+        final String durationText = skillLevel?.contentReadingTime ?? "";
 
-          // 2. Gradient Overlay
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(0.55), Colors.transparent, Colors.black.withOpacity(0.35)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  stops: const [0.0, 0.45, 1.0],
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton( icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.of(context).pop(), ),
+            actions: [
+              IconButton( icon: const Icon(Icons.equalizer_rounded, color: Colors.white), onPressed: () { /* Action */ },),
+              IconButton( icon: const Icon(Icons.share_outlined, color: Colors.white), onPressed: () { /* Action */ },),
+              IconButton( icon: const Icon(Icons.check, color: Colors.white), onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> GoalScreen(skillTrackId: widget.objectId,))); }, ),
+              IconButton( icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () { /* Action */ },),
+            ],
+          ),
+          body: Stack(
+            children: [
+              // 1. Background Image (Uses direct imageUrl)
+              Positioned.fill(
+                child: Image.network(
+                  widget.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator(color: Colors.white)),
+                  errorBuilder: (context, error, stackTrace) => Container(color: Colors.blueGrey[800], child: const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60))),
                 ),
               ),
-            ),
-          ),
 
-          // 3. Overlay Text Content (Static)
-          Positioned(
-            top: topPadding + kToolbarHeight + (screenHeight * 0.03),
-            left: 20,
-            right: 20,
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text( title, textAlign: TextAlign.center, style: TextStyle( color: Colors.white.withOpacity(0.9), fontSize: 18, fontWeight: FontWeight.w500, shadows: [Shadow(color: Colors.black.withOpacity(0.6), blurRadius: 5)],),),
-                  const SizedBox(height: 10),
-                  Text( subtitle, textAlign: TextAlign.center, style: TextStyle( color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2, shadows: [Shadow(color: Colors.black.withOpacity(0.8), blurRadius: 7)],),),
-                  const SizedBox(height: 6),
-                  Text( durationText, textAlign: TextAlign.center, style: TextStyle( color: Colors.white.withOpacity(0.9), fontSize: 19, fontWeight: FontWeight.w500, shadows: [Shadow(color: Colors.black.withOpacity(0.6), blurRadius: 5)],),),
-                ]
-            ),
-          ),
-
-          // 4. Central Play/Pause Button
-          Positioned(
-            top: screenHeight * 0.5 - 45,
-            left: screenWidth * 0.5 - 45,
-            child: GestureDetector(
-                onTap: () { setState(() { _isPlaying = !_isPlaying; }); },
+              // 2. Gradient Overlay
+              Positioned.fill(
                 child: Container(
-                  width: 90, height: 90,
                   decoration: BoxDecoration(
-                      color: const Color(0xFFE91E63), shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black.withOpacity(0.15), width: 3.0),
-                      boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.45), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 5) ) ]
+                    gradient: LinearGradient(
+                      colors: [Colors.black.withOpacity(0.55), Colors.transparent, Colors.black.withOpacity(0.35)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: const [0.0, 0.45, 1.0],
+                    ),
                   ),
-                  child: Center( child: Icon(_isPlaying ? Icons.pause_rounded : Icons.equalizer_rounded, color: Colors.white, size: 55,)),
-                )
-            ),
-          ),
-
-          // 5. Draggable Bottom Sheet
-          DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: _initialSheetSize,
-            minChildSize: _minSheetSize,
-            maxChildSize: _maxSheetSize,
-            builder: (BuildContext context, ScrollController scrollController) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only( topLeft: Radius.circular(24.0), topRight: Radius.circular(24.0),),
-                  boxShadow: [ BoxShadow( color: Colors.black38, blurRadius: 18.0, spreadRadius: 0.0, offset: Offset(0, -6), ), ],
                 ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only( topLeft: Radius.circular(24.0), topRight: Radius.circular(24.0),),
-                  child: ListView( // Using ListView for content scrolling
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 15.0),
-                    children: [
-                      // --- Handle/Hint ---
-                      Center(
-                        child: Column(
-                          children: [
-                            const Icon(Icons.arrow_drop_up, color: Color(0xFFE91E63), size: 28,),
-                            Text("READ THIS LETTER", style: TextStyle( color: Colors.grey[700], fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.6, ),),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+              ),
 
-                      // --- Expanded Content ---
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // 3. Overlay Text Content (Dynamic)
+              Positioned(
+                top: topPadding + kToolbarHeight + (screenHeight * 0.03),
+                left: 20,
+                right: 20,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text( title, textAlign: TextAlign.center, style: TextStyle( color: Colors.white.withOpacity(0.9), fontSize: 18, fontWeight: FontWeight.w500, shadows: [Shadow(color: Colors.black.withOpacity(0.6), blurRadius: 5)],),),
+                    const SizedBox(height: 10),
+                    Text( subtitle, textAlign: TextAlign.center, style: TextStyle( color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2, shadows: [Shadow(color: Colors.black.withOpacity(0.8), blurRadius: 7)],),),
+                    const SizedBox(height: 6),
+                    if (durationText.isNotEmpty)
+                      Text( durationText, textAlign: TextAlign.center, style: TextStyle( color: Colors.white.withOpacity(0.9), fontSize: 19, fontWeight: FontWeight.w500, shadows: [Shadow(color: Colors.black.withOpacity(0.6), blurRadius: 5)],),),
+                  ]
+                ),
+              ),
+
+              // 4. Central Play/Pause Button
+              Positioned(
+                top: screenHeight * 0.5 - 45,
+                left: screenWidth * 0.5 - 45,
+                child: GestureDetector(
+                    onTap: () { setState(() { _isPlaying = !_isPlaying; }); },
+                    child: Container(
+                      width: 90, height: 90,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFE91E63), shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black.withOpacity(0.15), width: 3.0),
+                          boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.45), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 5) ) ]
+                      ),
+                      child: Center( child: Icon(_isPlaying ? Icons.pause_rounded : Icons.equalizer_rounded, color: Colors.white, size: 55,)),
+                    )
+                ),
+              ),
+
+              // 5. Draggable Bottom Sheet
+              DraggableScrollableSheet(
+                controller: _sheetController,
+                initialChildSize: _initialSheetSize,
+                minChildSize: _minSheetSize,
+                maxChildSize: _maxSheetSize,
+                builder: (BuildContext context, ScrollController scrollController) {
+                  return Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only( topLeft: Radius.circular(24.0), topRight: Radius.circular(24.0),),
+                      boxShadow: [ BoxShadow( color: Colors.black38, blurRadius: 18.0, spreadRadius: 0.0, offset: Offset(0, -6), ), ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only( topLeft: Radius.circular(24.0), topRight: Radius.circular(24.0),),
+                      child: Stack(
                         children: [
-                          Text(letterDate, style: TextStyle( color: Colors.grey[500], fontSize: 13.5, ),),
-                          Text(letterReadTime, style: TextStyle( color: Colors.grey[500], fontSize: 13.5, ),)
+                          ListView(
+                            controller: scrollController,
+                            padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 80.0), // Extra bottom padding for button
+                            children: [
+                              // --- Handle/Hint ---
+                              Center(
+                                child: Column(
+                                  children: [
+                                    const Icon(Icons.arrow_drop_up, color: Color(0xFFE91E63), size: 28,),
+                                    Text("READ THIS LETTER", style: TextStyle( color: Colors.grey[700], fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.6, ),),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // --- Expanded Content ---
+                              const SizedBox(height: 20),
+
+                              // --- WebView Section Replaces Title/Body ---
+                              _buildWebViewContent(),
+
+                              const SizedBox(height: 40), // Bottom padding
+                            ],
+                          ),
+                          // --- Animated Done Button ---
+                          Positioned(
+                            left: 0, right: 0, bottom: 20,
+                            child: AnimatedOpacity(
+                              opacity: _showDoneButton ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOut,
+                              child: Center(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE91E63),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 6,
+                                  ),
+                                  onPressed: _showDoneButton ? () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context)=> GoalScreen(skillTrackId: widget.objectId,)));
+                                  } : null,
+                                  child: const Text("Done, What's Next?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 28),
-                      Text(
-                        letterSalutation,
-                        style: TextStyle( color: Colors.grey[800], fontSize: 16, fontWeight: FontWeight.w500, ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // --- WebView Section Replaces Title/Body ---
-                      _buildWebViewContent(), // Add the helper widget here
-
-                      const SizedBox(height: 40), // Bottom padding
-                    ],
-                  ),
-                ),
-              );
-            },
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
