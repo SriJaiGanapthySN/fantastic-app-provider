@@ -430,30 +430,33 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
                         ),
                         const SizedBox(height: 20),
                         if (skillGoalData!["value"] != null && skillGoalData!["value"] > 0)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
                                 skillGoalData!["value"] ?? 0, (index) {
-                              int currentCompletionRate = skillGoalData!["completionRateGoal"] ?? 0;
-                              bool isColored = index < currentCompletionRate;
+                                  int currentCompletionRate = skillGoalData!["completionRateGoal"] ?? 0;
+                                  bool isColored = index < currentCompletionRate;
 
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                                child: TweenAnimationBuilder<Color?>(
-                                  tween: ColorTween(
-                                    end: isColored ? Colors.green : Colors.grey.shade400,
-                                  ),
-                                  duration: const Duration(milliseconds: 400),
-                                  builder: (BuildContext context, Color? color, Widget? child) {
-                                    return Icon(
-                                      Icons.check_circle,
-                                      color: color,
-                                      size: screenWidth * 0.075,
-                                    );
-                                  },
-                                ),
-                              );
-                            }),
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                                    child: TweenAnimationBuilder<Color?>(
+                                      tween: ColorTween(
+                                        end: isColored ? Colors.green : Colors.grey.shade400,
+                                      ),
+                                      duration: const Duration(milliseconds: 400),
+                                      builder: (BuildContext context, Color? color, Widget? child) {
+                                        return Icon(
+                                          Icons.check_circle,
+                                          color: color,
+                                          size: screenWidth * 0.075,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                }),
+                            ),
                           )
                         else
                           Padding(
