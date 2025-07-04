@@ -1,5 +1,6 @@
 import 'package:fantastic_app_riverpod/providers/journey_provider.dart';
 import 'package:fantastic_app_riverpod/screens/journey_path.dart';
+import 'package:fantastic_app_riverpod/screens/journey_reveal/journeyscreenrevealtype4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
@@ -14,6 +15,9 @@ import '../models/skill.dart';
 import '../models/skillTrack.dart';
 import '../services/journey_service.dart' as js;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:convert';
+import 'package:fantastic_app_riverpod/screens/journey_reveal/motivator_paged_screen.dart';
+import 'package:fantastic_app_riverpod/screens/journey_reveal/content_audio_screen.dart';
 
 // Helper function for robust date parsing
 DateTime _parseJourneyDate(dynamic dateValue, DateTime defaultValue) {
@@ -431,32 +435,32 @@ class _LevelItem extends StatelessWidget {
       );
 
       // Check for Type 2 (Goal)
-      if (skillObj.goalId.isNotEmpty) {
-        final goalDataResponse =
-            await journeyService.getSkillGoal(email, skillObj.goalId);
-        if (goalDataResponse != null) {
-          final goalData = {
-            'goalId': goalDataResponse['goalId']?.toString() ?? skillObj.goalId,
-            'title': goalDataResponse['title']?.toString() ?? skillObj.title,
-            'objectId':
-                goalDataResponse['objectId']?.toString() ?? skillObj.goalId,
-            'description': goalDataResponse['description']?.toString() ?? '',
-          };
-          print("Navigating to Goal screen (Type 2)");
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => Journeyscreenrevealtype2(
-                goalData: goalData,
-                skill: skillObj,
-                email: email,
-                skilltrack: _createSkillTrackForType('goal'),
-              ),
-            ),
-          );
-          return;
-        }
-      }
+      // if (skillObj.goalId.isNotEmpty) {
+      //   final goalDataResponse =
+      //       await journeyService.getSkillGoal(email, skillObj.goalId);
+      //   if (goalDataResponse != null) {
+      //     final goalData = {
+      //       'goalId': goalDataResponse['goalId']?.toString() ?? skillObj.goalId,
+      //       'title': goalDataResponse['title']?.toString() ?? skillObj.title,
+      //       'objectId':
+      //           goalDataResponse['objectId']?.toString() ?? skillObj.goalId,
+      //       'description': goalDataResponse['description']?.toString() ?? '',
+      //     };
+      //     print("Navigating to Goal screen (Type 2)");
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => Journeyscreenrevealtype2(
+      //           goalData: goalData,
+      //           skill: skillObj,
+      //           email: email,
+      //           skilltrack: _createSkillTrackForType('goal'),
+      //         ),
+      //       ),
+      //     );
+      //     return;
+      //   }
+      // }
 
       final level =
           await journeyService.getSkillLevel(email, skillObj.objectId);
@@ -547,6 +551,59 @@ class _LevelItem extends StatelessWidget {
               email: email,
               skilltrack: _createSkillTrackForType('letter'), // Or 'content'
             ),
+          ),
+        );
+        return;
+      } else if (level != null && level['type'] == "CONTENT_PAGED") {
+        print("Type 4 Content ");
+        final pagedData = {
+          'goalId': level['goalId']?.toString() ?? '',
+          'contentTitle': level['contentTitle']?.toString() ?? skillObj.title,
+          'type': level['type']?.toString() ?? 'CONTENT_PAGED',
+          'contentReadingTime': level['contentReadingTime']?.toString() ?? '',
+          'skillTrackId': level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
+          'skillId': level['skillId']?.toString() ?? skillObj.objectId,
+          'createdAt': (level['createdAt'] as num?)?.toInt(),
+          // Pass the nested pagedContent object directly. Provide a safe fallback.
+          'pagedContent': level['pagedContent'] ?? {'pages': []},
+        };
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PagedContentScreen(
+              goalData: pagedData, // Or 'content'
+            ),
+          ),
+        );
+        return;
+      } else if (level != null && level['type'] == "MOTIVATOR_PAGED") {
+        print("Navigating to Paged Content Screen (MOTIVATOR_PAGED)");
+
+        final motivatorPagedData = {
+          'contentTitle': level['contentTitle']?.toString() ?? skillObj.title,
+          'contentReadingTime': level['contentReadingTime']?.toString() ?? '',
+          'skillTrackId': level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
+          'skillId': level['skillId']?.toString() ?? skillObj.objectId,
+          'createdAt': (level['createdAt'] as num?)?.toInt(),
+          'pagedContent': _parsePagedContent(level['pagedContent']),
+        };
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MotivatorPagedScreen(
+              motivatorData: motivatorPagedData,
+            ),
+          ),
+        );
+        return;
+      } else if (level != null && level['type'] == "CONTENT_AUDIO") {
+        print("Navigating to Content Audio Screen (CONTENT_AUDIO)");
+        final audioData = Map<String, dynamic>.from(level);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ContentAudioScreen(audioData: audioData),
           ),
         );
         return;
@@ -883,6 +940,24 @@ class _LevelItem extends StatelessWidget {
         SnackBar(content: Text('Error trying Type 3 navigation: $e')),
       );
     }
+  }
+
+  Map<String, dynamic> _parsePagedContent(dynamic pagedContent) {
+    if (pagedContent == null) {
+      return {'pages': []};
+    }
+    if (pagedContent is Map && pagedContent['pages'] is List) {
+      return Map<String, dynamic>.from(pagedContent);
+    }
+    if (pagedContent is String) {
+      try {
+        final decoded = jsonDecode(pagedContent);
+        if (decoded is Map && decoded['pages'] is List) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+    }
+    return {'pages': []};
   }
 
   @override
