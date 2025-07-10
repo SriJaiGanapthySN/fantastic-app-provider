@@ -65,7 +65,15 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<void> logout() async {
     try {
-      await firebaseAuth.signOut().timeout(const Duration(seconds: 10));
+      // First sign out from Firebase Auth
+      await firebaseAuth.signOut();
+
+      // Also sign out from Google to allow account switching
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+        await googleSignIn.disconnect();
+      }
     } catch (e) {
       _logError('Error during logout', e);
       throw Exception('Logout Failed: ${e.toString()}');

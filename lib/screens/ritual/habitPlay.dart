@@ -470,7 +470,8 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                                           null)
                                                         {
                                                           _coachingPlay(
-                                                              habitCoachingData!)
+                                                              habitCoachingData[
+                                                                  "voiceUrl"]),
                                                         }
                                                       else
                                                         {
