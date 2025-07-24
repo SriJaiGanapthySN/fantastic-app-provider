@@ -224,23 +224,45 @@ class _HabitListState extends ConsumerState<HabitList> {
                                             vertical: 0.0, horizontal: 8.0),
                                         child: Row(
                                           children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 8.0),
-                                              child: SvgPicture.network(
-                                                icon,
-                                                height: 16,
-                                                width: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
                                             Expanded(
-                                              child: Text(
-                                                title,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 12,
+                                              child: InkWell(
+                                                borderRadius: BorderRadius.circular(13.04),
+                                                onTap: () {
+                                                  // Navigate to habitPlay with the specific habit index
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) => habitPlay(
+                                                        email: email, // Use safe email
+                                                        startIndex: habitIndex, // Pass the specific habit index
+                                                      ),
+                                                    ),
+                                                  ).then((_) {
+                                                    // Refresh habits when returning
+                                                    _fetchHabits();
+                                                  });
+                                                },
+                                                child: Row(
+                                                  children: [
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(left: 8.0),
+                                                      child: SvgPicture.network(
+                                                        icon,
+                                                        height: 16,
+                                                        width: 16,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        title,
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight: FontWeight.w500,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ),
@@ -258,33 +280,12 @@ class _HabitListState extends ConsumerState<HabitList> {
                                               onChanged:
                                                   (bool? newValue) async {
                                                 if (newValue != null) {
-                                                  if (!isCompleted) {
-                                                    // Navigate to habitPlay with the specific habit index
-                                                    Navigator.of(context)
-                                                        .push(
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            habitPlay(
-                                                          email:
-                                                              email, // Use safe email
-                                                          startIndex:
-                                                              habitIndex, // Pass the specific habit index
-                                                        ),
-                                                      ),
-                                                    )
-                                                        .then((_) {
-                                                      // Refresh habits when returning
-                                                      _fetchHabits();
-                                                    });
-                                                  } else {
-                                                    // If already completed, just update status to incomplete
-                                                    await _taskServices
-                                                        .updateHabitStatus(
-                                                            false,
-                                                            objectId,
-                                                            email); // Use safe email
-                                                    _fetchHabits();
-                                                  }
+                                                  await _taskServices.updateHabitStatus(
+                                                    newValue,
+                                                    objectId,
+                                                    email,
+                                                  );
+                                                  _fetchHabits();
                                                 }
                                               },
                                             ),
