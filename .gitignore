@@ -51,3 +51,5 @@ firebase.json
 functions/node_modules/
 functions/.env
 .firebaserc
+.podFile
+.gradle.properties
