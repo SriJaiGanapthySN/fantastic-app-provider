@@ -4,6 +4,7 @@ import 'package:fantastic_app_riverpod/providers/animation_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/message_provider.dart';
 import 'package:fantastic_app_riverpod/providers/speech_recognition_provider.dart';
+import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_app_bar.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_background.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_content.dart';
@@ -45,6 +46,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     // Add text controller listener
     _textController.addListener(_handleTextInputChange);
+
+    // Add authentication when chat screen opens
+    _authenticateUser();
   }
 
   void _handleTextInputChange() {
@@ -75,6 +79,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             userIsScrolling: true,
             nearBottom: nearBottom,
           );
+    }
+  }
+
+  // Add this new method for authentication
+  Future<void> _authenticateUser() async {
+    final apiService = ref.read(chatApiServiceProvider);
+    
+    // Hardcoded credentials for authentication
+    const defaultEmail = "string";
+    const defaultPassword = "string";
+    
+    try {
+      final token = await apiService.authenticate(defaultEmail, defaultPassword);
+      
+      if (token != null) {
+        ref.read(authStatusProvider.notifier).state = true;
+        
+        // Load existing messages
+        final messages = await apiService.fetchMessages();
+        print('Loaded ${messages.length} existing messages');
+        ref.read(apiMessagesProvider.notifier).state = messages;
+        
+        // Clear any previous auth errors
+        ref.read(authErrorProvider.notifier).state = null;
+      } else {
+        print('Authentication failed');
+        ref.read(authStatusProvider.notifier).state = false;
+        ref.read(authErrorProvider.notifier).state = 'Authentication failed';
+      }
+    } catch (e) {
+      print('Authentication error: $e');
+      ref.read(authStatusProvider.notifier).state = false;
+      ref.read(authErrorProvider.notifier).state = 'Authentication error: $e';
     }
   }
 
@@ -136,8 +173,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
   }
 
-  void _sendCard(String voiceText) {
+  void _sendCard(String voiceText) async {
     if (!mounted) return;
+
+    // Check if user is authenticated
+    final isAuthenticated = ref.read(authStatusProvider);
+    if (!isAuthenticated) {
+      print('User not authenticated');
+      // Attempt to re-authenticate
+      await _authenticateUser();
+      
+      // Check again after authentication attempt
+      final stillNotAuthenticated = !ref.read(authStatusProvider);
+      if (stillNotAuthenticated) {
+        // Show error to user or handle unauthenticated state
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required. Please try again.')),
+        );
+        return;
+      }
+    }
 
     // Trim voice text to remove any leading/trailing whitespace
     final trimmedVoiceText = voiceText.trim();
@@ -149,7 +204,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     _textController.clear();
 
-    ref.read(messageProvider(this).notifier).sendMessage(messageText);
+    // This now includes API integration
+    await ref.read(messageProvider(this).notifier).sendMessage(messageText);
 
     // Ensure we scroll down when sending a message
     _scrollToBottom();
@@ -191,6 +247,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final animationManager = ref.watch(animationProvider(this));
     // Consistently access the recognized text the same way
     final voiceText = ref.watch(speechRecognitionProvider).recognizedText.value;
+    
+    // Watch API states for potential UI feedback
+    final isAuthenticated = ref.watch(authStatusProvider);
+    final isLoading = ref.watch(chatLoadingProvider);
+    final authError = ref.watch(authErrorProvider);
 
     return Scaffold(
       body: Stack(
