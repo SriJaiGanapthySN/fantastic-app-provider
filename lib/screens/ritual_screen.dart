@@ -1,5 +1,4 @@
 import 'package:fantastic_app_riverpod/screens/auth_page.dart';
-import 'package:fantastic_app_riverpod/screens/ritual/addrotinelistscreen.dart';
 import 'package:fantastic_app_riverpod/utils/blur_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +10,6 @@ import '../providers/_providers.dart';
 import '../providers/habit_play_provider.dart';
 import '../services/task_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'ritual/taskreveal.dart';
 import 'ritual/habitPlay.dart';
 import '../providers/auth_provider.dart';
 
@@ -40,8 +38,8 @@ class RitualScreen extends ConsumerWidget {
     String email = '';
 
     // First check auth state for current user
-    if (authState.user?.email != null && authState.user!.email!.isNotEmpty) {
-      email = authState.user!.email!;
+    if (authState.user?.email != null && authState.user!.email.isNotEmpty) {
+      email = authState.user!.email;
     }
     // Then try passed email parameter
     else if (currentUserEmail.isNotEmpty) {
@@ -94,6 +92,7 @@ class RitualScreen extends ConsumerWidget {
     final notesData = ref.watch(notesDataProvider);
     final habitCoachingData = ref.watch(habitCoachingDataProvider);
     final scrollController = ref.watch(scrollControllerProvider);
+    int totalDuration = 0;
 
     return Stack(
       children: [
@@ -113,7 +112,7 @@ class RitualScreen extends ConsumerWidget {
           child: Column(
             children: [
               const SizedBox(height: 64),
-              const AlarmWidget(),
+              AlarmWidget(),
               HabitList(
                 email: email, // Use the validated email
               ),

@@ -100,14 +100,10 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   }
 
   void _coachingPlay(Map<String, dynamic> task) {
-    print("In COACHING");
     // Handle coaching play without audio
     if (habitCoachingData != null) {
       // Add any non-audio related coaching functionality here
-      print("Playing coaching content");
-    } else {
-      print("habitCoachingData is null");
-    }
+    } else {}
   }
 
   // Handle skip button press
@@ -207,9 +203,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
       if (hexColor.length == 6) {
         return Color(int.parse('0xFF$hexColor'));
       }
-    } catch (e) {
-      print("Invalid color string: $e");
-    }
+    } catch (e) {}
     return Colors.orange; // Default to orange on error
   }
 
@@ -217,19 +211,16 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
     int day = dayOfWeek();
     if (habitName.contains("Focus")) {
       habitCoachingData = await _coachingService.getHabitCoaching("FOCUS", day);
-      print(habitCoachingData);
       return habitCoachingData!["subtitle"];
     }
     if (habitName.contains("Daily")) {
       habitCoachingData =
           await _coachingService.getHabitCoaching("MORNING", day);
-      print(habitCoachingData);
       return habitCoachingData!["subtitle"];
     }
     if (habitName.contains("Nightly")) {
       habitCoachingData =
           await _coachingService.getHabitCoaching("NIGHTLY", day);
-      print(habitCoachingData);
       return habitCoachingData!["subtitle"];
     }
     return " ";

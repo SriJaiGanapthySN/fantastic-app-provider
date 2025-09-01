@@ -1,15 +1,18 @@
+import 'package:fantastic_app_riverpod/providers/duration_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/_providers.dart';
 import '../utils/blur_container.dart';
 
 class AlarmWidget extends ConsumerWidget {
-  const AlarmWidget({super.key});
+  const AlarmWidget({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alarmState = ref.watch(alarmProvider);
-
+    final totalDuration = ref.watch(totalDurationProvider);
     final alarmColor = alarmState.isAlarmSet
         ? const Color(0xFF00E29A)
         : const Color(0xFFFCC500);
@@ -81,7 +84,7 @@ class AlarmWidget extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.water_drop,
+                      Icons.timelapse,
                       color: Colors.white,
                       size: 24,
                     ),
@@ -98,7 +101,7 @@ class AlarmWidget extends ConsumerWidget {
                               fontSize: 14),
                         ),
                         Text(
-                          alarmState.formattedDuration,
+                          "$totalDuration minutes",
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 10,

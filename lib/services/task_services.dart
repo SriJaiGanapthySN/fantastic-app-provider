@@ -62,17 +62,13 @@ class TaskServices {
     try {
       // Validate email
       if (email == null || email.trim().isEmpty) {
-        print('TaskServices: Invalid email provided: "$email"');
         return []; // Return empty list for invalid email
       }
-
-      print('TaskServices: Fetching habits for user: $email');
 
       // Check if the tester document exists, if not create it
       DocumentSnapshot testerDoc =
           await _firestore.collection('testers').doc(email).get();
       if (!testerDoc.exists) {
-        print('TaskServices: Creating new tester document for email: $email');
         await _firestore.collection('testers').doc(email).set({
           'email': email,
           'createdAt': FieldValue.serverTimestamp(),
@@ -103,7 +99,6 @@ class TaskServices {
 
       return habits;
     } catch (e) {
-      print('TaskServices: Error fetching user habits: $e');
       return []; // Return an empty list in case of an error
     }
   }
@@ -481,20 +476,20 @@ class TaskServices {
   }
 
   Future<int> getTotalUserTasks(String userEmail) async {
-    var _querysnapshot = await _firestore
+    var querysnapshot = await _firestore
         .collection('testers')
         .doc(userEmail)
         .collection('tasks')
         .get();
-    return _querysnapshot.docs.length;
+    return querysnapshot.docs.length;
   }
 
   Future<int> getTotalUserHabits(String userEmail) async {
-    var _querysnapshot = await _firestore
+    var querysnapshot = await _firestore
         .collection('testers')
         .doc(userEmail)
         .collection('habits')
         .get();
-    return _querysnapshot.docs.length;
+    return querysnapshot.docs.length;
   }
 }

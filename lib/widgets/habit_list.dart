@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/_providers.dart';
 import '../utils/blur_container.dart';
 import '../services/task_services.dart';
+import '../providers/duration_provider.dart';
 
 class HabitList extends ConsumerStatefulWidget {
   const HabitList({super.key, required this.email});
@@ -50,6 +51,24 @@ class _HabitListState extends ConsumerState<HabitList> {
       }
 
       final habits = await _taskServices.getUserHabits(email);
+      final total = habits.fold<int>(
+        0,
+        (sum, habit) {
+          final value = habit['completionTimeValue'];
+          if (value is num) {
+            return sum + value.toInt();
+          }
+          if (value is String) {
+            return sum + (int.tryParse(value) ?? 0);
+          }
+          return sum;
+        },
+      );
+
+      if (mounted) {
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.read(totalDurationProvider.notifier).state = total;
+      }
       setState(() {
         _habits = habits;
         _isLoading = false;
@@ -72,6 +91,7 @@ class _HabitListState extends ConsumerState<HabitList> {
   @override
   Widget build(BuildContext context) {
     final dateState = ref.watch(dateProvider.notifier);
+    final totalDuration = ref.watch(totalDurationProvider);
     // DO NOT REMOVE currentDate
     // ignore: unused_local_variable
     final currentDate = ref.watch(dateProvider);
@@ -226,17 +246,24 @@ class _HabitListState extends ConsumerState<HabitList> {
                                           children: [
                                             Expanded(
                                               child: InkWell(
-                                                borderRadius: BorderRadius.circular(13.04),
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        13.04),
                                                 onTap: () {
                                                   // Navigate to habitPlay with the specific habit index
-                                                  Navigator.of(context).push(
+                                                  Navigator.of(context)
+                                                      .push(
                                                     MaterialPageRoute(
-                                                      builder: (context) => habitPlay(
-                                                        email: email, // Use safe email
-                                                        startIndex: habitIndex, // Pass the specific habit index
+                                                      builder: (context) =>
+                                                          habitPlay(
+                                                        email:
+                                                            email, // Use safe email
+                                                        startIndex:
+                                                            habitIndex, // Pass the specific habit index
                                                       ),
                                                     ),
-                                                  ).then((_) {
+                                                  )
+                                                      .then((_) {
                                                     // Refresh habits when returning
                                                     _fetchHabits();
                                                   });
@@ -244,7 +271,9 @@ class _HabitListState extends ConsumerState<HabitList> {
                                                 child: Row(
                                                   children: [
                                                     Padding(
-                                                      padding: const EdgeInsets.only(left: 8.0),
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 8.0),
                                                       child: SvgPicture.network(
                                                         icon,
                                                         height: 16,
@@ -257,7 +286,8 @@ class _HabitListState extends ConsumerState<HabitList> {
                                                         title,
                                                         style: TextStyle(
                                                           color: Colors.white,
-                                                          fontWeight: FontWeight.w500,
+                                                          fontWeight:
+                                                              FontWeight.w500,
                                                           fontSize: 12,
                                                         ),
                                                       ),
@@ -280,7 +310,8 @@ class _HabitListState extends ConsumerState<HabitList> {
                                               onChanged:
                                                   (bool? newValue) async {
                                                 if (newValue != null) {
-                                                  await _taskServices.updateHabitStatus(
+                                                  await _taskServices
+                                                      .updateHabitStatus(
                                                     newValue,
                                                     objectId,
                                                     email,

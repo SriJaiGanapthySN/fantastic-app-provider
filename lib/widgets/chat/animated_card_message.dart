@@ -271,24 +271,29 @@ class CardImageSection extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(getResponsiveWidth(context, 0.032)), // ~12 on 375 width
+          borderRadius:
+              BorderRadius.circular(getResponsiveWidth(context, 0.032)),
           child: AnimatedOpacity(
             duration: Duration(milliseconds: 100),
             curve: Curves.easeInOut,
             opacity: ((opacity - 0.3) <= 0.0) ? 0 : opacity - 0.3,
             child: Image.asset(
-              'assets/images/login.jpg',
+              'assets/images/image (1).png',
               width: getResponsiveWidth(context, 0.7),
-              height: getResponsiveHeight(context, 0.2), // ~200px on 1000px height
+              height: getResponsiveHeight(context, 0.231),
               fit: BoxFit.cover,
             ),
           ),
         ),
-        Positioned.fill(
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           child: Lottie.asset(
             'assets/animations/gradient.json',
             fit: BoxFit.cover,
-            repeat: false,
+            repeat: true,
             controller: imageController,
             onLoaded: (composition) {
               imageController
@@ -298,46 +303,51 @@ class CardImageSection extends StatelessWidget {
           ),
         ),
         if (applyBlur)
+          // Positioned(
+          //   bottom: 0,
+          //   left: 0,
+          //   right: 0,
+          //   child: Opacity(
+          //     opacity: 0.26,
+          //     child: Image.asset(
+          //       'assets/images/blur.jpeg',
+          //       height: getResponsiveHeight(context, 0.07),
+          //       fit: BoxFit.cover,
+          //     ),
+          //   ),
+          // ),
           Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Opacity(
-              opacity: 0.26,
-              child: Image.asset(
-                'assets/images/blur.jpeg',
-                height: getResponsiveHeight(context, 0.07),
-                fit: BoxFit.cover,
+            bottom:
+                getResponsiveHeight(context, 0.01), // ~10px on 1000px height
+            left: getResponsiveWidth(context, 0.053), // ~20px on 375px width
+            right: getResponsiveWidth(context, 0.053), // ~20px on 375px width
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: 800),
+              curve: Curves.easeIn,
+              opacity: opacity >= 0.8 ? 1.0 : 0.0,
+              child: AnimatedBuilder(
+                animation: imageController,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(
+                        0,
+                        imageController.value < 0.8
+                            ? getResponsiveHeight(context, 0.02)
+                            : 0), // ~20px on 1000px height
+                    child: Text(
+                      "Dolphins Doing a Backflip in the Ocean",
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: getResponsiveFontSize(context, 18),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
-        Positioned(
-          bottom: getResponsiveHeight(context, 0.01), // ~10px on 1000px height
-          left: getResponsiveWidth(context, 0.053), // ~20px on 375px width
-          right: getResponsiveWidth(context, 0.053), // ~20px on 375px width
-          child: AnimatedOpacity(
-            duration: Duration(milliseconds: 800),
-            curve: Curves.easeIn,
-            opacity: opacity >= 0.8 ? 1.0 : 0.0,
-            child: AnimatedBuilder(
-              animation: imageController,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, imageController.value < 0.8 ? getResponsiveHeight(context, 0.02) : 0), // ~20px on 1000px height
-                  child: Text(
-                    "Dolphins Doing a Backflip in the Ocean",
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: getResponsiveFontSize(context, 18),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
       ],
     );
   }

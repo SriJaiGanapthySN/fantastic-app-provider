@@ -1,9 +1,7 @@
 import 'package:fantastic_app_riverpod/screens/main_screen.dart';
 import 'package:fantastic_app_riverpod/screens/ritual/notesscreen.dart';
-import 'package:fantastic_app_riverpod/screens/ritual_screen.dart';
 import 'package:fantastic_app_riverpod/services/task_services.dart';
 import 'package:fantastic_app_riverpod/widgets/common/generalcompenentfornotes.dart';
-import 'package:fantastic_app_riverpod/widgets/habit_list.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,7 +33,7 @@ class _TaskrevealState extends State<Taskreveal> {
 
   String items = '';
   var timestamp = "";
-  double NotepadContentHeight = 0;
+  double notepadContentHeight = 0;
 
   @override
   void initState() {
@@ -236,12 +234,12 @@ class _TaskrevealState extends State<Taskreveal> {
           24.0; // Approximation: 50 characters per line, 24px per line
 
       // Limit the height for non-coaching categories to a reasonable amount (200)
-      NotepadContentHeight =
+      notepadContentHeight =
           textHeight * 2 + 10 > 200 ? 200 : textHeight * 2 + 10;
     } else {
-      NotepadContentHeight = 0;
+      notepadContentHeight = 0;
     }
-    return NotepadContentHeight;
+    return notepadContentHeight;
   }
 
   @override
@@ -282,9 +280,11 @@ class _TaskrevealState extends State<Taskreveal> {
 
             noteData(currentTask);
 
+            Text(currentTask["voiceUrl"]);
+
             // Play audio when background is shown
             if (!_isSnoozed) {
-              _playAudio(currentTask['audioLink']);
+              _playAudio(currentTask['voiceUrl']);
             }
 
             // Stop audio when the last task's animation finishes
@@ -566,7 +566,7 @@ class _TaskrevealState extends State<Taskreveal> {
                                       const SizedBox(height: 20),
                                       Container(
                                         width: boxWidth,
-                                        height: 80.0 + NotepadContentHeight,
+                                        height: 80.0 + notepadContentHeight,
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: Colors.black.withOpacity(0.8),
