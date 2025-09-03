@@ -8,6 +8,7 @@ import '../providers/_providers.dart';
 import '../utils/blur_container.dart';
 import '../services/task_services.dart';
 import '../providers/duration_provider.dart';
+import '../providers/habit_list_provider.dart';
 
 class HabitList extends ConsumerStatefulWidget {
   const HabitList({super.key, required this.email});
@@ -20,78 +21,32 @@ class HabitList extends ConsumerStatefulWidget {
 
 class _HabitListState extends ConsumerState<HabitList> {
   final int initialPage = 3;
-  final TaskServices _taskServices = TaskServices();
-  List<Map<String, dynamic>> _habits = [];
-  bool _isLoading = true;
   late String email;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     email = widget.email;
-
     if (email.isEmpty) {
       print('Warning: Empty email provided to HabitList');
-      // Consider adding a fallback behavior here
     } else {
       print('HabitList initialized with email: $email');
-    }
-
-    _fetchHabits();
-  }
-
-  Future<void> _fetchHabits() async {
-    try {
-      if (email.isEmpty) {
-        setState(() {
-          _habits = [];
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final habits = await _taskServices.getUserHabits(email);
-      final total = habits.fold<int>(
-        0,
-        (sum, habit) {
-          final value = habit['completionTimeValue'];
-          if (value is num) {
-            return sum + value.toInt();
-          }
-          if (value is String) {
-            return sum + (int.tryParse(value) ?? 0);
-          }
-          return sum;
-        },
-      );
-
-      if (mounted) {
-        final container = ProviderScope.containerOf(context, listen: false);
-        container.read(totalDurationProvider.notifier).state = total;
-      }
-      setState(() {
-        _habits = habits;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching habits: $e');
-      setState(() {
-        _isLoading = false;
+      // Fetch habits on mount
+      Future.microtask(() async {
+        await ref.read(habitListProvider.notifier).fetchHabits(email);
+        if (mounted) setState(() => _isLoading = false);
       });
     }
   }
 
   Future<void> _loadHabits() async {
-    final userHabits = await TaskServices().getUserHabits(email);
-    setState(() {
-      _habits = userHabits;
-    });
+    await ref.read(habitListProvider.notifier).fetchHabits(email);
   }
 
   @override
   Widget build(BuildContext context) {
     final dateState = ref.watch(dateProvider.notifier);
-    final totalDuration = ref.watch(totalDurationProvider);
     // DO NOT REMOVE currentDate
     // ignore: unused_local_variable
     final currentDate = ref.watch(dateProvider);
@@ -106,6 +61,7 @@ class _HabitListState extends ConsumerState<HabitList> {
       );
     }
 
+    final habits = ref.watch(habitListProvider);
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : CarouselSlider.builder(
@@ -156,7 +112,7 @@ class _HabitListState extends ConsumerState<HabitList> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${_habits.length} Habits',
+                                      '${habits.length} Habits',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 12,
@@ -181,8 +137,8 @@ class _HabitListState extends ConsumerState<HabitList> {
                                     Navigator.push(context,
                                         MaterialPageRoute(builder: (context) {
                                       return Addrotinelistscreen(
-                                          habits: _habits,
-                                          updateHabits: _habits,
+                                          habits: habits,
+                                          updateHabits: habits,
                                           email: widget.email,
                                           onHabitUpdate: _loadHabits);
                                     }));
@@ -195,13 +151,6 @@ class _HabitListState extends ConsumerState<HabitList> {
                                     ),
                                   ),
                                 ),
-                                // Text(
-                                //   dateState.getCurrentDay(),
-                                //   style: const TextStyle(
-                                //     fontWeight: FontWeight.w600,
-                                //     fontSize: 12,
-                                //   ),
-                                // ),
                                 Icon(
                                   Icons.chevron_right,
                                   color: Colors.black.withValues(alpha: 0.4),
@@ -213,16 +162,16 @@ class _HabitListState extends ConsumerState<HabitList> {
                       ),
                       const SizedBox(height: 12),
                       Expanded(
-                        child: _habits.isEmpty
+                        child: habits.isEmpty
                             ? Center(
                                 child: Text('No habits found',
                                     style: TextStyle(color: Colors.white)))
                             : ListView.builder(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                                itemCount: _habits.length,
+                                itemCount: habits.length,
                                 itemBuilder: (context, habitIndex) {
-                                  final habit = _habits[habitIndex];
+                                  final habit = habits[habitIndex];
                                   final bool isCompleted =
                                       habit['isCompleted'] ?? false;
                                   final String title =
@@ -250,22 +199,18 @@ class _HabitListState extends ConsumerState<HabitList> {
                                                     BorderRadius.circular(
                                                         13.04),
                                                 onTap: () {
-                                                  // Navigate to habitPlay with the specific habit index
                                                   Navigator.of(context)
                                                       .push(
                                                     MaterialPageRoute(
                                                       builder: (context) =>
                                                           habitPlay(
-                                                        email:
-                                                            email, // Use safe email
-                                                        startIndex:
-                                                            habitIndex, // Pass the specific habit index
+                                                        email: email,
+                                                        startIndex: habitIndex,
                                                       ),
                                                     ),
                                                   )
                                                       .then((_) {
-                                                    // Refresh habits when returning
-                                                    _fetchHabits();
+                                                    _loadHabits();
                                                   });
                                                 },
                                                 child: Row(
@@ -310,13 +255,11 @@ class _HabitListState extends ConsumerState<HabitList> {
                                               onChanged:
                                                   (bool? newValue) async {
                                                 if (newValue != null) {
-                                                  await _taskServices
-                                                      .updateHabitStatus(
-                                                    newValue,
-                                                    objectId,
-                                                    email,
-                                                  );
-                                                  _fetchHabits();
+                                                  await ref
+                                                      .read(habitListProvider
+                                                          .notifier)
+                                                      .fetchHabits(email);
+                                                  _loadHabits();
                                                 }
                                               },
                                             ),

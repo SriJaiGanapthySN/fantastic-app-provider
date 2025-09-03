@@ -10,6 +10,7 @@ import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/habit_play_provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class habitPlay extends ConsumerStatefulWidget {
   final String email;
@@ -26,6 +27,7 @@ class habitPlay extends ConsumerStatefulWidget {
 }
 
 class _TaskrevealState extends ConsumerState<habitPlay> {
+  final AudioPlayer _audioPlayerBgm = AudioPlayer(); // BGM audio player
   final CoachingService _coachingService = CoachingService();
   late ScrollController _scrollController;
   Map<String, dynamic>? habitCoachingData;
@@ -37,6 +39,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   @override
   void initState() {
     super.initState();
+    _playBgm();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
@@ -46,6 +49,14 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
         ref.read(currentTaskIndexProvider.notifier).state = widget.startIndex;
       });
     }
+  }
+
+  void _playBgm() async {
+    await _audioPlayerBgm.play(AssetSource("audio/bgm_task_reveal.m4a"));
+  }
+
+  void _stopBgm() async {
+    await _audioPlayerBgm.stop();
   }
 
   void noteData(QueryDocumentSnapshot currentTask) {
@@ -63,6 +74,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
   @override
   void dispose() {
+    _stopBgm();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();

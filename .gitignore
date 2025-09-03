@@ -52,4 +52,6 @@ functions/node_modules/
 functions/.env
 .firebaserc
 .podFile
-.gradle.properties
+# Android local configs
+android/local.properties
+android/gradle.properties
