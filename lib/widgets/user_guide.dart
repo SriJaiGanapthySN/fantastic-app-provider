@@ -75,10 +75,14 @@ class UserGuide extends StatefulWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          SvgPicture.asset('assets/icons/chat.svg', color: Colors.white70, height: 24),
-          SvgPicture.asset('assets/icons/route.svg', color: Colors.white70, height: 24),
-          SvgPicture.asset('assets/icons/heart.svg', color: Colors.white70, height: 24),
-          SvgPicture.asset('assets/icons/search.svg', color: Colors.white70, height: 24),
+          SvgPicture.asset('assets/icons/chat.svg',
+              color: Colors.white70, height: 24),
+          SvgPicture.asset('assets/icons/route.svg',
+              color: Colors.white70, height: 24),
+          SvgPicture.asset('assets/icons/heart.svg',
+              color: Colors.white70, height: 24),
+          SvgPicture.asset('assets/icons/search.svg',
+              color: Colors.white70, height: 24),
         ],
       ),
     );
@@ -87,7 +91,7 @@ class UserGuide extends StatefulWidget {
   static Future<void> showAppGuide(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenGuide = prefs.getBool('has_seen_guide') ?? false;
-    
+
     if (!hasSeenGuide && context.mounted) {
       final overlay = Overlay.of(context);
       final overlayEntry = OverlayEntry(
@@ -96,7 +100,8 @@ class UserGuide extends StatefulWidget {
           steps: [
             GuideStep(
               title: "Chat with Fabulous",
-              description: "Get personalized guidance and support from your AI companion. Ask questions, share thoughts, and get motivation.",
+              description:
+                  "Get personalized guidance and support from your AI companion. Ask questions, share thoughts, and get motivation.",
               target: _buildPreviewCard(
                 title: "AI Chat",
                 subtitle: "Your personal AI companion",
@@ -106,7 +111,8 @@ class UserGuide extends StatefulWidget {
             ),
             GuideStep(
               title: "Your Daily Ritual",
-              description: "Start your day right with a personalized morning routine. Track your habits and build a healthy lifestyle.",
+              description:
+                  "Start your day right with a personalized morning routine. Track your habits and build a healthy lifestyle.",
               target: _buildPreviewCard(
                 title: "Daily Ritual",
                 subtitle: "Build your perfect morning routine",
@@ -116,7 +122,8 @@ class UserGuide extends StatefulWidget {
             ),
             GuideStep(
               title: "Your Journey",
-              description: "Track your progress and unlock new achievements. See how far you've come and where you're headed.",
+              description:
+                  "Track your progress and unlock new achievements. See how far you've come and where you're headed.",
               target: _buildPreviewCard(
                 title: "Journey Map",
                 subtitle: "Your path to success",
@@ -126,7 +133,8 @@ class UserGuide extends StatefulWidget {
             ),
             GuideStep(
               title: "Discover More",
-              description: "Explore new challenges, guided activities, and coaching series to enhance your journey.",
+              description:
+                  "Explore new challenges, guided activities, and coaching series to enhance your journey.",
               target: _buildPreviewCard(
                 title: "Discover",
                 subtitle: "Find new challenges and activities",
@@ -136,7 +144,8 @@ class UserGuide extends StatefulWidget {
             ),
             GuideStep(
               title: "Quick Navigation",
-              description: "Switch between different sections of the app using this navigation bar.",
+              description:
+                  "Switch between different sections of the app using this navigation bar.",
               target: _buildNavPreview(),
             ),
           ],
@@ -145,7 +154,7 @@ class UserGuide extends StatefulWidget {
           },
         ),
       );
-      
+
       overlay.insert(overlayEntry);
     }
   }
@@ -206,17 +215,20 @@ class _UserGuideState extends State<UserGuide> {
               top: screenSize.height * 0.3,
               child: step.target,
             ),
-            if (currentStep < 4) Positioned(
-              bottom: 120,
-              left: (currentStep * (screenSize.width / 4)) + (screenSize.width / 8) - 15,
-              child: Transform.rotate(
-                angle: -3.14159,
-                child: CustomPaint(
-                  size: const Size(30, 40),
-                  painter: ArrowPainter(),
+            if (currentStep < 4)
+              Positioned(
+                bottom: 120,
+                left: (currentStep * (screenSize.width / 4)) +
+                    (screenSize.width / 8) -
+                    15,
+                child: Transform.rotate(
+                  angle: -3.14159,
+                  child: CustomPaint(
+                    size: const Size(30, 40),
+                    painter: ArrowPainter(),
+                  ),
                 ),
               ),
-            ),
             Positioned(
               left: 24,
               right: 24,
@@ -292,7 +304,9 @@ class _UserGuideState extends State<UserGuide> {
                             ),
                           ),
                           child: Text(
-                            currentStep < widget.steps.length - 1 ? 'Next' : 'Got it!',
+                            currentStep < widget.steps.length - 1
+                                ? 'Next'
+                                : 'Got it!',
                           ),
                         ),
                       ],
@@ -379,4 +393,4 @@ class HolePainter extends CustomPainter {
   bool shouldRepaint(HolePainter oldDelegate) =>
       targetRect != oldDelegate.targetRect ||
       borderRadius != oldDelegate.borderRadius;
-} 
+}

@@ -13,17 +13,19 @@ class BottomNavBar extends ConsumerWidget {
     final selectedIndex = ref.watch(selectedTabProvider);
 
     return BlurContainer(
-      blur: 17.51,
-      borderRadius: 54.71,
+      blur: 20,
+      borderRadius: 60,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildNavButton(
               context, 'assets/icons/chat.svg', 0, selectedIndex, ref),
           _buildNavButton(
-              context, 'assets/icons/route.svg', 1, selectedIndex, ref),
+              context, 'assets/icons/route.svg', 2, selectedIndex, ref),
           _buildNavButton(
-              context, 'assets/icons/search.svg', 2, selectedIndex, ref),
+              context, 'assets/icons/heart.svg', 1, selectedIndex, ref),
+          _buildNavButton(
+              context, 'assets/icons/search.svg', 3, selectedIndex, ref),
         ],
       ),
     );
@@ -39,11 +41,11 @@ class BottomNavBar extends ConsumerWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     // Make all measurements responsive
-    final buttonSize = screenWidth * 0.13; // 13% of screen width
-    final iconSize = buttonSize * 0.48; // 48% of button size
-    final blurValue = screenWidth * 0.02; // 2% of screen width
+    final buttonSize = screenWidth * 0.16; // 25% of screen width
+    final iconSize = buttonSize * 0.33; // 60% of button size
+    final blurValue = screenWidth * 0.01; // 2% of screen width
     final borderRadiusValue = buttonSize * 0.75; // 75% of button size
-    final alphaValue = (screenWidth * 0.13)
+    final alphaValue = (screenWidth * 0.12)
         .clamp(40, 80)
         .toInt(); // Responsive alpha with min/max bounds
 
@@ -55,23 +57,31 @@ class BottomNavBar extends ConsumerWidget {
         // Directly control the PageView
         pageController.jumpToPage(index);
       },
-      child: BlurContainer(
-        blur: blurValue,
-        borderRadius: borderRadiusValue,
-        color: isSelected ? Colors.white : Colors.black.withAlpha(alphaValue),
-        width: buttonSize,
-        height: buttonSize,
-        child: Center(
-          child: SvgPicture.asset(
-            iconPath,
-            colorFilter: ColorFilter.mode(
-              isSelected ? Colors.black : Colors.white,
-              BlendMode.srcIn,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: 7), // Small top padding
+          BlurContainer(
+            blur: blurValue,
+            borderRadius: borderRadiusValue,
+            color:
+                isSelected ? Colors.white : Colors.black.withAlpha(alphaValue),
+            width: buttonSize,
+            height: buttonSize,
+            child: Center(
+              child: SvgPicture.asset(
+                iconPath,
+                colorFilter: ColorFilter.mode(
+                  isSelected ? Colors.black : Colors.white,
+                  BlendMode.srcIn,
+                ),
+                width: iconSize,
+                height: iconSize,
+              ),
             ),
-            width: iconSize,
-            height: iconSize,
           ),
-        ),
+          SizedBox(height: 7),
+        ],
       ),
     );
   }

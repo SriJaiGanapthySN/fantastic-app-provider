@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fantastic_app_riverpod/factories/message_factory.dart';
 import 'package:fantastic_app_riverpod/utils/question_detector.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
-import 'package:fantastic_app_riverpod/providers/animation_provider.dart';
-import 'package:fantastic_app_riverpod/providers/speech_recognition_provider.dart';
+import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
 
 class MessageNotifier extends StateNotifier<MessageFactory?> {
   final Ref ref;
@@ -14,7 +13,7 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
     state = MessageFactory(tickerProvider);
   }
 
-  void sendMessage(String messageText) {
+  void sendMessage(String messageText) async {
     final chatNotifier = ref.read(chatProvider.notifier);
     final isQuestion = QuestionDetector.isQuestion(messageText);
 
@@ -38,13 +37,14 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
     final userMessage = state!.createUserMessage(
       messageText: messageText,
       onAnimationComplete: () =>
-          _handleUserMessageAnimationComplete(isQuestion),
+          _handleUserMessageAnimationComplete(isQuestion, messageText),
     );
 
     chatNotifier.addMessage(userMessage);
   }
 
-  void _handleUserMessageAnimationComplete(bool isQuestion) {
+  void _handleUserMessageAnimationComplete(
+      bool isQuestion, String userMessageText) async {
     final chatNotifier = ref.read(chatProvider.notifier);
 
     // Schedule to set sending message to false after delay
@@ -53,10 +53,39 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
       chatNotifier.setIsSendingMessage(false);
     });
 
-    // Add bot response
+    // Add bot response with API call
     chatNotifier.setIsUserSendingMessage(true);
+
+    // Try to get API response
+    String apiResponse = "Here is a reference to the card"; // Default fallback
+    try {
+      final apiService = ref.read(chatApiServiceProvider);
+
+      // Check if authenticated, if not authenticate first
+      final isAuthenticated = ref.read(authStatusProvider);
+      if (!isAuthenticated) {
+        const defaultEmail = "string";
+        const defaultPassword = "string";
+        final token =
+            await apiService.authenticate(defaultEmail, defaultPassword);
+        if (token != null) {
+          ref.read(authStatusProvider.notifier).state = true;
+        }
+      }
+
+      // Send message to API
+      final response = await apiService.sendMessage(userMessageText);
+      if (response != null && response['ai_message_content'] != null) {
+        apiResponse = response['ai_message_content'];
+        print('✅ Got API response: $apiResponse');
+      }
+    } catch (e) {
+      print('❌ API call failed, using default message: $e');
+    }
+
     final cardMessage = state!.createCardMessage(
       isQuestion: isQuestion,
+      apiResponse: apiResponse, // Pass the API response
       onAnimationComplete: () {
         if (isQuestion) {
           chatNotifier.setThresholdReached(false);

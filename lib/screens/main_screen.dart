@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/nav_provider.dart';
 import 'ChallengeScreen.dart';
-import 'chatScreen.dart';
+import 'chat_screen.dart';
 import 'discoverscreen.dart';
 import 'journey_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -45,6 +45,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     // Log the email being used
     print('MainScreen: Using email: $userEmail for all screens');
 
+    final selectedTab = ref.watch(selectedTabProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: PageView(
@@ -60,14 +61,19 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ChatScreen(email: userEmail), // Pass email to ChatScreen
           RitualScreen(
               currentUserEmail: userEmail), // Pass email to RitualScreen
-          Discoverscreen(email: userEmail), // Pass email to DiscoverScreen
+          JourneyScreen(userEmail: userEmail),
+          Discoverscreen(email: userEmail),
+          // Pass email to DiscoverScreen
         ],
       ),
-      floatingActionButton: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 25.0),
-        child: BottomNavBar(),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: selectedTab == 0
+          ? null
+          : const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.0),
+              child: BottomNavBar(),
+            ),
+      floatingActionButtonLocation:
+          selectedTab == 0 ? null : FloatingActionButtonLocation.centerFloat,
     );
   }
 }

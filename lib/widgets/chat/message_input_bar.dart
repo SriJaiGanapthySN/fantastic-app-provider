@@ -32,9 +32,9 @@ class MessageInputBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
-      offset: const Offset(0, -110), // Move the input bar 20 pixels up
+      offset: const Offset(0, -15), // Move the input bar 20 pixels up
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(20.0),
         child: Row(
           children: [
             if (!isSendingMessage)

@@ -37,7 +37,10 @@ class AddDiscoveryTile extends ConsumerWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => JourneyScreen(tile: tile),
+                builder: (context) => JourneyScreen(
+                  tile: tile,
+                  userEmail: email,
+                ),
               ),
             );
             break;
@@ -69,7 +72,9 @@ class AddDiscoveryTile extends ConsumerWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => JourneyScreen(),
+                builder: (context) => JourneyScreen(
+                  userEmail: email,
+                ),
               ),
             );
         }

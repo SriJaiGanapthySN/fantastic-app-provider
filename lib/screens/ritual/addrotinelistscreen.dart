@@ -1,6 +1,7 @@
 import 'package:fantastic_app_riverpod/services/task_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:math' as math;
 
 class Addrotinelistscreen extends StatefulWidget {
   final List<Map<String, dynamic>> habits;
@@ -31,14 +32,13 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
     super.initState();
     // Ensure we have a valid email
     safeEmail = widget.email;
-    print('AddRoutineListScreen: Using email: $safeEmail');
     fetchData(); // Fetch data on initialization
   }
 
   // Fetch all habits and user habits
   Future<void> fetchData() async {
     try {
-      print('Fetching habits for email: $safeEmail'); // Debug log
+      // Debug log
       final habits = await TaskServices().getHabits(); // Get all habits
       final userHabits =
           await TaskServices().getUserHabits(safeEmail); // Get user habits
@@ -49,7 +49,6 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
         taskCount = userHabits.length; // Update task count
       });
     } catch (e) {
-      print('Error fetching data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load data: $e')),
       );
@@ -63,7 +62,7 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
 
   // Toggle habit addition/removal
   void toggleHabit(String habitId) {
-    print('Toggle habit $habitId for email: $safeEmail'); // Debug log
+    // Debug log
 
     if (isHabitAdded(habitId)) {
       // Remove habit
@@ -111,54 +110,105 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
       if (hexColor.length == 6) {
         return Color(int.parse('0xFF$hexColor'));
       }
-    } catch (e) {
-      print("Invalid color string: $e");
-    }
+    } catch (e) {}
     return Colors.orange; // Default color
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F9F2), // Light green background
       appBar: AppBar(
+        elevation: 0, // Remove shadow
         iconTheme: const IconThemeData(color: Colors.white),
         title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Row(
+              // crossAxisAlignment: CrossAxisAlignment.center,
+              // mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.dashboard_sharp,
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.176,
+                ),
+                SvgPicture.asset(
+                  'assets/icons/leaf.svg',
+                  width: 24,
+                  height: 24,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 40),
+                const SizedBox(width: 20),
                 Text(
-                  '$taskCount habits', // Displaying the updated habit count
-                  style: const TextStyle(fontSize: 18, color: Colors.white),
+                  '$taskCount Habits', // Displaying the updated habit count
+                  style: const TextStyle(
+                      fontSize: 22,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              // crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(Icons.alarm, size: 32, color: Colors.white),
-                SizedBox(width: 40),
-                Text("None",
-                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                Icon(Icons.alarm, size: 24, color: Colors.white),
+                SizedBox(width: 20),
+                Text("Healthy Routines",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontStyle: FontStyle.italic)),
               ],
             ),
           ],
         ),
-        toolbarHeight: 166,
+        centerTitle: true,
+        toolbarHeight: 150,
         flexibleSpace: Stack(
           children: [
-            const Image(
-              image: AssetImage('assets/images/image.png'),
-              width: double.infinity,
-              fit: BoxFit.fill,
-            ),
             Container(
-              color: Colors.black.withOpacity(0.2),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.green[800]!,
+                    const Color.fromARGB(165, 67, 160, 72),
+                    Colors.green[400]!,
+                  ],
+                ),
+              ),
+            ),
+            // Decorative leaves
+            Positioned(
+              top: -20,
+              right: -20,
+              child: Transform.rotate(
+                angle: -math.pi / 10,
+                child: SvgPicture.asset(
+                  'assets/icons/leaf.svg',
+                  height: 100,
+                  color: Colors.white.withOpacity(0.2),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -10,
+              left: -10,
+              child: Transform.rotate(
+                angle: math.pi / 6,
+                child: SvgPicture.asset(
+                  'assets/icons/leaf.svg',
+                  height: 70,
+                  color: Colors.white.withOpacity(0.15),
+                ),
+              ),
+            ),
+            // Overlay with slight transparency
+            Container(
+              color: Colors.black.withOpacity(0.1),
               width: double.infinity,
               height: double.infinity,
             ),
@@ -166,66 +216,177 @@ class _AddRoutineListScreenState extends State<Addrotinelistscreen> {
         ),
         backgroundColor: Colors.transparent,
       ),
-      body: allHabits.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: allHabits.length,
-              itemBuilder: (context, index) {
-                final habit = allHabits[index];
-                final habitId = habit['objectId'];
-                final iconPath = habit['iconUrl'] ?? '';
-                final isAdded = isHabitAdded(habitId);
-
-                return Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Stack(
+        children: [
+          // Background leaf decorations
+          Positioned(
+            right: -30,
+            top: 100,
+            child: Transform.rotate(
+              angle: math.pi / 15,
+              child: SvgPicture.asset(
+                'assets/icons/leaf.svg',
+                height: 120,
+                color: Colors.green.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -40,
+            bottom: 150,
+            child: Transform.rotate(
+              angle: -math.pi / 6,
+              child: SvgPicture.asset(
+                'assets/icons/leaf.svg',
+                height: 150,
+                color: Colors.green.withOpacity(0.1),
+              ),
+            ),
+          ),
+          // Actual list content
+          allHabits.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            SvgPicture.network(
-                              iconPath,
-                              width: 24,
-                              height: 24,
-                              color: isAdded
-                                  ? colorFromString(habit['color'])
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 20),
-                            // Text(habit['name']),
-                            Expanded(
-                              child: Text(
-                                habit['name'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.black,
-                                ),
-                                softWrap: true,
-                                overflow: TextOverflow.visible,
-                              ),
-                            ),
-                            // Expanded(
-                            //     child: Text(habit['name'],
-                            //         textAlign: TextAlign.start)),
-                          ],
-                        ),
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                       ),
-                      TextButton(
-                        onPressed: () => toggleHabit(habitId),
-                        child: Text(
-                          isAdded ? 'REMOVE' : 'ADD',
-                          style: TextStyle(
-                            color: isAdded ? Colors.red : Colors.green,
-                          ),
+                      SizedBox(height: 20),
+                      Text(
+                        "Loading your habits...",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 16,
+                          fontStyle: FontStyle.italic,
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 20),
+                  itemCount: allHabits.length,
+                  itemBuilder: (context, index) {
+                    final habit = allHabits[index];
+                    final habitId = habit['objectId'];
+                    final iconPath = habit['iconUrl'] ?? '';
+                    final isAdded = isHabitAdded(habitId);
+                    final Color itemColor =
+                        isAdded ? colorFromString(habit['color']) : Colors.grey;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: isAdded
+                                ? Colors.green.withOpacity(0.5)
+                                : Colors.grey.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: itemColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: SvgPicture.network(
+                                        iconPath,
+                                        width: 24,
+                                        height: 24,
+                                        color: itemColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        habit['name'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey[800],
+                                        ),
+                                        softWrap: true,
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Custom button
+                              InkWell(
+                                onTap: () => toggleHabit(habitId),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isAdded
+                                        ? Colors.red.withOpacity(0.1)
+                                        : Colors.green.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isAdded
+                                          ? Colors.red.withOpacity(0.5)
+                                          : Colors.green.withOpacity(0.5),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isAdded
+                                            ? Icons.remove_circle_outline
+                                            : Icons.add_circle_outline,
+                                        size: 16,
+                                        color:
+                                            isAdded ? Colors.red : Colors.green,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        isAdded ? 'REMOVE' : 'ADD',
+                                        style: TextStyle(
+                                          color: isAdded
+                                              ? Colors.red
+                                              : Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ],
+      ),
     );
   }
 }

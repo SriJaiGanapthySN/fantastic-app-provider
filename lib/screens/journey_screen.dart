@@ -19,7 +19,9 @@ import '../providers/auth_provider.dart';
 
 class JourneyScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? tile;
-  const JourneyScreen({Key? key, this.tile}) : super(key: key);
+  JourneyScreen({Key? key, this.tile, required this.userEmail})
+      : super(key: key);
+  final String userEmail;
 
   @override
   ConsumerState<JourneyScreen> createState() => _JourneyScreenState();
@@ -47,7 +49,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   Future<void> _loadUserEmail() async {
     // For testing/debugging, use test03@gmail.com
     setState(() {
-      _userEmail = "test03@gmail.com";
+      _userEmail = widget.userEmail;
     });
   }
 
@@ -80,11 +82,12 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
     print('widget.tile: ${widget.tile}');
     print('widget.tile objectId: ${widget.tile?['objectId']}');
     print('widget.tile title: ${widget.tile?['title']}');
-    
-    final journeyId = widget.tile?['objectId'] ?? '6Gr4B9SkA3'; // Use default journey ID for testing
+
+    final journeyId = widget.tile?['objectId'] ??
+        '6Gr4B9SkA3'; // Use default journey ID for testing
     print('Final journeyId being used: $journeyId');
     print('=========================================');
-    
+
     final journeyStats = ref.watch(journeyStatsProvider(JourneyStatsRequest(
       userEmail: _userEmail!,
       journeyId: journeyId,
@@ -180,7 +183,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           journeyStats.when(
                             data: (stats) => JourneyCard(
                               title: widget.tile?['title'] ?? 'No Title',
-                              subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                              subtitle:
+                                  widget.tile?['subtitle'] ?? 'No Subtitle',
                               progress: stats['levelCompletion'] ?? '0%',
                               imageUrl: widget.tile?['imageUrl'] ?? '',
                               onTap: () {
@@ -193,7 +197,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             ),
                             loading: () => JourneyCard(
                               title: widget.tile?['title'] ?? 'No Title',
-                              subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                              subtitle:
+                                  widget.tile?['subtitle'] ?? 'No Subtitle',
                               progress: '0%',
                               imageUrl: widget.tile?['imageUrl'] ?? '',
                               onTap: () {
@@ -206,7 +211,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             ),
                             error: (error, stack) => JourneyCard(
                               title: widget.tile?['title'] ?? 'No Title',
-                              subtitle: widget.tile?['subtitle'] ?? 'No Subtitle',
+                              subtitle:
+                                  widget.tile?['subtitle'] ?? 'No Subtitle',
                               progress: '0%',
                               imageUrl: widget.tile?['imageUrl'] ?? '',
                               onTap: () {
@@ -229,7 +235,9 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                               );
                               // Navigate to discovery screen with journey tab selected
                               // Set journey tab as selected in discovery screen
-                              ref.read(discoverUIStateProvider.notifier).selectButton(0);
+                              ref
+                                  .read(discoverUIStateProvider.notifier)
+                                  .selectButton(0);
                               // Navigate to discovery screen (index 2 in main screen)
                               ref.read(selectedTabProvider.notifier).state = 2;
                               Navigator.pop(context); // Go back to main screen
@@ -241,9 +249,11 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             data: (stats) => Column(
                               children: [
                                 StatsCard(
-                                  completionValue: stats['levelCompletion'] ?? '0%',
+                                  completionValue:
+                                      stats['levelCompletion'] ?? '0%',
                                   eventsValue: stats['eventsCompleted'] ?? '0',
-                                  skillCompletionValue: stats['skillCompletion'],
+                                  skillCompletionValue:
+                                      stats['skillCompletion'],
                                   userEmail: _userEmail,
                                 ),
                               ],
@@ -263,7 +273,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                 Center(
                                   child: Text(
                                     'Journey ID: $journeyId',
-                                    style: const TextStyle(color: Colors.yellow, fontSize: 12),
+                                    style: const TextStyle(
+                                        color: Colors.yellow, fontSize: 12),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -271,7 +282,8 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                                 Center(
                                   child: Text(
                                     'User: $_userEmail',
-                                    style: const TextStyle(color: Colors.yellow, fontSize: 12),
+                                    style: const TextStyle(
+                                        color: Colors.yellow, fontSize: 12),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),

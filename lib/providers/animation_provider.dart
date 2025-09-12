@@ -38,7 +38,8 @@ class AnimationManager {
 
   void resetRipple() {
     rippleController.reset();
-    rippleController.forward();
+    rippleController.repeat(); // Make it repeat continuously
+    // Don't trigger onAnimationStart for ripple - that's only for mind animation
   }
 }
 
@@ -53,7 +54,8 @@ class AnimationNotifier extends StateNotifier<AnimationManager?> {
   void _initialize() {
     final rippleController = AnimationController(
       vsync: tickerProvider,
-      duration: const Duration(milliseconds: 1000),
+      duration:
+          const Duration(seconds: 5), // Slower animation - 5 seconds duration
     );
 
     final mindController = AnimationController(

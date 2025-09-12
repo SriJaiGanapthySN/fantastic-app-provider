@@ -74,7 +74,6 @@ class SkillLevel {
   }
 }
 
-
 // --- Modified Skill Class ---
 class Skill {
   final String id; // <<< Added Firestore Document ID
@@ -128,7 +127,8 @@ class Skill {
   factory Skill.fromJson(Map<String, dynamic> json) {
     // Note: This doesn't set the Firestore 'id'. Use fromFirestore for that.
     return Skill(
-      id: json['id'] ?? '', // Allow setting id if passed in JSON, but fromFirestore is preferred
+      id: json['id'] ??
+          '', // Allow setting id if passed in JSON, but fromFirestore is preferred
       color: json['color'] as String,
       createdAt: json['createdAt'] as int,
       goalId: json['goalId'] as String,
@@ -200,9 +200,11 @@ class SkillGoal {
       createdAt: data['createdAt'] as int? ?? 0,
       description: data['description'] as String? ?? '',
       // Safely handle list conversion, default to empty list if null or wrong type
-      habitIds: List<String>.from((data['habitIds'] as List<dynamic>?)?.map((e) => e.toString()) ?? []),
+      habitIds: List<String>.from(
+          (data['habitIds'] as List<dynamic>?)?.map((e) => e.toString()) ?? []),
       objectId: data['objectId'] as String? ?? '',
-      removePreviousGoalHabits: data['removePreviousGoalHabits'] as bool? ?? false,
+      removePreviousGoalHabits:
+          data['removePreviousGoalHabits'] as bool? ?? false,
       ritualType: data['ritualType'] as String? ?? '',
       skillTrackId: data['skillTrackId'] as String? ?? '', // Crucial field
       title: data['title'] as String? ?? '',
@@ -216,7 +218,8 @@ class SkillGoal {
   factory SkillGoal.fromJson(Map<String, dynamic> json) {
     // Note: This doesn't set the Firestore 'id'. Use fromFirestore for that.
     return SkillGoal(
-      id: json['id'] ?? '', // Allow setting id if passed in JSON, but fromFirestore is preferred
+      id: json['id'] ??
+          '', // Allow setting id if passed in JSON, but fromFirestore is preferred
       createdAt: json['createdAt'] as int,
       description: json['description'] as String,
       habitIds: List<String>.from(json['habitIds'] ?? []),
@@ -261,10 +264,12 @@ Future<SkillGoal?> getSkillGoalByTrackId(String skillTrackIdToFind) async {
 
     // Reference the 'skillGoal' collection with converter
     final CollectionReference<SkillGoal> skillGoalCollection =
-    firestore.collection('skillGoal').withConverter<SkillGoal>(
-      fromFirestore: (snapshots, _) => SkillGoal.fromFirestore(snapshots), // Use the new factory
-      toFirestore: (skillGoal, _) => skillGoal.toJson(), // Use existing toJson
-    );
+        firestore.collection('Parent-skillGoal').withConverter<SkillGoal>(
+              fromFirestore: (snapshots, _) =>
+                  SkillGoal.fromFirestore(snapshots), // Use the new factory
+              toFirestore: (skillGoal, _) =>
+                  skillGoal.toJson(), // Use existing toJson
+            );
 
     // Create the query
     QuerySnapshot<SkillGoal> querySnapshot = await skillGoalCollection
@@ -286,7 +291,6 @@ Future<SkillGoal?> getSkillGoalByTrackId(String skillTrackIdToFind) async {
   }
 }
 
-
 // --- Fetch Function for Skill ---
 
 /// Fetches a single document from the 'skill' collection
@@ -299,10 +303,11 @@ Future<Skill?> getSkillByTrackId(String skillTrackIdToFind) async {
 
     // Reference the 'skill' collection with converter
     final CollectionReference<Skill> skillCollection =
-    firestore.collection('skill').withConverter<Skill>(
-      fromFirestore: (snapshots, _) => Skill.fromFirestore(snapshots), // Use the new factory
-      toFirestore: (skill, _) => skill.toJson(), // Use existing toJson
-    );
+        firestore.collection('Parent-skill').withConverter<Skill>(
+              fromFirestore: (snapshots, _) =>
+                  Skill.fromFirestore(snapshots), // Use the new factory
+              toFirestore: (skill, _) => skill.toJson(), // Use existing toJson
+            );
 
     // Create the query
     QuerySnapshot<Skill> querySnapshot = await skillCollection
@@ -331,17 +336,21 @@ Future<SkillLevel?> getSkillLevelByTrackId(String skillTrackIdToFind) async {
 
     // 2. Reference the 'skillLevel' collection
     //    Use .withConverter for better type safety
+    // parent update
     final CollectionReference<SkillLevel> skillLevelCollection =
-    firestore.collection('skillLevel').withConverter<SkillLevel>(
-      fromFirestore: (snapshots, _) => SkillLevel.fromFirestore(snapshots), // Use your factory
-      toFirestore: (skillLevel, _) => skillLevel.toJson(), // Use your toJson
-    );
+        firestore.collection('Parent-skillLevel').withConverter<SkillLevel>(
+              fromFirestore: (snapshots, _) =>
+                  SkillLevel.fromFirestore(snapshots), // Use your factory
+              toFirestore: (skillLevel, _) =>
+                  skillLevel.toJson(), // Use your toJson
+            );
 
     // 3. Create the query
     QuerySnapshot<SkillLevel> querySnapshot = await skillLevelCollection
         .where('skillTrackId', isEqualTo: skillTrackIdToFind)
         .limit(1) // Optimization: stop searching after finding the first match
         .get();
+
 
     // 4. Check if any documents were found
     if (querySnapshot.docs.isNotEmpty) {

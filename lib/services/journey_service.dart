@@ -299,19 +299,19 @@ class JourneyService {
     try {
       print('=== ADDING SKILL GOALS WITH ENRICHED DATA ===');
       print('Adding ${ids.length} goals for user: $email');
-      
+
       // Reference to the target path: /testers/{email}/skillGoal
       final userSkillGoalPath =
           _firestore.collection('testers').doc(email).collection('skillGoal');
-      
+
       // Reference to user's skillLevel collection to find related data
-      final userSkillLevelPath = 
+      final userSkillLevelPath =
           _firestore.collection('testers').doc(email).collection('skillLevel');
 
       // Iterate through each ID in the list
       for (String id in ids) {
         // Reference to the document path: /skillGoal/{id}
-        final skillDocRef = _firestore.collection('skillGoal').doc(id);
+        final skillDocRef = _firestore.collection('Parent-skillGoal').doc(id);
 
         // Fetch the document snapshot
         final docSnapshot = await skillDocRef.get();
@@ -320,34 +320,34 @@ class JourneyService {
         if (docSnapshot.exists) {
           // Get the document data
           final skillData = docSnapshot.data() as Map<String, dynamic>;
-          
+
           // Find the corresponding skillLevel document that has this goalId
-          final skillLevelQuery = await userSkillLevelPath
-              .where('goalId', isEqualTo: id)
-              .get();
-          
+          final skillLevelQuery =
+              await userSkillLevelPath.where('goalId', isEqualTo: id).get();
+
           // Initialize the updated data with existing data
           final updatedSkillData = {
             ...skillData, // Existing data
             'isCompleted': false, // New field
           };
-          
+
           // If we found a matching skillLevel, add the required fields
           if (skillLevelQuery.docs.isNotEmpty) {
             final skillLevelDoc = skillLevelQuery.docs.first;
             final skillLevelData = skillLevelDoc.data();
-            
+
             // Add the fields needed for goal completion
             updatedSkillData['skillLevelId'] = skillLevelDoc.id;
             updatedSkillData['skillId'] = skillLevelData['skillId'];
             updatedSkillData['skillTrackId'] = skillLevelData['skillTrackId'];
-            
+
             print('✅ Enriched goal $id with:');
             print('  - skillLevelId: ${skillLevelDoc.id}');
             print('  - skillId: ${skillLevelData['skillId']}');
             print('  - skillTrackId: ${skillLevelData['skillTrackId']}');
           } else {
-            print('⚠️ No matching skillLevel found for goal $id - goal may not complete properly');
+            print(
+                '⚠️ No matching skillLevel found for goal $id - goal may not complete properly');
           }
 
           // Add the document data to the user's skillGoal collection
@@ -483,30 +483,28 @@ class JourneyService {
     }
   }
 
-
   Future<Map<String, dynamic>?> getSkillLevel(
       String email, String goalId) async {
     try {
       // Reference to the user's skillGoal collection
       print("Currently searching for :$goalId");
-      final userSkillLevelPath =
-      _firestore.collection('skillLevel');
+      final userSkillLevelPath = _firestore.collection('skillLevel');
 
       // Query to get documents where 'objectId' matches the given goalId
       final querySnapshot =
-      await userSkillLevelPath.where('skillId', isEqualTo: goalId).get();
+          await userSkillLevelPath.where('skillId', isEqualTo: goalId).get();
 
       // Check if any documents are found
       if (querySnapshot.docs.isEmpty) {
         print('No level found with objectId: $goalId');
         return null;
-      }else{
+      } else {
         print("Found the skillLevel :$goalId");
       }
 
       // Since objectId should be unique, we expect one document
       final skillLevel =
-      querySnapshot.docs.first.data() as Map<String, dynamic>;
+          querySnapshot.docs.first.data() as Map<String, dynamic>;
 
       return skillLevel;
     } catch (e) {
@@ -534,7 +532,8 @@ class JourneyService {
       final skillLevelDoc = await skillLevelRef.get();
       if (!skillLevelDoc.exists) {
         // Fetch master skillLevel doc for all required fields
-        final masterSkillLevelDoc = await _firestore.collection('skillLevel').doc(skillLevelId).get();
+        final masterSkillLevelDoc =
+            await _firestore.collection('skillLevel').doc(skillLevelId).get();
         final masterData = masterSkillLevelDoc.data() ?? {};
         // Compose new doc with all master fields, plus required user fields
         await skillLevelRef.set({
@@ -545,7 +544,8 @@ class JourneyService {
           'skillTrackId': skillTrackId,
           'objectId': skillLevelId,
         });
-        print('✅ Skill level document created and marked as completed (with master fields)');
+        print(
+            '✅ Skill level document created and marked as completed (with master fields)');
       } else {
         await skillLevelRef.update({'isCompleted': true});
         print('✅ Skill level updated');
@@ -560,7 +560,8 @@ class JourneyService {
       final skillDoc = await skillRef.get();
       if (!skillDoc.exists) {
         // Fetch master skill doc for all required fields
-        final masterSkillDoc = await _firestore.collection('skill').doc(skillId).get();
+        final masterSkillDoc =
+            await _firestore.collection('skill').doc(skillId).get();
         final masterData = masterSkillDoc.data() ?? {};
         // Ensure totalLevels is present
         final totalLevels = masterData['totalLevels'] ?? 0;
@@ -571,9 +572,11 @@ class JourneyService {
           'skillLevelCompleted': 1,
           'totalLevels': totalLevels,
         });
-        print('✅ Skill document created and marked as completed (with master fields)');
+        print(
+            '✅ Skill document created and marked as completed (with master fields)');
       } else {
-        final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
         await skillRef.update({'skillLevelCompleted': currentCount + 1});
         print('✅ Skill updated - new count: [32m${currentCount + 1}[0m');
       }
@@ -587,7 +590,8 @@ class JourneyService {
       final trackDoc = await trackRef.get();
       if (!trackDoc.exists) {
         // Fetch master skillTrack doc for all required fields
-        final masterTrackDoc = await _firestore.collection('skillTrack').doc(skillTrackId).get();
+        final masterTrackDoc =
+            await _firestore.collection('skillTrack').doc(skillTrackId).get();
         final masterData = masterTrackDoc.data() ?? {};
         // Ensure totalLevels is present
         final totalLevels = masterData['totalLevels'] ?? 0;
@@ -597,10 +601,12 @@ class JourneyService {
           'levelsCompleted': 1,
           'totalLevels': totalLevels,
         });
-        print('✅ Skill track document created and marked as completed (with master fields)');
+        print(
+            '✅ Skill track document created and marked as completed (with master fields)');
       } else {
         final trackData = trackDoc.data();
-        final currentCount = (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
         await trackRef.update({'levelsCompleted': currentCount + 1});
         print('✅ Skill track updated - new count: ${currentCount + 1}');
       }
@@ -628,15 +634,18 @@ class JourneyService {
             print('✅ Goal updated');
           } else {
             // Optionally: copy from master goal if you want to create it
-            final masterGoalDoc = await _firestore.collection('skillGoal').doc(goalId).get();
+            final masterGoalDoc =
+                await _firestore.collection('skillGoal').doc(goalId).get();
             if (masterGoalDoc.exists) {
               await userGoalRef.set({
                 ...?masterGoalDoc.data(),
                 'isCompleted': true,
               });
-              print('✅ Goal document created and marked as completed (with master fields)');
+              print(
+                  '✅ Goal document created and marked as completed (with master fields)');
             } else {
-              print('⚠️ Master goal document not found for $goalId, skipping creation.');
+              print(
+                  '⚠️ Master goal document not found for $goalId, skipping creation.');
             }
           }
         }
@@ -670,7 +679,8 @@ class JourneyService {
       String skillId, String skillTrackId) async {
     try {
       print('=== UPDATING ONE TIME - IMMEDIATE FIX ===');
-      print('User: $userEmail, Skill Level ID: $id, Skill ID: $skillId, Track ID: $skillTrackId');
+      print(
+          'User: $userEmail, Skill Level ID: $id, Skill ID: $skillId, Track ID: $skillTrackId');
 
       // Check if already completed to avoid duplicate updates
       final skillLevelDoc = await _firestore
@@ -685,8 +695,9 @@ class JourneyService {
         return false;
       }
 
-      final isAlreadyCompleted = skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
-      
+      final isAlreadyCompleted =
+          skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
+
       if (isAlreadyCompleted) {
         print('⚠️ Skill level already completed, skipping update');
         return true;
@@ -710,9 +721,10 @@ class JourneyService {
           .collection('skill')
           .doc(skillId)
           .get();
-      
+
       if (skillDoc.exists) {
-        final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
         await _firestore
             .collection('testers')
             .doc(userEmail)
@@ -727,7 +739,7 @@ class JourneyService {
       // 3. Update journey track completion IMMEDIATELY
       print('Updating skill track document IMMEDIATELY...');
       print('Skill track ID: $skillTrackId');
-      
+
       try {
         final trackDoc = await _firestore
             .collection('testers')
@@ -735,13 +747,14 @@ class JourneyService {
             .collection('skillTrack')
             .doc(skillTrackId)
             .get();
-        
+
         if (trackDoc.exists) {
           final trackData = trackDoc.data();
           print('Track data found: $trackData');
-          final currentCount = (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
           print('Current track levels completed: $currentCount');
-          
+
           await _firestore
               .collection('testers')
               .doc(userEmail)
@@ -752,19 +765,19 @@ class JourneyService {
         } else {
           print('❌ Skill track document not found: $skillTrackId');
           print('Trying to check if document exists...');
-          
+
           // Try to check if the document exists in the collection
           final allTracks = await _firestore
               .collection('testers')
               .doc(userEmail)
               .collection('skillTrack')
               .get();
-          
+
           print('Available skill tracks:');
           for (var doc in allTracks.docs) {
             print('  - ${doc.id}');
           }
-          
+
           return false;
         }
       } catch (trackError) {
@@ -799,46 +812,52 @@ class JourneyService {
     try {
       print('=== UPDATING GOAL WITH COMPLETION CHECK ===');
       print('User: $userEmail, Goal ID: $id, New Rate: $rate');
-      
+
       // Get the goal document first to check its current state and target value
       final goalRef = FirebaseFirestore.instance
           .collection('testers')
           .doc(userEmail)
           .collection('skillGoal')
           .doc(id);
-      
+
       final goalDoc = await goalRef.get();
       if (!goalDoc.exists) {
         print('❌ Goal document not found: $id');
         return false;
       }
-      
+
       final goalData = goalDoc.data() as Map<String, dynamic>;
       final targetValue = (goalData['value'] as num?)?.toInt() ?? 0;
-      final currentRate = (goalData['completionRateGoal'] as num?)?.toInt() ?? 0;
+      final currentRate =
+          (goalData['completionRateGoal'] as num?)?.toInt() ?? 0;
       final isAlreadyCompleted = goalData['isCompleted'] as bool? ?? false;
-      
+
       print('=== DETAILED GOAL ANALYSIS ===');
-      print('Goal target: $targetValue, Current rate in DB: $currentRate, New rate requested: $rate, Already completed: $isAlreadyCompleted');
-      print('Rate change calculation: $rate - $currentRate = ${rate - currentRate}');
-      print('Will update journey progress? ${rate > currentRate ? "YES" : "NO"} (rate > currentRate: $rate > $currentRate)');
-      
+      print(
+          'Goal target: $targetValue, Current rate in DB: $currentRate, New rate requested: $rate, Already completed: $isAlreadyCompleted');
+      print(
+          'Rate change calculation: $rate - $currentRate = ${rate - currentRate}');
+      print(
+          'Will update journey progress? ${rate > currentRate ? "YES" : "NO"} (rate > currentRate: $rate > $currentRate)');
+
       // Always update the completion rate
       await goalRef.update({'completionRateGoal': rate});
       print('✅ Goal rate updated from $currentRate to: $rate');
-      
+
       // Get skill level information from the goal data for journey tracking
       final skillLevelId = goalData['skillLevelId'] as String?;
       final skillId = goalData['skillId'] as String?;
       final skillTrackId = goalData['skillTrackId'] as String?;
-      
-      print('Skill Level ID: $skillLevelId, Skill ID: $skillId, Track ID: $skillTrackId');
-      
+
+      print(
+          'Skill Level ID: $skillLevelId, Skill ID: $skillId, Track ID: $skillTrackId');
+
       // Update journey progress on EVERY rate increase (not just goal completion)
       if (rate > currentRate && skillTrackId != null) {
         final rateDifference = rate - currentRate;
-        print('🚀 Rate increased by $rateDifference - updating journey progress...');
-        
+        print(
+            '🚀 Rate increased by $rateDifference - updating journey progress...');
+
         // Update journey track completion for each rate increase
         final trackDoc = await _firestore
             .collection('testers')
@@ -846,10 +865,11 @@ class JourneyService {
             .collection('skillTrack')
             .doc(skillTrackId)
             .get();
-        
+
         if (trackDoc.exists) {
           final trackData = trackDoc.data();
-          final currentCount = (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
           final newCount = currentCount + rateDifference;
           await _firestore
               .collection('testers')
@@ -857,11 +877,12 @@ class JourneyService {
               .collection('skillTrack')
               .doc(skillTrackId)
               .update({'levelsCompleted': newCount});
-          print('✅ Journey track updated - levels completed: $currentCount → $newCount (+$rateDifference)');
+          print(
+              '✅ Journey track updated - levels completed: $currentCount → $newCount (+$rateDifference)');
         } else {
           print('❌ Journey track document not found: $skillTrackId');
         }
-        
+
         // Also update skill completion count
         if (skillId != null) {
           print('Updating skill completion count...');
@@ -871,9 +892,10 @@ class JourneyService {
               .collection('skill')
               .doc(skillId)
               .get();
-          
+
           if (skillDoc.exists) {
-            final currentSkillCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+            final currentSkillCount =
+                (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
             final newSkillCount = currentSkillCount + rateDifference;
             await _firestore
                 .collection('testers')
@@ -881,24 +903,26 @@ class JourneyService {
                 .collection('skill')
                 .doc(skillId)
                 .update({'skillLevelCompleted': newSkillCount});
-            print('✅ Skill updated - completion count: $currentSkillCount → $newSkillCount (+$rateDifference)');
+            print(
+                '✅ Skill updated - completion count: $currentSkillCount → $newSkillCount (+$rateDifference)');
           }
         }
       } else if (rate <= currentRate) {
-        print('⚠️ No rate increase detected ($currentRate → $rate) - skipping journey progress update');
+        print(
+            '⚠️ No rate increase detected ($currentRate → $rate) - skipping journey progress update');
         print('   Reason: rate ($rate) <= currentRate ($currentRate)');
       } else if (skillTrackId == null) {
         print('⚠️ Missing skillTrackId - cannot update journey progress');
       }
-      
+
       // If this goal has reached or exceeded its target and isn't already completed
       if (rate >= targetValue && targetValue > 0 && !isAlreadyCompleted) {
         print('🎯 Goal has reached target! Marking as completed...');
-        
+
         // Mark goal as completed
         await goalRef.update({'isCompleted': true});
         print('✅ Goal marked as completed');
-        
+
         if (skillLevelId != null) {
           // Mark the associated skill level as completed
           print('Updating skill level document...');
@@ -910,7 +934,7 @@ class JourneyService {
               .update({'isCompleted': true});
           print('✅ Skill level marked as completed');
         }
-        
+
         // Log full goal completion interaction
         print('Logging goal completion interaction...');
         await _firestore
@@ -927,7 +951,7 @@ class JourneyService {
           'timestamp': FieldValue.serverTimestamp(),
         });
         print('✅ Goal completion interaction logged');
-        
+
         print('🎉 GOAL FULL COMPLETION SEQUENCE COMPLETED');
       } else {
         // Log daily progress interaction
@@ -960,7 +984,8 @@ class JourneyService {
       String skillId, String skillTrackId) async {
     try {
       print('=== UPDATING MOTIVATOR - IMMEDIATE FIX ===');
-      print('User: $userEmail, Skill Level ID: $id, Skill ID: $skillId, Track ID: $skillTrackId');
+      print(
+          'User: $userEmail, Skill Level ID: $id, Skill ID: $skillId, Track ID: $skillTrackId');
 
       // Check if already completed
       final skillLevelDoc = await _firestore
@@ -971,8 +996,9 @@ class JourneyService {
           .get();
 
       if (skillLevelDoc.exists) {
-        final isAlreadyCompleted = skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
-        
+        final isAlreadyCompleted =
+            skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
+
         if (isAlreadyCompleted) {
           print('⚠️ Skill level already completed, skipping update');
           return true;
@@ -996,9 +1022,10 @@ class JourneyService {
             .collection('skill')
             .doc(skillId)
             .get();
-        
+
         if (skillDoc.exists) {
-          final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
           await _firestore
               .collection('testers')
               .doc(userEmail)
@@ -1013,7 +1040,7 @@ class JourneyService {
         // 3. Update journey track completion IMMEDIATELY
         print('Updating skill track document IMMEDIATELY...');
         print('Skill track ID: $skillTrackId');
-        
+
         try {
           final trackDoc = await _firestore
               .collection('testers')
@@ -1021,13 +1048,14 @@ class JourneyService {
               .collection('skillTrack')
               .doc(skillTrackId)
               .get();
-          
+
           if (trackDoc.exists) {
             final trackData = trackDoc.data();
             print('Track data found: $trackData');
-            final currentCount = (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
+            final currentCount =
+                (trackData?['levelsCompleted'] as num?)?.toInt() ?? 0;
             print('Current track levels completed: $currentCount');
-            
+
             await _firestore
                 .collection('testers')
                 .doc(userEmail)
@@ -1141,7 +1169,8 @@ class JourneyService {
   }
 
   // Add this new method to get journey type information
-  Future<Map<String, dynamic>> getJourneyType(String skillTrackId, String email) async {
+  Future<Map<String, dynamic>> getJourneyType(
+      String skillTrackId, String email) async {
     try {
       // Try to get the journey from the user's collection first
       final userJourneyRef = _firestore
@@ -1149,21 +1178,21 @@ class JourneyService {
           .doc(email)
           .collection('skillTrack')
           .doc(skillTrackId);
-          
+
       final userJourneySnapshot = await userJourneyRef.get();
-      
+
       if (userJourneySnapshot.exists) {
         return userJourneySnapshot.data() ?? {'type': ''};
       }
-      
+
       // If not found in user's collection, try the main skillTrack collection
       final journeyRef = _firestore.collection('skillTrack').doc(skillTrackId);
       final journeySnapshot = await journeyRef.get();
-      
+
       if (journeySnapshot.exists) {
         return journeySnapshot.data() ?? {'type': ''};
       }
-      
+
       return {'type': ''};
     } catch (e) {
       print('Error fetching journey type: $e');
@@ -1184,11 +1213,11 @@ class JourneyService {
         'action': action,
         'timestamp': FieldValue.serverTimestamp(),
       };
-      
+
       if (additionalData != null) {
         data.addAll(additionalData);
       }
-      
+
       await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -1199,7 +1228,8 @@ class JourneyService {
     }
   }
 
-  Future<Map<String, dynamic>> testCompletionFlow(String userEmail, String skillTrackId) async {
+  Future<Map<String, dynamic>> testCompletionFlow(
+      String userEmail, String skillTrackId) async {
     try {
       // 1. Get initial state
       final initialTrack = await _firestore
@@ -1208,7 +1238,7 @@ class JourneyService {
           .collection('skillTrack')
           .doc(skillTrackId)
           .get();
-      
+
       final initialStats = {
         'levelsCompleted': initialTrack.data()?['levelsCompleted'] ?? 0,
         'skillLevelCount': initialTrack.data()?['skillLevelCount'] ?? 0,
@@ -1236,10 +1266,10 @@ class JourneyService {
       final skillLevel = skillLevels.docs.first;
       final skillLevelId = skillLevel.id;
       final skillId = skillLevel.data()['skillId'];
-      
+
       // 3. Update completion
       final batch = _firestore.batch();
-      
+
       // Update skill level
       final skillLevelRef = _firestore
           .collection('testers')
@@ -1273,7 +1303,7 @@ class JourneyService {
           .collection('skillTrack')
           .doc(skillTrackId)
           .get();
-      
+
       final finalStats = {
         'levelsCompleted': finalTrack.data()?['levelsCompleted'] ?? 0,
         'skillLevelCount': finalTrack.data()?['skillLevelCount'] ?? 0,
@@ -1293,7 +1323,8 @@ class JourneyService {
         'message': 'Test completed successfully',
         'initialStats': initialStats,
         'finalStats': finalStats,
-        'skillLevelCompleted': updatedSkillLevel.data()?['isCompleted'] ?? false,
+        'skillLevelCompleted':
+            updatedSkillLevel.data()?['isCompleted'] ?? false,
         'skillLevelId': skillLevelId,
         'skillId': skillId,
       };
@@ -1309,7 +1340,7 @@ class JourneyService {
   Future<void> forceStatsRefresh(String userEmail) async {
     try {
       print('=== FORCING STATS REFRESH ===');
-      
+
       // Add a dummy interaction to trigger provider refresh
       await _firestore
           .collection('testers')
@@ -1320,7 +1351,7 @@ class JourneyService {
         'timestamp': FieldValue.serverTimestamp(),
         'forced': true,
       });
-      
+
       print('✅ Stats refresh triggered');
     } catch (e) {
       print('❌ Error forcing stats refresh: $e');
@@ -1328,24 +1359,23 @@ class JourneyService {
   }
 
   // Auto-initialize missing journey with default skills and levels
-  Future<bool> initializeJourney(String userEmail, String journeyId, Map<String, dynamic>? journeyData) async {
+  Future<bool> initializeJourney(String userEmail, String journeyId,
+      Map<String, dynamic>? journeyData) async {
     try {
       print('🚀 INITIALIZING JOURNEY FROM EXISTING DATA: $journeyId');
-      
+
       // 1. Get the existing journey from main skillTrack collection
-      final mainJourneyDoc = await _firestore
-          .collection('skillTrack')
-          .doc(journeyId)
-          .get();
-      
+      final mainJourneyDoc =
+          await _firestore.collection('skillTrack').doc(journeyId).get();
+
       if (!mainJourneyDoc.exists) {
         print('❌ Journey $journeyId not found in main skillTrack collection');
         return false;
       }
-      
+
       final mainJourneyData = mainJourneyDoc.data()!;
       print('✅ Found main journey: ${mainJourneyData['title']}');
-      
+
       // 2. Copy journey to user's collection with completion tracking
       await _firestore
           .collection('testers')
@@ -1360,18 +1390,18 @@ class JourneyService {
         'initializedAt': FieldValue.serverTimestamp(),
       });
       print('✅ Journey copied to user collection');
-      
+
       // 3. Get and copy all skills for this journey
       final skillsQuery = await _firestore
           .collection('skill')
           .where('skillTrackId', isEqualTo: journeyId)
           .get();
-      
+
       print('Found ${skillsQuery.docs.length} skills for journey');
-      
+
       for (var skillDoc in skillsQuery.docs) {
         final skillData = skillDoc.data();
-        
+
         // Copy skill to user's collection with completion tracking
         await _firestore
             .collection('testers')
@@ -1386,18 +1416,18 @@ class JourneyService {
         });
       }
       print('✅ All skills copied to user collection');
-      
+
       // 4. Get and copy all skill levels for this journey
       final skillLevelsQuery = await _firestore
           .collection('skillLevel')
           .where('skillTrackId', isEqualTo: journeyId)
           .get();
-      
+
       print('Found ${skillLevelsQuery.docs.length} skill levels for journey');
-      
+
       for (var levelDoc in skillLevelsQuery.docs) {
         final levelData = levelDoc.data();
-        
+
         // Copy skill level to user's collection with completion tracking
         await _firestore
             .collection('testers')
@@ -1411,19 +1441,19 @@ class JourneyService {
         });
       }
       print('✅ All skill levels copied to user collection');
-      
+
       // 5. Copy any associated goals
       final goalsQuery = await _firestore
-          .collection('skillGoal')
+          .collection('Parent-skillGoal')
           .where('skillTrackId', isEqualTo: journeyId)
           .get();
-      
+
       if (goalsQuery.docs.isNotEmpty) {
         print('Found ${goalsQuery.docs.length} goals for journey');
-        
+
         for (var goalDoc in goalsQuery.docs) {
           final goalData = goalDoc.data();
-          
+
           await _firestore
               .collection('testers')
               .doc(userEmail)
@@ -1437,7 +1467,7 @@ class JourneyService {
         }
         print('✅ All goals copied to user collection');
       }
-      
+
       print('🎉 JOURNEY INITIALIZATION COMPLETE: ${mainJourneyData['title']}');
       return true;
     } catch (e) {
@@ -1451,18 +1481,18 @@ class JourneyService {
     try {
       print('=== RESETTING GOAL FOR TESTING ===');
       print('User: $userEmail, Goal ID: $goalId');
-      
+
       final goalRef = FirebaseFirestore.instance
           .collection('testers')
           .doc(userEmail)
           .collection('skillGoal')
           .doc(goalId);
-      
+
       await goalRef.update({
         'completionRateGoal': 0,
         'isCompleted': false,
       });
-      
+
       print('✅ Goal reset to 0 completions');
       return true;
     } catch (e) {

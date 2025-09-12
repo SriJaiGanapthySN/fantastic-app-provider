@@ -5,11 +5,13 @@ import 'package:widget_and_text_animator/widget_and_text_animator.dart';
 
 class AnimatedCardMessage extends StatefulWidget {
   final bool isQuestion;
+  final String apiResponse;
   final Function()? onAnimationComplete;
 
   const AnimatedCardMessage({
     Key? key,
     this.isQuestion = false,
+    this.apiResponse = "Here is a reference to the card",
     this.onAnimationComplete,
   }) : super(key: key);
 
@@ -25,15 +27,23 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
   bool isBoxVisible = false;
   double opacityLevel = 1.0;
   bool isQuesAnimVisible = true;
-  bool applyBlur = false;
-  double opacity = 0.0;
+  bool showLocalSparkles =
+      false; // New: Small sparkle animation at bubble location
 
-  late AnimationController imageController;
+  // ============= COMMENTED IMAGE VARIABLES =============
+  // Uncomment these if you want to restore image functionality:
+  // bool applyBlur = false;
+  // double opacity = 0.0;
+  // late AnimationController imageController;
+  // ====================================================
 
   @override
   void initState() {
     super.initState();
 
+    // ============= COMMENTED IMAGE CONTROLLER SETUP =============
+    // Uncomment these if you want to restore image functionality:
+    /*
     imageController = AnimationController(vsync: this);
 
     imageController.addListener(() {
@@ -49,6 +59,19 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
         });
       }
     });
+    */
+    // ============================================================
+
+    // Initialize animation states
+    print('🚀 AnimatedCardMessage initialized');
+    print('📝 Is Question: ${widget.isQuestion}');
+    print('💬 API Response length: ${widget.apiResponse.length}');
+
+    isQuesAnimVisible = widget.isQuestion;
+    isGlowVisible = !widget.isQuestion;
+
+    print(
+        '🎯 Initial states - isGlowVisible: $isGlowVisible, isQuesAnimVisible: $isQuesAnimVisible');
 
     // Begin animations sequence
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -57,52 +80,89 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
   }
 
   void _startAnimations() {
+    // Calculate animation duration based on API response length
+    int responseLength = widget.apiResponse.length;
+    int estimatedReadingTimeMs = (responseLength * 50)
+        .clamp(3000, 8000); // 50ms per character, min 3s, max 8s
+
+    // Show localized sparkles first - like Claude's thinking animation
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) {
+        print('🔮 Starting sparkle animation');
+        setState(() {
+          showLocalSparkles = true;
+        });
+      }
+    });
+
     // Initial fade sequence
     Future.delayed(Duration(milliseconds: 2100), () {
       if (mounted) {
+        print('🌟 Starting background fade');
         setState(() {
           _decreaseOpacity();
           Future.delayed(Duration(milliseconds: 500), () {
-            setState(() {
-              isGlowVisible = false;
-            });
+            if (mounted) {
+              print('✨ Hiding background and sparkles');
+              setState(() {
+                isGlowVisible = false;
+                showLocalSparkles =
+                    false; // Hide sparkles when main animation starts
+              });
+            }
           });
         });
       }
     });
 
-    // Box visibility and completion animations
+    // Box visibility - start showing the box earlier
     Future.delayed(Duration(milliseconds: widget.isQuestion ? 2800 : 2400), () {
-      setState(() {
-        isBoxVisible = true;
-        Future.delayed(Duration(milliseconds: 800), () {
-          setState(() {
-            iconOpacity = 1.0;
-            repeatGlow = false;
-            isQuesAnimVisible = false;
+      if (mounted) {
+        print('💬 Showing message box');
+        setState(() {
+          isBoxVisible = true;
+
+          // Keep border animations running until message is likely complete
+          Future.delayed(Duration(milliseconds: estimatedReadingTimeMs), () {
+            if (mounted) {
+              print('🎯 Animation complete');
+              setState(() {
+                iconOpacity = 1.0;
+                repeatGlow = false;
+                isQuesAnimVisible = false;
+              });
+              if (widget.onAnimationComplete != null) {
+                widget.onAnimationComplete!();
+              }
+            }
           });
-          if (widget.onAnimationComplete != null) {
-            widget.onAnimationComplete!();
-          }
         });
-      });
+      }
     });
   }
 
   void _decreaseOpacity() async {
+    print('🔄 Starting opacity decrease animation');
     for (double i = 1.0; i >= 0.0; i -= 0.05) {
       await Future.delayed(Duration(milliseconds: 100));
       if (mounted) {
         setState(() {
           opacityLevel = i;
         });
+        if (i <= 0.05) {
+          print('⭕ Background animation opacity reached minimum');
+        }
       }
     }
+    print('✅ Background opacity animation complete');
   }
 
   @override
   void dispose() {
-    imageController.dispose();
+    // ============= COMMENTED IMAGE CONTROLLER DISPOSE =============
+    // Uncomment this if you want to restore image functionality:
+    // imageController.dispose();
+    // ==============================================================
     super.dispose();
   }
 
@@ -126,11 +186,57 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
     return value * screenWidth / 375;
   }
 
+  // Calculate precise text height for dynamic bubble sizing
+  double calculateTextHeight(BuildContext context, String text) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: GoogleFonts.lato(
+          textStyle: TextStyle(
+            fontFamily: "Original",
+            letterSpacing: 1,
+            fontSize: getResponsiveFontSize(context, 14),
+            color: Colors.white,
+          ),
+        ),
+      ),
+      maxLines: null,
+      textDirection: TextDirection.ltr,
+    );
+
+    // Calculate available width for text (accounting for padding and margins)
+    double availableWidth = getResponsiveWidth(context, 0.87) -
+        getResponsivePadding(context, 18) -
+        getResponsivePadding(context, 12) -
+        getResponsivePadding(context, 5) -
+        getResponsivePadding(context, 10);
+
+    textPainter.layout(maxWidth: availableWidth);
+    return textPainter.size.height;
+  }
+
+  // Calculate dynamic height based on actual text content
+  double calculateDynamicHeight(BuildContext context) {
+    // Get actual text height
+    double textHeight = calculateTextHeight(context, widget.apiResponse);
+
+    // Add padding for top, bottom margins and some breathing space
+    double totalPadding = getResponsivePadding(context, 12) + // top padding
+        getResponsivePadding(context, 12) + // bottom padding
+        getResponsivePadding(context, 10) + // top margin
+        getResponsivePadding(context, 20); // extra breathing space
+
+    double finalHeight = textHeight + totalPadding;
+
+    // Set reasonable bounds
+    double minHeight = getResponsiveHeight(context, 0.08); // Smaller minimum
+    double maxHeight = getResponsiveHeight(context, 0.40); // Reasonable maximum
+
+    return finalHeight.clamp(minHeight, maxHeight);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Padding(
       padding: EdgeInsets.symmetric(
         vertical: getResponsivePadding(context, 3),
@@ -153,25 +259,77 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                       : getResponsiveWidth(context, 0.8),
                   height: widget.isQuestion
                       ? getResponsiveHeight(context, 0.25)
-                      : getResponsiveHeight(context, 0.3),
+                      : getResponsiveHeight(context, 0.4),
                   fit: BoxFit.cover,
                   repeat: true,
+                  animate: true,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('❌ Error loading background animation: $error');
+                    return SizedBox
+                        .shrink(); // Just hide the animation if it fails
+                  },
                 ),
               ),
-            if (isBoxVisible) ...[
-              Lottie.asset(
-                "assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json",
-                width: getResponsiveWidth(context, 0.87),
-                height: getResponsiveHeight(context, 0.33),
-                fit: BoxFit.fill,
-                repeat: false,
+
+            // ============= LOCALIZED SPARKLE ANIMATION =============
+            // Small sparkle animation at bubble location (like Claude's thinking)
+            if (showLocalSparkles)
+              Positioned(
+                left:
+                    getResponsiveWidth(context, 0.05), // Small offset from left
+                top:
+                    getResponsiveHeight(context, 0.02), // Small offset from top
+                child: AnimatedOpacity(
+                  opacity: showLocalSparkles ? 1.0 : 0.0,
+                  duration: Duration(milliseconds: 300),
+                  child: SizedBox(
+                    width: getResponsiveWidth(context, 0.20), // Small width
+                    height: getResponsiveHeight(context, 0.10), // Small height
+                    child: Lottie.asset(
+                      'assets/animations/All Lottie/BG small Blur/BG small Blur.json',
+                      width: getResponsiveWidth(context, 0.20),
+                      height: getResponsiveHeight(context, 0.10),
+                      fit: BoxFit.contain,
+                      repeat: true,
+                      animate: true,
+                      errorBuilder: (context, error, stackTrace) {
+                        print('❌ Error loading sparkle animation: $error');
+                        print('❌ Stack trace: $stackTrace');
+                        return SizedBox
+                            .shrink(); // Just hide the sparkles if they fail to load
+                      },
+                    ),
+                  ),
+                ),
               ),
-              Lottie.asset(
-                "assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json",
-                width: getResponsiveWidth(context, 0.87),
-                height: getResponsiveHeight(context, 0.33),
-                fit: BoxFit.fill,
-                repeat: repeatGlow,
+            // ======================================================
+            if (isBoxVisible) ...[
+              // Dynamic height based on actual text content
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  double dynamicHeight = calculateDynamicHeight(context);
+
+                  return Lottie.asset(
+                    "assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json",
+                    width: getResponsiveWidth(context, 0.87),
+                    height: dynamicHeight,
+                    fit: BoxFit.fill,
+                    repeat: false,
+                  );
+                },
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  double dynamicHeight = calculateDynamicHeight(context);
+
+                  return Lottie.asset(
+                    "assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json",
+                    width: getResponsiveWidth(context, 0.87),
+                    height: dynamicHeight,
+                    fit: BoxFit.fill,
+                    repeat: repeatGlow,
+                  );
+                },
               ),
               Positioned.fill(
                 child: Padding(
@@ -179,62 +337,65 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                     top: getResponsivePadding(context, 12),
                     left: getResponsivePadding(context, 18),
                     right: getResponsivePadding(context, 12),
+                    bottom: getResponsivePadding(context, 12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Flexible(
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            top: getResponsivePadding(context, 10),
+                            left: getResponsivePadding(context, 5),
+                            right: getResponsivePadding(context, 10),
+                          ),
+                          child: TextAnimator(
+                            widget.apiResponse,
+                            incomingEffect: WidgetTransitionEffects(
+                                blur: const Offset(10, 10),
+                                duration: const Duration(milliseconds: 800)),
+                            outgoingEffect: WidgetTransitionEffects(
+                                blur: const Offset(10, 10)),
+                            atRestEffect: WidgetRestingEffects.wave(
+                                effectStrength: 0.2,
+                                duration: Duration(milliseconds: 750),
+                                numberOfPlays: 1),
+                            style: GoogleFonts.lato(
+                                textStyle: TextStyle(
+                              fontFamily: "Original",
+                              letterSpacing: 1,
+                              fontSize: getResponsiveFontSize(context, 14),
+                              color: Colors.white,
+                            )),
+                            textAlign: TextAlign.left,
+                            initialDelay: const Duration(milliseconds: 0),
+                            spaceDelay: const Duration(milliseconds: 100),
+                            characterDelay: const Duration(milliseconds: 10),
+                            maxLines: null, // Allow unlimited lines
+                          ),
+                        ),
+                      ),
+
+                      // ============= COMMENTED IMAGE SECTION =============
+                      // Uncomment below to add image section back to message cards
+                      /*
                       Container(
                         margin: EdgeInsets.only(
                           top: getResponsivePadding(context, 10),
-                          left: getResponsivePadding(context, 5),
-                          right: getResponsivePadding(context, 10),
+                          left: getResponsivePadding(context, 10),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextAnimator(
-                              "Here is a reference to the card",
-                              incomingEffect: WidgetTransitionEffects(
-                                  blur: const Offset(10, 10),
-                                  duration: const Duration(milliseconds: 800)),
-                              outgoingEffect: WidgetTransitionEffects(
-                                  blur: const Offset(10, 10)),
-                              atRestEffect: WidgetRestingEffects.wave(
-                                  effectStrength: 0.2,
-                                  duration: Duration(milliseconds: 750),
-                                  numberOfPlays: 1),
-                              style: GoogleFonts.lato(
-                                  textStyle: TextStyle(
-                                fontFamily: "Original",
-                                letterSpacing: 1,
-                                fontSize: getResponsiveFontSize(context, 14),
-                                color: Colors.white,
-                              )),
-                              textAlign: TextAlign.left,
-                              initialDelay: const Duration(milliseconds: 0),
-                              spaceDelay: const Duration(milliseconds: 100),
-                              characterDelay: const Duration(milliseconds: 10),
-                              maxLines: 8,
-                            ),
-                            Container(
-                              margin: EdgeInsets.only(
-                                top: getResponsivePadding(context, 10),
-                                left: getResponsivePadding(context, 10),
-                              ),
-                              child: CardImageSection(
-                                imageController: imageController,
-                                opacity: opacity,
-                                applyBlur: applyBlur,
-                                getResponsiveWidth: getResponsiveWidth,
-                                getResponsiveHeight: getResponsiveHeight,
-                                getResponsiveFontSize: getResponsiveFontSize,
-                              ),
-                            ),
-                          ],
+                        child: CardImageSection(
+                          imageController: imageController,
+                          opacity: opacity,
+                          applyBlur: applyBlur,
+                          getResponsiveWidth: getResponsiveWidth,
+                          getResponsiveHeight: getResponsiveHeight,
+                          getResponsiveFontSize: getResponsiveFontSize,
                         ),
                       ),
+                      */
+                      // ===================================================
                     ],
                   ),
                 ),
@@ -247,6 +408,9 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
   }
 }
 
+// ============= COMMENTED IMAGE SECTION CLASS =============
+// Uncomment below class to enable image functionality in message cards
+/*
 class CardImageSection extends StatelessWidget {
   final AnimationController imageController;
   final double opacity;
@@ -303,19 +467,6 @@ class CardImageSection extends StatelessWidget {
           ),
         ),
         if (applyBlur)
-          // Positioned(
-          //   bottom: 0,
-          //   left: 0,
-          //   right: 0,
-          //   child: Opacity(
-          //     opacity: 0.26,
-          //     child: Image.asset(
-          //       'assets/images/blur.jpeg',
-          //       height: getResponsiveHeight(context, 0.07),
-          //       fit: BoxFit.cover,
-          //     ),
-          //   ),
-          // ),
           Positioned(
             bottom:
                 getResponsiveHeight(context, 0.01), // ~10px on 1000px height
@@ -352,3 +503,5 @@ class CardImageSection extends StatelessWidget {
     );
   }
 }
+*/
+// =========================================================

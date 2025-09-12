@@ -44,10 +44,12 @@ class MessageFactory {
 
   Widget createCardMessage({
     required bool isQuestion,
+    String? apiResponse,
     required dynamic Function() onAnimationComplete,
   }) {
     return AnimatedCardMessage(
       isQuestion: isQuestion,
+      apiResponse: apiResponse ?? "Here is a reference to the card",
       onAnimationComplete: onAnimationComplete,
     );
   }

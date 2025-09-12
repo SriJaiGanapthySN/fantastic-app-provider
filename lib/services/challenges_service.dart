@@ -10,7 +10,7 @@ class ChallengesService {
     try {
       // Fetch documents from the 'skillTrack' collection where type contains 'challenge'
       final querySnapshot = await _firestore
-          .collection('skillTrack')
+          .collection('Parent-skillTrack')
           .where('type', isGreaterThanOrEqualTo: 'FREE_CHALLENGE')
           // Efficient string prefix query
           .get();
@@ -164,7 +164,7 @@ class ChallengesService {
       String challengeId, String email) async {
     try {
       // Reference to the 'skill' collection
-      final skillCollection = _firestore.collection('skill');
+      final skillCollection = _firestore.collection('Parent-skill');
 
       // Query to fetch skills associated with this challenge
       final querySnapshot = await skillCollection
@@ -209,7 +209,7 @@ class ChallengesService {
   Future<int> getTotalSkillLevels(String skillId) async {
     try {
       var querySnapshot = await _firestore
-          .collection('skillLevel')
+          .collection('Parent-skillLevel')
           .where('skillId', isEqualTo: skillId)
           .get();
       return querySnapshot.docs.length;
@@ -224,7 +224,7 @@ class ChallengesService {
       List<Skill> skills, String email) async {
     try {
       final List<String> goals = [];
-      final skillLevelCollection = _firestore.collection('skillLevel');
+      final skillLevelCollection = _firestore.collection('Parent-skillLevel');
       final userSkillLevelPath =
           _firestore.collection('testers').doc(email).collection('skillLevel');
 
@@ -270,13 +270,13 @@ class ChallengesService {
     try {
       print('=== ADDING CHALLENGE GOALS WITH ENRICHED DATA ===');
       print('Adding ${goalIds.length} goals for user: $email');
-      
+
       final userSkillGoalPath =
           _firestore.collection('testers').doc(email).collection('skillGoal');
-      final skillGoalCollection = _firestore.collection('skillGoal');
-      
+      final skillGoalCollection = _firestore.collection('Parent-skillGoal');
+
       // Reference to user's skillLevel collection to find related data
-      final userSkillLevelPath = 
+      final userSkillLevelPath =
           _firestore.collection('testers').doc(email).collection('skillLevel');
 
       int addedCount = 0;
@@ -286,36 +286,36 @@ class ChallengesService {
 
         if (docSnapshot.exists) {
           final goalData = docSnapshot.data() as Map<String, dynamic>;
-          
+
           // Find the corresponding skillLevel document that has this goalId
-          final skillLevelQuery = await userSkillLevelPath
-              .where('goalId', isEqualTo: goalId)
-              .get();
-          
+          final skillLevelQuery =
+              await userSkillLevelPath.where('goalId', isEqualTo: goalId).get();
+
           // Initialize the updated data
           final updatedGoalData = {
             ...goalData,
             'isCompleted': false,
           };
-          
+
           // If we found a matching skillLevel, add the required fields
           if (skillLevelQuery.docs.isNotEmpty) {
             final skillLevelDoc = skillLevelQuery.docs.first;
             final skillLevelData = skillLevelDoc.data();
-            
+
             // Add the fields needed for goal completion
             updatedGoalData['skillLevelId'] = skillLevelDoc.id;
             updatedGoalData['skillId'] = skillLevelData['skillId'];
             updatedGoalData['skillTrackId'] = skillLevelData['skillTrackId'];
-            
+
             print('✅ Enriched challenge goal $goalId with:');
             print('  - skillLevelId: ${skillLevelDoc.id}');
             print('  - skillId: ${skillLevelData['skillId']}');
             print('  - skillTrackId: ${skillLevelData['skillTrackId']}');
           } else {
-            print('⚠️ No matching skillLevel found for goal $goalId - goal may not complete properly');
+            print(
+                '⚠️ No matching skillLevel found for goal $goalId - goal may not complete properly');
           }
-          
+
           await userSkillGoalPath.doc(goalId).set(updatedGoalData);
           addedCount++;
           print('✅ Challenge goal $goalId added successfully');
@@ -335,7 +335,8 @@ class ChallengesService {
       String skillId, String challengeId) async {
     try {
       print('=== UPDATING CHALLENGE SKILL LEVEL - IMMEDIATE FIX ===');
-      print('User: $userEmail, Skill Level ID: $skillLevelId, Skill ID: $skillId, Challenge ID: $challengeId');
+      print(
+          'User: $userEmail, Skill Level ID: $skillLevelId, Skill ID: $skillId, Challenge ID: $challengeId');
 
       // Check if already completed to avoid duplicate updates
       final skillLevelDoc = await _firestore
@@ -350,8 +351,9 @@ class ChallengesService {
         return false;
       }
 
-      final isAlreadyCompleted = skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
-      
+      final isAlreadyCompleted =
+          skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
+
       if (isAlreadyCompleted) {
         print('⚠️ Skill level already completed, skipping update');
         return true;
@@ -375,9 +377,10 @@ class ChallengesService {
           .collection('skill')
           .doc(skillId)
           .get();
-      
+
       if (skillDoc.exists) {
-        final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
         await _firestore
             .collection('testers')
             .doc(userEmail)
@@ -397,9 +400,10 @@ class ChallengesService {
           .collection('skillTrack')
           .doc(challengeId)
           .get();
-      
+
       if (challengeDoc.exists) {
-        final currentCount = (challengeDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (challengeDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
         await _firestore
             .collection('testers')
             .doc(userEmail)
@@ -439,7 +443,8 @@ class ChallengesService {
       String skillLevelId, String skillId, String challengeId) async {
     try {
       print('=== UPDATING CHALLENGE GOAL - IMMEDIATE FIX ===');
-      print('User: $userEmail, Goal ID: $goalId, Skill Level ID: $skillLevelId, Skill ID: $skillId, Challenge ID: $challengeId');
+      print(
+          'User: $userEmail, Goal ID: $goalId, Skill Level ID: $skillLevelId, Skill ID: $skillId, Challenge ID: $challengeId');
 
       // Check if goal already completed to avoid duplicate updates
       final goalDoc = await _firestore
@@ -455,7 +460,7 @@ class ChallengesService {
       }
 
       final isGoalCompleted = goalDoc.data()?['isCompleted'] as bool? ?? false;
-      
+
       if (isGoalCompleted) {
         print('⚠️ Goal already completed, skipping update');
         return true;
@@ -481,8 +486,9 @@ class ChallengesService {
           .get();
 
       if (skillLevelDoc.exists) {
-        final isLevelCompleted = skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
-        
+        final isLevelCompleted =
+            skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
+
         if (!isLevelCompleted) {
           await _firestore
               .collection('testers')
@@ -506,9 +512,10 @@ class ChallengesService {
           .collection('skill')
           .doc(skillId)
           .get();
-      
+
       if (skillDoc.exists) {
-        final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
         await _firestore
             .collection('testers')
             .doc(userEmail)
@@ -528,9 +535,10 @@ class ChallengesService {
           .collection('skillTrack')
           .doc(challengeId)
           .get();
-      
+
       if (challengeDoc.exists) {
-        final currentCount = (challengeDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
+        final currentCount =
+            (challengeDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
         await _firestore
             .collection('testers')
             .doc(userEmail)

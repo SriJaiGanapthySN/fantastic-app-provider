@@ -21,7 +21,8 @@ class Journeyscreenrevealtype2 extends StatefulWidget {
   });
 
   @override
-  State<Journeyscreenrevealtype2> createState() => _Journeyscreenrevealtype2State();
+  State<Journeyscreenrevealtype2> createState() =>
+      _Journeyscreenrevealtype2State();
 }
 
 class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
@@ -33,7 +34,8 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
   String? errorMessage;
 
   bool _hasCompletedTaskForToday = false;
-  bool _isLoadingCompletionAction = false; // Used for "Complete Today" and "Restart"
+  bool _isLoadingCompletionAction =
+      false; // Used for "Complete Today" and "Restart"
 
   @override
   void initState() {
@@ -165,11 +167,12 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
 
     try {
       print('=== DAILY COMPLETION - FETCHING FRESH DATA ===');
-      
+
       // CRITICAL FIX: Fetch fresh data from database before calculating increment
       // The UI data might be stale, so we need the actual current rate from DB
-      final freshGoalData = await _journeyService.getSkillGoal(widget.email, widget.goalData["goalId"]);
-      
+      final freshGoalData = await _journeyService.getSkillGoal(
+          widget.email, widget.goalData["goalId"]);
+
       if (freshGoalData == null) {
         setState(() {
           _isLoadingCompletionAction = false;
@@ -177,13 +180,16 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
         });
         return;
       }
-      
-      final currentRateInDB = (freshGoalData["completionRateGoal"] as num?)?.toInt() ?? 0;
+
+      final currentRateInDB =
+          (freshGoalData["completionRateGoal"] as num?)?.toInt() ?? 0;
       final totalValue = (freshGoalData["value"] as num?)?.toInt() ?? 0;
-      
-      print('Fresh data from DB: currentRate=$currentRateInDB, target=$totalValue');
-      print('UI data was: currentRate=${skillGoalData!["completionRateGoal"] ?? 0}');
-      
+
+      print(
+          'Fresh data from DB: currentRate=$currentRateInDB, target=$totalValue');
+      print(
+          'UI data was: currentRate=${skillGoalData!["completionRateGoal"] ?? 0}');
+
       if (currentRateInDB >= totalValue) {
         setState(() {
           _isLoadingCompletionAction = false;
@@ -192,22 +198,24 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
         return;
       }
 
-      final newRate = currentRateInDB + 1;  // Calculate based on FRESH database data
+      final newRate =
+          currentRateInDB + 1; // Calculate based on FRESH database data
       print('Calculated newRate: $currentRateInDB + 1 = $newRate');
-      
-      bool success = await _performAndUpdateGoal(newRate, widget.email, widget.goalData["goalId"]);
+
+      bool success = await _performAndUpdateGoal(
+          newRate, widget.email, widget.goalData["goalId"]);
 
       if (success && mounted) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_getPrefsKey(), _getTodayDateString());
-        
+
         // Log the daily completion
         await _journeyService.logJourneyScreenInteraction(
           widget.email,
           widget.skilltrack.objectId,
           'daily_goal_completion',
         );
-        
+
         setState(() {
           _hasCompletedTaskForToday = true;
           _isLoadingCompletionAction = false; // Action complete
@@ -216,7 +224,9 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
         // Error message would have been set by _performAndUpdateGoal, it also sets _isLoadingCompletionAction = false on error
         // So, we only need to ensure it's false if somehow not set by _performAndUpdateGoal's error path
         if (_isLoadingCompletionAction) {
-          setState(() { _isLoadingCompletionAction = false; });
+          setState(() {
+            _isLoadingCompletionAction = false;
+          });
         }
       }
     } catch (e) {
@@ -234,19 +244,21 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
     if (skillGoalData == null) return;
 
     // setState for _isLoadingCompletionAction is handled by _performAndUpdateGoal
-    bool success = await _performAndUpdateGoal(0, widget.email, widget.goalData["goalId"]);
+    bool success =
+        await _performAndUpdateGoal(0, widget.email, widget.goalData["goalId"]);
 
     if (success && mounted) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_getPrefsKey()); // Clear the daily completion marker for the new cycle
-      
+      await prefs.remove(
+          _getPrefsKey()); // Clear the daily completion marker for the new cycle
+
       // Log the goal restart
       await _journeyService.logJourneyScreenInteraction(
         widget.email,
         widget.skilltrack.objectId,
         'goal_restart',
       );
-      
+
       setState(() {
         _hasCompletedTaskForToday = false; // Reset daily completion status
         _isLoadingCompletionAction = false; // Action complete
@@ -254,7 +266,9 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
     } else if (mounted) {
       // Error message would have been set by _performAndUpdateGoal, it also sets _isLoadingCompletionAction = false on error
       if (_isLoadingCompletionAction) {
-        setState(() { _isLoadingCompletionAction = false; });
+        setState(() {
+          _isLoadingCompletionAction = false;
+        });
       }
     }
   }
@@ -277,15 +291,15 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
           skillTrackId,
           'goal_completion',
         );
-        
+
         setState(() {
           isLoading = false;
         });
-        
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const JourneyScreen(),
+            builder: (context) => JourneyScreen(userEmail: email),
           ),
         );
       } else {
@@ -330,11 +344,11 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
         leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
-              if (!_isLoadingCompletionAction) { // Prevent pop while action is in progress
+              if (!_isLoadingCompletionAction) {
+                // Prevent pop while action is in progress
                 Navigator.pop(context);
               }
-            }
-        ),
+            }),
       ),
       body: Stack(
         children: [
@@ -357,133 +371,148 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
               ),
             )
           else if (skillGoalData == null)
-              const Center(
-                child: Text(
-                  'No goal data available to display.',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              )
-            else
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 50),
-                          SvgPicture.network(
-                            widget.skill.iconUrl,
-                            width: screenWidth * 0.2,
-                            height: screenWidth * 0.2,
-                            fit: BoxFit.contain,
-                            placeholderBuilder: (context) => const CircularProgressIndicator(strokeWidth: 2, color: Colors.white54,),
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            skillGoalData!["title"] ?? "No Title",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.08,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                            child: Text(
-                              skillGoalData!["description"] ?? "No Description",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: screenWidth * 0.045,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    padding: const EdgeInsets.all(20),
+            const Center(
+              child: Text(
+                'No goal data available to display.',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            )
+          else
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 20),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        const SizedBox(height: 50),
+                        SvgPicture.network(
+                          widget.skill.iconUrl,
+                          width: screenWidth * 0.2,
+                          height: screenWidth * 0.2,
+                          fit: BoxFit.contain,
+                          placeholderBuilder: (context) =>
+                              const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white54,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Text(
-                          "Do it ${skillGoalData!["value"] ?? 0} times this week to succeed",
+                          skillGoalData!["title"] ?? "No Title",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: screenWidth * 0.05,
-                            color: Colors.black,
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.08,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        if (skillGoalData!["value"] != null && skillGoalData!["value"] > 0)
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                skillGoalData!["value"] ?? 0, (index) {
-                                  int currentCompletionRate = skillGoalData!["completionRateGoal"] ?? 0;
-                                  bool isColored = index < currentCompletionRate;
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                                    child: TweenAnimationBuilder<Color?>(
-                                      tween: ColorTween(
-                                        end: isColored ? Colors.green : Colors.grey.shade400,
-                                      ),
-                                      duration: const Duration(milliseconds: 400),
-                                      builder: (BuildContext context, Color? color, Widget? child) {
-                                        return Icon(
-                                          Icons.check_circle,
-                                          color: color,
-                                          size: screenWidth * 0.075,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                }),
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              "No target repetitions set.",
-                              style: TextStyle(color: Colors.grey.shade600),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                          child: Text(
+                            skillGoalData!["description"] ?? "No Description",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: screenWidth * 0.045,
                             ),
                           ),
-                        const SizedBox(height: 24),
-                        // Display error from actions here, above the buttons/messages for clarity
-                        if (errorMessage != null && !isLoading && !_isLoadingCompletionAction)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0), // Space before button
-                            child: Text(
-                              errorMessage!,
-                              style: const TextStyle(color: Colors.red, fontSize: 13),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        _buildCompletionButtonOrMessage(screenWidth),
-                        const SizedBox(height: 10),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Do it ${skillGoalData!["value"] ?? 0} times this week to succeed",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.05,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (skillGoalData!["value"] != null &&
+                          skillGoalData!["value"] > 0)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                                skillGoalData!["value"] ?? 0, (index) {
+                              int currentCompletionRate =
+                                  skillGoalData!["completionRateGoal"] ?? 0;
+                              bool isColored = index < currentCompletionRate;
+
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6.0),
+                                child: TweenAnimationBuilder<Color?>(
+                                  tween: ColorTween(
+                                    end: isColored
+                                        ? Colors.green
+                                        : Colors.grey.shade400,
+                                  ),
+                                  duration: const Duration(milliseconds: 400),
+                                  builder: (BuildContext context, Color? color,
+                                      Widget? child) {
+                                    return Icon(
+                                      Icons.check_circle,
+                                      color: color,
+                                      size: screenWidth * 0.075,
+                                    );
+                                  },
+                                ),
+                              );
+                            }),
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            "No target repetitions set.",
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      // Display error from actions here, above the buttons/messages for clarity
+                      if (errorMessage != null &&
+                          !isLoading &&
+                          !_isLoadingCompletionAction)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: 12.0), // Space before button
+                          child: Text(
+                            errorMessage!,
+                            style: const TextStyle(
+                                color: Colors.red, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      _buildCompletionButtonOrMessage(screenWidth),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -505,7 +534,8 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
 
     if (_isLoadingCompletionAction) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 10.0), // Give some space for the loader
+        padding: EdgeInsets.symmetric(
+            vertical: 10.0), // Give some space for the loader
         child: CircularProgressIndicator(),
       );
     }
@@ -517,14 +547,19 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
           Text(
             "Congratulations! Goal Fully Achieved!",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: screenWidth * 0.045, color: Colors.green.shade700, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: screenWidth * 0.045,
+                color: Colors.green.shade700,
+                fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueGrey, // A different color for restart
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06, vertical: 10),
-              textStyle: TextStyle(fontSize: screenWidth * 0.04, color: Colors.white),
+              padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.06, vertical: 10),
+              textStyle:
+                  TextStyle(fontSize: screenWidth * 0.04, color: Colors.white),
             ).copyWith(
               foregroundColor: MaterialStateProperty.all(Colors.white),
             ),
@@ -537,14 +572,19 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
       return Text(
         "Today's Goal Completed. Well done!!",
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: screenWidth * 0.045, color: Colors.green.shade700, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            fontSize: screenWidth * 0.045,
+            color: Colors.green.shade700,
+            fontWeight: FontWeight.bold),
       );
     } else {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: colorFromString(widget.skill.color),
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08, vertical: 12),
-          textStyle: TextStyle(fontSize: screenWidth * 0.045, color: Colors.white),
+          padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.08, vertical: 12),
+          textStyle:
+              TextStyle(fontSize: screenWidth * 0.045, color: Colors.white),
         ).copyWith(
           foregroundColor: MaterialStateProperty.all(Colors.white),
         ),
