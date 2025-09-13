@@ -19,7 +19,6 @@ class ChallengesService {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error fetching challenges: $e');
       return [];
     }
   }
@@ -41,7 +40,6 @@ class ChallengesService {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error fetching unreleased challenge: $e');
       return [];
     }
   }
@@ -60,7 +58,6 @@ class ChallengesService {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error fetching user challenges: $e');
       return [];
     }
   }
@@ -80,16 +77,9 @@ class ChallengesService {
         final currentValue = snapshot.data()?['isReleased'] as bool?;
         if (currentValue != null) {
           await docRef.update({'isReleased': !currentValue});
-          print('Challenge $docId updated to isReleased: ${!currentValue}');
-        } else {
-          print('Field "isReleased" does not exist in the challenge document.');
-        }
-      } else {
-        print('Challenge document $docId does not exist.');
-      }
-    } catch (e) {
-      print('Error updating challenge release status: $e');
-    }
+        } else {}
+      } else {}
+    } catch (e) {}
   }
 
   // Add a challenge to a user's collection
@@ -120,14 +110,8 @@ class ChallengesService {
             .collection('skillTrack')
             .doc(id)
             .set(challengeData);
-
-        print('Challenge $id added to user $email\'s collection');
-      } else {
-        print('Challenge with id $id does not exist in skillTrack collection.');
-      }
-    } catch (e) {
-      print('Error adding challenge: $e');
-    }
+      } else {}
+    } catch (e) {}
   }
 
   // Get skills associated with a specific challenge
@@ -142,7 +126,6 @@ class ChallengesService {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        print('No skills found for challenge: $challengeId');
         return [];
       }
 
@@ -154,7 +137,6 @@ class ChallengesService {
       skills.sort((a, b) => a.position.compareTo(b.position));
       return skills;
     } catch (e) {
-      print('Error fetching challenge skills: $e');
       return [];
     }
   }
@@ -172,7 +154,6 @@ class ChallengesService {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        print('No skills found for challenge ID: $challengeId');
         return [];
       }
 
@@ -197,10 +178,8 @@ class ChallengesService {
         await userSkillPath.doc(skill.objectId).set(skillData);
       }
 
-      print('${skills.length} challenge skills added for user $email');
       return skills;
     } catch (e) {
-      print('Error adding challenge skills: $e');
       return [];
     }
   }
@@ -214,7 +193,6 @@ class ChallengesService {
           .get();
       return querySnapshot.docs.length;
     } catch (e) {
-      print('Error getting total skill levels: $e');
       return 0;
     }
   }
@@ -256,11 +234,8 @@ class ChallengesService {
         }
       }
 
-      print(
-          'Added skill levels for challenge with ${goals.length} associated goals');
       return goals;
     } catch (e) {
-      print('Error adding challenge skill levels: $e');
       return [];
     }
   }
@@ -268,9 +243,6 @@ class ChallengesService {
   // Add skill goals for a challenge
   Future<void> addChallengeGoals(List<String> goalIds, String email) async {
     try {
-      print('=== ADDING CHALLENGE GOALS WITH ENRICHED DATA ===');
-      print('Adding ${goalIds.length} goals for user: $email');
-
       final userSkillGoalPath =
           _firestore.collection('testers').doc(email).collection('skillGoal');
       final skillGoalCollection = _firestore.collection('Parent-skillGoal');
@@ -306,38 +278,19 @@ class ChallengesService {
             updatedGoalData['skillLevelId'] = skillLevelDoc.id;
             updatedGoalData['skillId'] = skillLevelData['skillId'];
             updatedGoalData['skillTrackId'] = skillLevelData['skillTrackId'];
-
-            print('✅ Enriched challenge goal $goalId with:');
-            print('  - skillLevelId: ${skillLevelDoc.id}');
-            print('  - skillId: ${skillLevelData['skillId']}');
-            print('  - skillTrackId: ${skillLevelData['skillTrackId']}');
-          } else {
-            print(
-                '⚠️ No matching skillLevel found for goal $goalId - goal may not complete properly');
-          }
+          } else {}
 
           await userSkillGoalPath.doc(goalId).set(updatedGoalData);
           addedCount++;
-          print('✅ Challenge goal $goalId added successfully');
-        } else {
-          print('❌ Goal $goalId not found in skillGoal collection');
-        }
+        } else {}
       }
-
-      print('=== ADDED $addedCount CHALLENGE GOALS FOR USER $email ===');
-    } catch (e) {
-      print('❌ Error adding challenge goals: $e');
-    }
+    } catch (e) {}
   }
 
   // Update completion status for a challenge skill level
   Future<bool> updateChallengeSkillLevel(String userEmail, String skillLevelId,
       String skillId, String challengeId) async {
     try {
-      print('=== UPDATING CHALLENGE SKILL LEVEL - IMMEDIATE FIX ===');
-      print(
-          'User: $userEmail, Skill Level ID: $skillLevelId, Skill ID: $skillId, Challenge ID: $challengeId');
-
       // Check if already completed to avoid duplicate updates
       final skillLevelDoc = await _firestore
           .collection('testers')
@@ -347,7 +300,6 @@ class ChallengesService {
           .get();
 
       if (!skillLevelDoc.exists) {
-        print("❌ Skill level document does not exist");
         return false;
       }
 
@@ -355,22 +307,18 @@ class ChallengesService {
           skillLevelDoc.data()?['isCompleted'] as bool? ?? false;
 
       if (isAlreadyCompleted) {
-        print('⚠️ Skill level already completed, skipping update');
         return true;
       }
 
       // 1. Update the skill level document IMMEDIATELY
-      print('Updating skill level document IMMEDIATELY...');
       await _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillLevel')
           .doc(skillLevelId)
           .update({'isCompleted': true});
-      print('✅ Skill level updated');
 
       // 2. Update skill completion count IMMEDIATELY
-      print('Updating skill document IMMEDIATELY...');
       final skillDoc = await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -387,13 +335,9 @@ class ChallengesService {
             .collection('skill')
             .doc(skillId)
             .update({'skillLevelCompleted': currentCount + 1});
-        print('✅ Skill updated - new count: ${currentCount + 1}');
-      } else {
-        print('❌ Skill document not found: $skillId');
-      }
+      } else {}
 
       // 3. Update challenge completion count IMMEDIATELY
-      print('Updating challenge document IMMEDIATELY...');
       final challengeDoc = await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -410,13 +354,9 @@ class ChallengesService {
             .collection('skillTrack')
             .doc(challengeId)
             .update({'levelsCompleted': currentCount + 1});
-        print('✅ Challenge updated - new count: ${currentCount + 1}');
-      } else {
-        print('❌ Challenge document not found: $challengeId');
-      }
+      } else {}
 
       // 4. Log interaction
-      print('Logging interaction IMMEDIATELY...');
       await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -428,12 +368,9 @@ class ChallengesService {
         'challengeId': challengeId,
         'timestamp': FieldValue.serverTimestamp(),
       });
-      print('✅ Interaction logged');
 
-      print('=== CHALLENGE SKILL LEVEL UPDATE COMPLETED SUCCESSFULLY ===');
       return true;
     } catch (e) {
-      print('❌ Error updating challenge skill level: $e');
       return false;
     }
   }
@@ -442,10 +379,6 @@ class ChallengesService {
   Future<bool> updateChallengeGoal(String userEmail, String goalId,
       String skillLevelId, String skillId, String challengeId) async {
     try {
-      print('=== UPDATING CHALLENGE GOAL - IMMEDIATE FIX ===');
-      print(
-          'User: $userEmail, Goal ID: $goalId, Skill Level ID: $skillLevelId, Skill ID: $skillId, Challenge ID: $challengeId');
-
       // Check if goal already completed to avoid duplicate updates
       final goalDoc = await _firestore
           .collection('testers')
@@ -455,29 +388,24 @@ class ChallengesService {
           .get();
 
       if (!goalDoc.exists) {
-        print("❌ Goal document does not exist");
         return false;
       }
 
       final isGoalCompleted = goalDoc.data()?['isCompleted'] as bool? ?? false;
 
       if (isGoalCompleted) {
-        print('⚠️ Goal already completed, skipping update');
         return true;
       }
 
       // 1. Update the goal document IMMEDIATELY
-      print('Updating goal document IMMEDIATELY...');
       await _firestore
           .collection('testers')
           .doc(userEmail)
           .collection('skillGoal')
           .doc(goalId)
           .update({'isCompleted': true});
-      print('✅ Goal updated');
 
       // 2. Update the associated skill level IMMEDIATELY
-      print('Updating skill level document IMMEDIATELY...');
       final skillLevelDoc = await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -496,16 +424,10 @@ class ChallengesService {
               .collection('skillLevel')
               .doc(skillLevelId)
               .update({'isCompleted': true});
-          print('✅ Skill level updated');
-        } else {
-          print('⚠️ Skill level already completed');
-        }
-      } else {
-        print('❌ Skill level document not found: $skillLevelId');
-      }
+        } else {}
+      } else {}
 
       // 3. Update skill completion count IMMEDIATELY
-      print('Updating skill document IMMEDIATELY...');
       final skillDoc = await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -522,13 +444,9 @@ class ChallengesService {
             .collection('skill')
             .doc(skillId)
             .update({'skillLevelCompleted': currentCount + 1});
-        print('✅ Skill updated - new count: ${currentCount + 1}');
-      } else {
-        print('❌ Skill document not found: $skillId');
-      }
+      } else {}
 
       // 4. Update challenge completion count IMMEDIATELY
-      print('Updating challenge document IMMEDIATELY...');
       final challengeDoc = await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -545,13 +463,9 @@ class ChallengesService {
             .collection('skillTrack')
             .doc(challengeId)
             .update({'levelsCompleted': currentCount + 1});
-        print('✅ Challenge updated - new count: ${currentCount + 1}');
-      } else {
-        print('❌ Challenge document not found: $challengeId');
-      }
+      } else {}
 
       // 5. Log interaction
-      print('Logging interaction IMMEDIATELY...');
       await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -564,12 +478,9 @@ class ChallengesService {
         'challengeId': challengeId,
         'timestamp': FieldValue.serverTimestamp(),
       });
-      print('✅ Interaction logged');
 
-      print('=== CHALLENGE GOAL UPDATE COMPLETED SUCCESSFULLY ===');
       return true;
     } catch (e) {
-      print('❌ Error updating challenge goal: $e');
       return false;
     }
   }

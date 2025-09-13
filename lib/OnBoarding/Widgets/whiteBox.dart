@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class WhiteBox extends StatelessWidget {
   final String text;
-  const WhiteBox({Key? key, required this.text}) : super(key: key);
+  const WhiteBox({super.key, required this.text}); // Modernized constructor
 
   @override
   Widget build(BuildContext context) {

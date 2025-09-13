@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +23,8 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
   @override
   void initState() {
     super.initState();
-    final personalDetails = ref.read(selectedSleepProvider.notifier).personalDetails;
+    final personalDetails =
+        ref.read(selectedSleepProvider.notifier).personalDetails;
     final name = personalDetails.isNotEmpty ? personalDetails.first : 'Name';
     displayText = "$name's contract";
 
@@ -44,7 +47,8 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
           buttonSize += 2;
         } else {
           timer.cancel();
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const OnBoard30()));
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => const OnBoard30()));
         }
       });
     });
@@ -65,7 +69,8 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
 
   @override
   Widget build(BuildContext context) {
-    final personalDetails = ref.watch(selectedSleepProvider.notifier).personalDetails;
+    final personalDetails =
+        ref.watch(selectedSleepProvider.notifier).personalDetails;
     final name = personalDetails.isNotEmpty ? personalDetails.first : 'Name';
 
     return Scaffold(
@@ -75,7 +80,8 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/onboardingImages/29422565604857cc3d9b651485bb53eb_img_hypnotic_lune_still_as_a_forest_lake_inner_step_opt.jpg'),
+                image: AssetImage(
+                    'assets/images/onboardingImages/29422565604857cc3d9b651485bb53eb_img_hypnotic_lune_still_as_a_forest_lake_inner_step_opt.jpg'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -135,4 +141,3 @@ class _OnBoard29State extends ConsumerState<OnBoard29> {
     );
   }
 }
-

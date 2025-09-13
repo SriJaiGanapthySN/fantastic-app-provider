@@ -355,7 +355,6 @@ class _LevelItem extends StatelessWidget {
   final js.JourneyService _journeyService = js.JourneyService();
 
   _LevelItem({
-    Key? key,
     required this.title,
     required this.description,
     required this.isCompleted,
@@ -370,7 +369,7 @@ class _LevelItem extends StatelessWidget {
     required this.overallJourneyTrackType,
     required this.skill,
     this.journeyTile,
-  }) : super(key: key);
+  });
 
   void _navigateToJourneyReveal(BuildContext context) async {
     // Log the level navigation interaction
@@ -384,7 +383,7 @@ class _LevelItem extends StatelessWidget {
         'skillTitle': skill['title'],
       },
     );
-    
+
     _getSkillTypeAndNavigate(context);
   }
 
@@ -467,14 +466,14 @@ class _LevelItem extends StatelessWidget {
       print("Type : $level");
       print("Type : ${level?['type']}");
 
-      if(level!=null && level['type']=="GOAL"){
+      if (level != null && level['type'] == "GOAL") {
         final goalDataResponse =
-        await journeyService.getSkillGoal(email, level['goalId']);
+            await journeyService.getSkillGoal(email, level['goalId']);
         final goalData = {
           'goalId': goalDataResponse?['goalId']?.toString() ?? skillObj.goalId,
           'title': goalDataResponse?['title']?.toString() ?? skillObj.title,
           'objectId':
-          goalDataResponse?['objectId']?.toString() ?? skillObj.goalId,
+              goalDataResponse?['objectId']?.toString() ?? skillObj.goalId,
           'description': goalDataResponse?['description']?.toString() ?? '',
         };
 
@@ -561,7 +560,8 @@ class _LevelItem extends StatelessWidget {
           'contentTitle': level['contentTitle']?.toString() ?? skillObj.title,
           'type': level['type']?.toString() ?? 'CONTENT_PAGED',
           'contentReadingTime': level['contentReadingTime']?.toString() ?? '',
-          'skillTrackId': level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
+          'skillTrackId':
+              level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
           'skillId': level['skillId']?.toString() ?? skillObj.objectId,
           'createdAt': (level['createdAt'] as num?)?.toInt(),
           // Pass the nested pagedContent object directly. Provide a safe fallback.
@@ -582,7 +582,8 @@ class _LevelItem extends StatelessWidget {
         final motivatorPagedData = {
           'contentTitle': level['contentTitle']?.toString() ?? skillObj.title,
           'contentReadingTime': level['contentReadingTime']?.toString() ?? '',
-          'skillTrackId': level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
+          'skillTrackId':
+              level['skillTrackId']?.toString() ?? skillObj.skillTrackId,
           'skillId': level['skillId']?.toString() ?? skillObj.objectId,
           'createdAt': (level['createdAt'] as num?)?.toInt(),
           'pagedContent': _parsePagedContent(level['pagedContent']),
@@ -896,7 +897,8 @@ class _LevelItem extends StatelessWidget {
         }
       }
 
-      if (Navigator.canPop(context)) Navigator.pop(context); // Close loading dialog only
+      if (Navigator.canPop(context))
+        Navigator.pop(context); // Close loading dialog only
 
       if (foundMotivatorLevel != null) {
         final String motivatorItemObjectId =

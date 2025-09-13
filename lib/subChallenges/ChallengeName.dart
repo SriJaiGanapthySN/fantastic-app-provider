@@ -1,14 +1,17 @@
 import 'package:fantastic_app_riverpod/subChallenges/SuperPower.dart';
-import 'package:fantastic_app_riverpod/subChallenges/SuperPowerList.dart';
-import 'package:fantastic_app_riverpod/subChallenges/testing.dart';
+
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Required for ImageFilter
 
 class NameChallengeScreen extends StatefulWidget {
-  final String imageUrl;// Expect the URL for the main image
+  final String imageUrl; // Expect the URL for the main image
   final String title;
   final String objectId;
-  const NameChallengeScreen({super.key, required this.imageUrl, required this.title, required this.objectId});
+  const NameChallengeScreen(
+      {super.key,
+      required this.imageUrl,
+      required this.title,
+      required this.objectId});
 
   @override
   State<NameChallengeScreen> createState() => _NameChallengeScreenState();
@@ -45,14 +48,18 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Stack( // Use Stack for layering image and button over content
+      body: Stack(
+        // Use Stack for layering image and button over content
         children: [
           // 1. Main Scrollable Content Area (takes full space initially)
           Positioned.fill(
             // Leave space at the bottom for the image fade AND the button container
-            bottom: _buttonContainerHeight + (screenHeight * 0.1), // Adjust 0.1 as needed for image overlap
+            bottom: _buttonContainerHeight +
+                (screenHeight * 0.1), // Adjust 0.1 as needed for image overlap
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0), // Increased horizontal padding
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 32.0,
+                  vertical: 16.0), // Increased horizontal padding
               child: Column(
                 // *** Center align the Column's content ***
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -60,7 +67,8 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
                   // Main Title (Centered)
                   const Text(
                     "Name your challenge routine",
-                    textAlign: TextAlign.center, // Ensure text itself centers if wrapping
+                    textAlign: TextAlign
+                        .center, // Ensure text itself centers if wrapping
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -78,7 +86,9 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
                         height: 1.4,
                       ),
                       children: [
-                        TextSpan(text: "Personalize it to your liking to make it fun and inspiring! "),
+                        TextSpan(
+                            text:
+                                "Personalize it to your liking to make it fun and inspiring! "),
                         TextSpan(text: "💃", style: TextStyle(fontSize: 18)),
                       ],
                     ),
@@ -121,7 +131,8 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
                     ],
                   ),
                   // --- End Editable Challenge Name Section ---
-                  const SizedBox(height: 30), // Ensure spacing at the end of scroll
+                  const SizedBox(
+                      height: 30), // Ensure spacing at the end of scroll
                 ],
               ),
             ),
@@ -129,7 +140,8 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
 
           // 2. Fading Background Image (positioned above the button container)
           Positioned(
-            bottom: _buttonContainerHeight - 10, // Start slightly above the button container edge
+            bottom: _buttonContainerHeight -
+                10, // Start slightly above the button container edge
             left: 0,
             right: 0,
             height: screenHeight * 0.4, // Adjust height as needed
@@ -139,20 +151,28 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
                 return LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black], // Fade *in* the image from top
-                  stops: [0.0, 0.6], // Adjust stops: 0.0=fully transparent, 0.6=fully opaque
+                  colors: [
+                    Colors.transparent,
+                    Colors.black
+                  ], // Fade *in* the image from top
+                  stops: [
+                    0.0,
+                    0.6
+                  ], // Adjust stops: 0.0=fully transparent, 0.6=fully opaque
                 ).createShader(bounds);
               },
-              blendMode: BlendMode.dstIn, // Apply transparency mask to the image
+              blendMode:
+                  BlendMode.dstIn, // Apply transparency mask to the image
               child: Image.network(
                 widget.imageUrl,
                 fit: BoxFit.cover, // Cover the assigned space
-                alignment: Alignment.bottomCenter, // Align image bottom within its bounds
-                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(), // Handle error
+                alignment: Alignment
+                    .bottomCenter, // Align image bottom within its bounds
+                errorBuilder: (context, error, stackTrace) =>
+                    const SizedBox.shrink(), // Handle error
               ),
             ),
           ),
-
 
           // 3. Bottom Button Container (White, Rounded Top)
           Positioned(
@@ -161,14 +181,16 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
             right: 0,
             child: Container(
               height: _buttonContainerHeight, // Give it a defined height
-              padding: const EdgeInsets.fromLTRB(24.0, 18.0, 24.0, 25.0), // Adjust padding (more bottom for safe area)
+              padding: const EdgeInsets.fromLTRB(24.0, 18.0, 24.0,
+                  25.0), // Adjust padding (more bottom for safe area)
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24.0),
                   topRight: Radius.circular(24.0),
                 ),
-                boxShadow: [ // Optional: Add subtle shadow
+                boxShadow: [
+                  // Optional: Add subtle shadow
                   BoxShadow(
                     color: Colors.black.withOpacity(0.08),
                     blurRadius: 10.0,
@@ -190,10 +212,16 @@ class _NameChallengeScreenState extends State<NameChallengeScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
-                    )
-                ),
+                    )),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SuperPowerScreen(imageUrl: widget.imageUrl,objectId: widget.objectId,title: widget.title,)));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => SuperPowerScreen(
+                                imageUrl: widget.imageUrl,
+                                objectId: widget.objectId,
+                                title: widget.title,
+                              )));
                   //Navigator.push(context, MaterialPageRoute(builder: (context) => SkillLevelDetailScreen(skillTrackId: widget.objectId,)));
                   // Add navigation/action
                 },

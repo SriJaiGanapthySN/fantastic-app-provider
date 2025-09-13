@@ -134,15 +134,28 @@ class SignInPageState extends State<SignInPage> {
     );
   }
 
-  void login(WidgetRef ref) {
-    //prepare email and password
+  Future<void> login(WidgetRef ref) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    //ensure that email and password are not empty
     if (email.isNotEmpty && password.isNotEmpty) {
-      //try to login
-      ref.read(authProvider.notifier).login(email, password);
+      await ref.read(authProvider.notifier).login(email, password);
+      final authState = ref.read(authProvider);
+      if (authState.user != null) {
+        Navigator.pushReplacementNamed(context, '/habitPlay', arguments: {
+          'email': authState.user!.email,
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authState.error ?? 'Login failed',
+              style: const TextStyle(color: Colors.red),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(

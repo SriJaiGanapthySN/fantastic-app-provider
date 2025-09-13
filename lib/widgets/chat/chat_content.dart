@@ -91,6 +91,7 @@ class ChatContent extends StatelessWidget {
           rippleController: rippleController,
           voiceText: voiceText,
           isLongPressing: isLongPressing,
+          isMessageBoxVisible: isMessageBoxVisible,
         ),
       ],
     );

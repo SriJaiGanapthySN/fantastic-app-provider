@@ -13,7 +13,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth_page.dart';
 import 'screens/main_screen.dart';
-import 'screens/test_screen.dart';
+import 'screens/ritual/habitPlay.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -87,17 +87,24 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
-      // home: Consumer(
-      //   builder: (context, ref, child) {
-      //     final email = ref.watch(safeUserEmailProvider);
-      //     return Discoverscreen(email: email);
-      //   },
-      // ),
-
+      routes: {
+        '/habitPlay': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+          final email = args != null && args['email'] != null
+              ? args['email'] as String
+              : '';
+          return habitPlay(email: email);
+        },
+      },
       home: authState.isLoading
           ? const Scaffold(
               body: Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  backgroundColor: Colors.grey,
+                  color: Colors.white,
+                  strokeWidth: 5,
+                ),
               ),
             )
           : authState.user != null

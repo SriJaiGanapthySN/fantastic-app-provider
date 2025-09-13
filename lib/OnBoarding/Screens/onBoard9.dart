@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-
 import 'onBoard10.dart';
 import '../States/StateNotifiers.dart';
 import '../Widgets/whiteBox.dart';
 
 class OnBoard9 extends ConsumerStatefulWidget {
-  const OnBoard9({super.key});
+  const OnBoard9({super.key}); // Modernized constructor
 
   @override
   ConsumerState<OnBoard9> createState() => _OnBoard9State();
@@ -54,7 +52,8 @@ class _OnBoard9State extends ConsumerState<OnBoard9> {
             fit: BoxFit.cover,
           ),
           Container(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(
+                0.3), // Consider replacing with .withValues() if deprecated
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: width * 0.03),
@@ -72,7 +71,6 @@ class _OnBoard9State extends ConsumerState<OnBoard9> {
                   ),
                 ),
                 SizedBox(height: height * 0.02),
-
                 for (var option in options) ...[
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 500),
@@ -86,7 +84,6 @@ class _OnBoard9State extends ConsumerState<OnBoard9> {
                   ),
                   SizedBox(height: height * 0.005),
                 ],
-
                 const Spacer(flex: 1),
               ],
             ),

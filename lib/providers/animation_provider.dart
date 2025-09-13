@@ -55,7 +55,7 @@ class AnimationNotifier extends StateNotifier<AnimationManager?> {
     final rippleController = AnimationController(
       vsync: tickerProvider,
       duration:
-          const Duration(seconds: 5), // Slower animation - 5 seconds duration
+          const Duration(seconds: 3), // Slower animation - 5 seconds duration
     );
 
     final mindController = AnimationController(

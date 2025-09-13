@@ -11,7 +11,7 @@ class ImageCard extends StatelessWidget {
     required this.imageAdd,
     required this.text,
     required this.isSelected,
-  });
+  }); // Modernized constructor
 
   @override
   Widget build(BuildContext context) {
@@ -45,14 +45,16 @@ class ImageCard extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       height: double.infinity,
-                      color: Colors.black.withOpacity(0.4),
+                      color: Colors.black.withOpacity(
+                          0.4), // Consider replacing with .withValues() if deprecated
                     ),
                   // Tick icon with circular white background
                   if (selected)
                     Center(
                       child: CircleAvatar(
                         radius: screenWidth * 0.15, // small circle
-                        backgroundColor: Colors.white.withOpacity(0.8),
+                        backgroundColor: Colors.white.withOpacity(
+                            0.8), // Consider replacing with .withValues() if deprecated
                         child: Icon(
                           Icons.check,
                           color: Colors.black,

@@ -20,24 +20,31 @@ class AnimatedMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.of(context).size.width * 0.7;
+
     return SlideTransition(
       position: animation,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
         child: Align(
           alignment: alignment,
-          child: Container(
-            constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.7),
-            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
-            decoration: BoxDecoration(
-              color: bubbleColor,
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Text(
-              message,
-              style: TextStyle(color: textColor),
-              softWrap: true,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                message,
+                style: TextStyle(color: textColor, height: 1.25),
+                textHeightBehavior: const TextHeightBehavior(
+                  applyHeightToFirstAscent: true,
+                  applyHeightToLastDescent: true,
+                ),
+                softWrap: true,
+              ),
             ),
           ),
         ),

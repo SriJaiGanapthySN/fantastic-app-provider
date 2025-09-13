@@ -40,10 +40,11 @@ class MessageInputBar extends StatelessWidget {
             if (!isSendingMessage)
               GestureDetector(
                 onTap: toggleMessageBoxVisibility,
-                onLongPressStart: onLongPressStart,
-                onLongPressEnd: onLongPressEnd,
-                onLongPressDown: (_) {},
-                onLongPressUp: () {},
+                // Only allow long press when message box is not visible
+                onLongPressStart: isMessageBoxVisible ? null : onLongPressStart,
+                onLongPressEnd: isMessageBoxVisible ? null : onLongPressEnd,
+                onLongPressDown: isMessageBoxVisible ? null : (_) {},
+                onLongPressUp: isMessageBoxVisible ? null : () {},
                 child: Container(
                   width: 56,
                   height: 56,

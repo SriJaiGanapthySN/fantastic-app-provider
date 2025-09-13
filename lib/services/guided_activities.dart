@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_cast
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:fantastic_app_riverpod/models/skill.dart';
@@ -19,7 +21,6 @@ class GuidedActivities {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error fetching categories: $e');
       return []; // Return an empty list in case of error
     }
   }
@@ -59,7 +60,6 @@ class GuidedActivities {
 
       return allResults;
     } catch (e) {
-      print('Error fetching trainings: $e');
       return []; // Return an empty list in case of error
     }
   }
@@ -90,7 +90,6 @@ class GuidedActivities {
 
       return data;
     } catch (e) {
-      print("Error fetching steps: $e");
       return []; // Return an empty list in case of error
     }
   }
@@ -117,7 +116,6 @@ class GuidedActivities {
       // Return null if no matching document is found
       return null;
     } catch (e) {
-      print('Error fetching unreleased journey: $e');
       return null;
     }
   }
@@ -142,7 +140,6 @@ class GuidedActivities {
       // Return null if no matching document is found
       return null;
     } catch (e) {
-      print('Error fetching unreleased journey: $e');
       return null;
     }
   }
@@ -156,10 +153,7 @@ class GuidedActivities {
           .doc(docId);
 
       await docRef.update({'isReleased': true});
-      print('Document $docId updated to isReleased: true');
-    } catch (e) {
-      print('Error updating isReleased: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> addSkillTrack(String id, String email) async {
@@ -183,14 +177,8 @@ class GuidedActivities {
 
         // Add the document data to the target path
         await userSkillLevelPath.doc(id).set(skillData);
-
-        print('Document $id added to /testers/$email/skillTrack');
-      } else {
-        print('Document with id $id does not exist in /skillTrack.');
-      }
-    } catch (e) {
-      print('Error fetching and adding skills: $e');
-    }
+      } else {}
+    } catch (e) {}
   }
 
 // Future<List<Skill>> addSkills(String skillTrackId, String email) async {
@@ -250,7 +238,6 @@ class GuidedActivities {
 
       // Check if documents are found
       if (querySnapshot.docs.isEmpty) {
-        print('No skills found for skillTrackId: $skillTrackId');
         return [];
       }
 
@@ -265,9 +252,7 @@ class GuidedActivities {
 
       // Check if the 'skill' collection already exists for the user
       final userSkillsSnapshot = await userSkillPath.get();
-      if (userSkillsSnapshot.docs.isEmpty) {
-        print('Skill collection for $email does not exist. Creating now.');
-      }
+      if (userSkillsSnapshot.docs.isEmpty) {}
 
       // Add each skill to the specified path with isComplete = false
       for (var skill in skills) {
@@ -281,10 +266,8 @@ class GuidedActivities {
         await userSkillPath.doc(skill.objectId).set(skillData);
       }
 
-      print('${skills.length} skills added to /testers/$email/skill');
       return skills;
     } catch (e) {
-      print('Error fetching and adding skills: $e');
       return [];
     }
   }
@@ -305,7 +288,6 @@ class GuidedActivities {
             .get();
 
         if (querySnapshot.docs.isEmpty) {
-          print('No skill level found for skillID: ${skill.objectId}');
           continue; // Move to the next skill
         }
 
@@ -335,31 +317,24 @@ class GuidedActivities {
 
           // Upload the updated data
           await userSkillLevelPath.doc(doc.id).set(updatedSkillData);
-
-          print('Document ${doc.id} added to /testers/$email/skillLevel');
         }
       }
 
       // Print the collected goal IDs
-      print('Collected goalIds: $goals');
       return goals;
     } catch (e) {
-      print('Error fetching and adding skill levels: $e');
       return []; // Return an empty list if an error occurs
     }
   }
 
   Future<void> addSkillGoals(List<String> ids, String email) async {
     try {
-      print('=== ADDING SKILL GOALS WITH ENRICHED DATA (GUIDED) ===');
-      print('Adding ${ids.length} goals for user: $email');
-      
       // Reference to the target path: /testers/{email}/skillGoal
       final userSkillGoalPath =
           _firestore.collection('testers').doc(email).collection('skillGoal');
-          
+
       // Reference to user's skillLevel collection to find related data
-      final userSkillLevelPath = 
+      final userSkillLevelPath =
           _firestore.collection('testers').doc(email).collection('skillLevel');
 
       // Iterate through each ID in the list
@@ -374,48 +349,33 @@ class GuidedActivities {
         if (docSnapshot.exists) {
           // Get the document data
           final skillData = docSnapshot.data() as Map<String, dynamic>;
-          
+
           // Find the corresponding skillLevel document that has this goalId
-          final skillLevelQuery = await userSkillLevelPath
-              .where('goalId', isEqualTo: id)
-              .get();
-          
+          final skillLevelQuery =
+              await userSkillLevelPath.where('goalId', isEqualTo: id).get();
+
           // Initialize the updated data with existing data
           final updatedSkillData = {
             ...skillData, // Existing data
             'isCompleted': false, // New field
           };
-          
+
           // If we found a matching skillLevel, add the required fields
           if (skillLevelQuery.docs.isNotEmpty) {
             final skillLevelDoc = skillLevelQuery.docs.first;
             final skillLevelData = skillLevelDoc.data();
-            
+
             // Add the fields needed for goal completion
             updatedSkillData['skillLevelId'] = skillLevelDoc.id;
             updatedSkillData['skillId'] = skillLevelData['skillId'];
             updatedSkillData['skillTrackId'] = skillLevelData['skillTrackId'];
-            
-            print('✅ Enriched goal $id with:');
-            print('  - skillLevelId: ${skillLevelDoc.id}');
-            print('  - skillId: ${skillLevelData['skillId']}');
-            print('  - skillTrackId: ${skillLevelData['skillTrackId']}');
-          } else {
-            print('⚠️ No matching skillLevel found for goal $id - goal may not complete properly');
-          }
+          } else {}
 
           // Add the document data to the user's skillGoal collection
           await userSkillGoalPath.doc(id).set(updatedSkillData);
-          print('✅ Goal $id added to /testers/$email/skillGoal');
-        } else {
-          print('❌ Goal $id does not exist in /skillGoal collection');
-        }
+        } else {}
       }
-
-      print('=== SKILL GOALS ADDITION COMPLETED (GUIDED) ===');
-    } catch (e) {
-      print('❌ Error adding skill goals: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> addSkillGoal(String id, String email) async {
@@ -437,14 +397,8 @@ class GuidedActivities {
 
         // Add the document data to the target path
         await userSkillLevelPath.doc(id).set(skillData);
-
-        print('Document $id added to /testers/$email/skillGoal');
-      } else {
-        print('Document with id $id does not exist in /skillGoal.');
-      }
-    } catch (e) {
-      print('Error fetching and adding skills: $e');
-    }
+      } else {}
+    } catch (e) {}
   }
 
   Future<List<Skill>> getSkills(String skillTrackId, String email) async {
@@ -460,7 +414,6 @@ class GuidedActivities {
 
       // Check if documents are found
       if (querySnapshot.docs.isEmpty) {
-        print('No skills found for skillTrackId: $skillTrackId');
         return [];
       }
 
@@ -475,7 +428,6 @@ class GuidedActivities {
       // Return the sorted list of skills
       return skills;
     } catch (e) {
-      print('Error fetching and adding skills: $e');
       return [];
     }
   }
@@ -493,7 +445,6 @@ class GuidedActivities {
 
       // Check if any documents are found
       if (querySnapshot.docs.isEmpty) {
-        print('No skills found with skillId: $skillId');
         return [];
       }
 
@@ -504,7 +455,6 @@ class GuidedActivities {
 
       return skillLevels;
     } catch (e) {
-      print('Error fetching skill levels: $e');
       return [];
     }
   }
@@ -522,7 +472,6 @@ class GuidedActivities {
 
       // Check if any documents are found
       if (querySnapshot.docs.isEmpty) {
-        print('No goal found with objectId: $goalId');
         return null;
       }
 
@@ -532,7 +481,6 @@ class GuidedActivities {
 
       return skillLevel;
     } catch (e) {
-      print('Error fetching skill levels: $e');
       return null;
     }
   }
@@ -542,7 +490,7 @@ class GuidedActivities {
     try {
       // Create a batch write to ensure all updates are atomic
       final batch = _firestore.batch();
-      
+
       // Get the goal document first to check if it's already completed
       final goalRef = _firestore
           .collection('testers')
@@ -550,14 +498,12 @@ class GuidedActivities {
           .collection('skillGoal')
           .doc(id);
       final goalDoc = await goalRef.get();
-      
+
       if (!goalDoc.exists) {
-        print("Goal document does not exist");
         return false;
       }
-      
+
       if (goalDoc.data()?['isCompleted'] == true) {
-        print("Goal is already completed");
         return true;
       }
 
@@ -568,9 +514,8 @@ class GuidedActivities {
           .collection('skillLevel')
           .doc(skillLevelId);
       final skillLevelDoc = await skillLevelRef.get();
-      
+
       if (!skillLevelDoc.exists) {
-        print("Skill level document does not exist");
         return false;
       }
 
@@ -593,7 +538,7 @@ class GuidedActivities {
               .collection('skill')
               .doc(skillId);
           final skillDoc = await skillRef.get();
-          
+
           if (skillDoc.exists) {
             final currentCount = skillDoc.data()?['skillLevelCompleted'] ?? 0;
             batch.update(skillRef, {'skillLevelCompleted': currentCount + 1});
@@ -608,7 +553,7 @@ class GuidedActivities {
               .collection('skillTrack')
               .doc(skillTrackId);
           final skillTrackDoc = await skillTrackRef.get();
-          
+
           if (skillTrackDoc.exists) {
             final currentCount = skillTrackDoc.data()?['levelsCompleted'] ?? 0;
             batch.update(skillTrackRef, {'levelsCompleted': currentCount + 1});
@@ -620,16 +565,12 @@ class GuidedActivities {
       await batch.commit();
       return true;
     } catch (e) {
-      print("Error updating task: $e");
       return false;
     }
   }
 
   Future<bool> updateOneTime(bool isAdded, String id, String userEmail) async {
     try {
-      print('=== UPDATING ONE TIME (GUIDED) - IMMEDIATE FIX ===');
-      print('User: $userEmail, Skill Level ID: $id');
-      
       // Get the skill level document first to check if it's already completed
       final skillLevelRef = _firestore
           .collection('testers')
@@ -637,14 +578,12 @@ class GuidedActivities {
           .collection('skillLevel')
           .doc(id);
       final skillLevelDoc = await skillLevelRef.get();
-      
+
       if (!skillLevelDoc.exists) {
-        print("❌ Skill level document does not exist");
         return false;
       }
 
       if (skillLevelDoc.data()?['isCompleted'] == true) {
-        print("⚠️ Skill level is already completed, skipping update");
         return true;
       }
 
@@ -652,53 +591,42 @@ class GuidedActivities {
       final skillId = skillLevelData['skillId'];
       final skillTrackId = skillLevelData['skillTrackId'];
 
-      print('Extracted - Skill ID: $skillId, Track ID: $skillTrackId');
-
       // 1. Update skill level IMMEDIATELY
-      print('Updating skill level document IMMEDIATELY...');
       await skillLevelRef.update({'isCompleted': true});
-      print('✅ Skill level updated');
 
       if (skillId != null) {
         // 2. Update skill completion count IMMEDIATELY
-        print('Updating skill document IMMEDIATELY...');
         final skillRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skill')
             .doc(skillId);
         final skillDoc = await skillRef.get();
-        
+
         if (skillDoc.exists) {
-          final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
           await skillRef.update({'skillLevelCompleted': currentCount + 1});
-          print('✅ Skill updated - new count: ${currentCount + 1}');
-        } else {
-          print('❌ Skill document not found: $skillId');
-        }
+        } else {}
       }
 
       if (skillTrackId != null) {
         // 3. Update skill track completion count IMMEDIATELY
-        print('Updating skill track document IMMEDIATELY...');
         final skillTrackRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skillTrack')
             .doc(skillTrackId);
         final skillTrackDoc = await skillTrackRef.get();
-        
+
         if (skillTrackDoc.exists) {
-          final currentCount = (skillTrackDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (skillTrackDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
           await skillTrackRef.update({'levelsCompleted': currentCount + 1});
-          print('✅ Skill track updated - new count: ${currentCount + 1}');
-        } else {
-          print('❌ Skill track document not found: $skillTrackId');
-        }
+        } else {}
       }
 
       // 4. Log interaction
-      print('Logging interaction IMMEDIATELY...');
       await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -710,12 +638,9 @@ class GuidedActivities {
         'skillTrackId': skillTrackId,
         'timestamp': FieldValue.serverTimestamp(),
       });
-      print('✅ Interaction logged');
 
-      print('=== ONE TIME UPDATE (GUIDED) COMPLETED SUCCESSFULLY ===');
       return true;
     } catch (e) {
-      print("❌ ERROR updating one time (guided): $e");
       return false;
     }
   }
@@ -723,9 +648,6 @@ class GuidedActivities {
   Future<bool> updateMotivator(
       bool isAdded, String id, String userEmail) async {
     try {
-      print('=== UPDATING MOTIVATOR (GUIDED) - IMMEDIATE FIX ===');
-      print('User: $userEmail, Skill Level ID: $id');
-
       // Get the skill level document first to check if it's already completed
       final skillLevelRef = _firestore
           .collection('testers')
@@ -733,14 +655,12 @@ class GuidedActivities {
           .collection('skillLevel')
           .doc(id);
       final skillLevelDoc = await skillLevelRef.get();
-      
+
       if (!skillLevelDoc.exists) {
-        print("❌ Skill level document does not exist");
         return false;
       }
 
       if (skillLevelDoc.data()?['isCompleted'] == true) {
-        print("⚠️ Skill level is already completed, skipping update");
         return true;
       }
 
@@ -748,53 +668,42 @@ class GuidedActivities {
       final skillId = skillLevelData['skillId'];
       final skillTrackId = skillLevelData['skillTrackId'];
 
-      print('Extracted - Skill ID: $skillId, Track ID: $skillTrackId');
-
       // 1. Update skill level IMMEDIATELY
-      print('Updating skill level document IMMEDIATELY...');
       await skillLevelRef.update({'isCompleted': true});
-      print('✅ Skill level updated');
 
       if (skillId != null) {
         // 2. Update skill completion count IMMEDIATELY
-        print('Updating skill document IMMEDIATELY...');
         final skillRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skill')
             .doc(skillId);
         final skillDoc = await skillRef.get();
-        
+
         if (skillDoc.exists) {
-          final currentCount = (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (skillDoc.data()?['skillLevelCompleted'] as num?)?.toInt() ?? 0;
           await skillRef.update({'skillLevelCompleted': currentCount + 1});
-          print('✅ Skill updated - new count: ${currentCount + 1}');
-        } else {
-          print('❌ Skill document not found: $skillId');
-        }
+        } else {}
       }
 
       if (skillTrackId != null) {
         // 3. Update skill track completion count IMMEDIATELY
-        print('Updating skill track document IMMEDIATELY...');
         final skillTrackRef = _firestore
             .collection('testers')
             .doc(userEmail)
             .collection('skillTrack')
             .doc(skillTrackId);
         final skillTrackDoc = await skillTrackRef.get();
-        
+
         if (skillTrackDoc.exists) {
-          final currentCount = (skillTrackDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
+          final currentCount =
+              (skillTrackDoc.data()?['levelsCompleted'] as num?)?.toInt() ?? 0;
           await skillTrackRef.update({'levelsCompleted': currentCount + 1});
-          print('✅ Skill track updated - new count: ${currentCount + 1}');
-        } else {
-          print('❌ Skill track document not found: $skillTrackId');
-        }
+        } else {}
       }
 
       // 4. Log interaction
-      print('Logging interaction IMMEDIATELY...');
       await _firestore
           .collection('testers')
           .doc(userEmail)
@@ -806,12 +715,9 @@ class GuidedActivities {
         'skillTrackId': skillTrackId,
         'timestamp': FieldValue.serverTimestamp(),
       });
-      print('✅ Interaction logged');
 
-      print('=== MOTIVATOR UPDATE (GUIDED) COMPLETED SUCCESSFULLY ===');
       return true;
     } catch (e) {
-      print("❌ ERROR updating motivator (guided): $e");
       return false;
     }
   }

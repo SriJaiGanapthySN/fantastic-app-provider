@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../States/StateNotifiers.dart';
 import '../Widgets/whiteBox.dart';
-
 import 'onBoard18.dart';
 
 class OnBoard17 extends ConsumerStatefulWidget {
-  const OnBoard17({super.key});
+  const OnBoard17({super.key}); // Modernized constructor
 
   @override
   ConsumerState<OnBoard17> createState() => _OnBoard17State();
@@ -27,7 +26,9 @@ class _OnBoard17State extends ConsumerState<OnBoard17> {
     ref.read(selectedSleepProvider.notifier).select(text);
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const OnBoard18()), // Replace with your next screen
+      MaterialPageRoute(
+          builder: (context) =>
+              const OnBoard18()), // Replace with your next screen
     );
   }
 
@@ -48,7 +49,8 @@ class _OnBoard17State extends ConsumerState<OnBoard17> {
             fit: BoxFit.cover,
           ),
           Container(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(
+                0.3), // Consider replacing with .withValues() if deprecated
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: width * 0.03),
@@ -67,7 +69,6 @@ class _OnBoard17State extends ConsumerState<OnBoard17> {
                   ),
                 ),
                 SizedBox(height: height * 0.02),
-
                 for (var option in options) ...[
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 500),
@@ -81,7 +82,6 @@ class _OnBoard17State extends ConsumerState<OnBoard17> {
                   ),
                   SizedBox(height: height * 0.005),
                 ],
-
                 const Spacer(flex: 1),
               ],
             ),

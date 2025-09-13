@@ -1,19 +1,21 @@
-import 'dart:math';
+import 'dart:math'; // Used for wave animation
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart'; // Used for custom font
+import 'package:lottie/lottie.dart'; // Used for ripple animation
 
 class VoiceInputOverlay extends StatefulWidget {
   final AnimationController rippleController;
   final String voiceText;
   final bool isLongPressing;
+  final bool isMessageBoxVisible;
 
   const VoiceInputOverlay({
-    Key? key,
+    super.key,
     required this.rippleController,
     required this.voiceText,
     required this.isLongPressing,
-  }) : super(key: key);
+    required this.isMessageBoxVisible,
+  });
 
   @override
   State<VoiceInputOverlay> createState() => _VoiceInputOverlayState();
@@ -201,7 +203,8 @@ class _VoiceInputOverlayState extends State<VoiceInputOverlay>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withOpacity(
+                        0.3), // Consider replacing with .withValues() if deprecated
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -229,55 +232,62 @@ class _VoiceInputOverlayState extends State<VoiceInputOverlay>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    // Accessibility: Add semantics for voice input overlay
 
-    if (!widget.isLongPressing && !_showMessageBubble) {
+    // Disable voice input overlay when message box is visible
+    if (widget.isMessageBoxVisible ||
+        (!widget.isLongPressing && !_showMessageBubble)) {
       return const SizedBox.shrink();
     }
 
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Stack(
-        children: [
-          // Your Lottie ripple animation - positioned at the bottom
-          if (widget.isLongPressing)
-            Container(
-              height: screenHeight * 0.6,
-              alignment: Alignment.bottomCenter,
-              child: Lottie.asset(
-                "assets/animations/All Lottie/Down Ripple/Ripple.json",
-                width: screenWidth,
-                height: screenHeight * 0.25,
-                fit: BoxFit.fill,
-                repeat: true,
-                animate: true,
-                controller: widget.rippleController,
-                options: LottieOptions(
-                  enableMergePaths: true,
+    return Semantics(
+      label: 'Voice input overlay',
+      child: Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: Stack(
+          children: [
+            // Lottie ripple animation - positioned at the absolute bottom
+            if (widget.isLongPressing)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Lottie.asset(
+                  "assets/animations/All Lottie/Down Ripple/Ripple.json",
+                  width: screenWidth,
+                  height: screenHeight * 0.25,
+                  fit: BoxFit.fill,
+                  repeat: true,
+                  animate: true,
+                  controller: widget.rippleController,
+                  options: LottieOptions(
+                    enableMergePaths: true,
+                  ),
+                  frameRate: FrameRate.composition,
                 ),
-                frameRate: FrameRate.composition,
               ),
-            ),
 
-          // Wavy text display (white, no background)
-          if (widget.isLongPressing && widget.voiceText.isNotEmpty)
-            Positioned(
-              bottom: screenHeight * 0.15,
-              left: 20,
-              right: 20,
-              child: _buildWaveText(),
-            ),
+            // Wavy text display (white, no background)
+            if (widget.isLongPressing && widget.voiceText.isNotEmpty)
+              Positioned(
+                bottom: screenHeight * 0.15,
+                left: 20,
+                right: 20,
+                child: _buildWaveText(),
+              ),
 
-          // Message bubble transition
-          if (_showMessageBubble)
-            Positioned(
-              bottom: screenHeight * 0.12,
-              left: 0,
-              right: 0,
-              child: _buildMessageBubble(),
-            ),
-        ],
+            // Message bubble transition
+            if (_showMessageBubble)
+              Positioned(
+                bottom: screenHeight * 0.12,
+                left: 0,
+                right: 0,
+                child: _buildMessageBubble(),
+              ),
+          ],
+        ),
       ),
     );
   }

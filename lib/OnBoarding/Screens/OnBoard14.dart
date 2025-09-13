@@ -8,7 +8,6 @@ import 'onBoard15.dart';
 class OnBoard14 extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
     final selectedItems = ref.watch(selectedSleepProvider);
     final List<Item> itemList = items; // your list of items
 
@@ -29,15 +28,14 @@ class OnBoard14 extends ConsumerWidget {
                       Text(
                         "Almost there! Tell us what you're interested in",
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24.0,
-                          color: Colors.white
-                        ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24.0,
+                            color: Colors.white),
                       ),
                       SizedBox(height: 8.0),
                       Text(
                         "Pick as many as you like.",
-                        style: TextStyle(fontSize: 16.0,color: Colors.white),
+                        style: TextStyle(fontSize: 16.0, color: Colors.white),
                       ),
                     ],
                   ),
@@ -49,7 +47,7 @@ class OnBoard14 extends ConsumerWidget {
                   height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white,width: 8),
+                    border: Border.all(color: Colors.white, width: 8),
                   ),
                 ),
               ],
@@ -71,7 +69,8 @@ class OnBoard14 extends ConsumerWidget {
                 itemCount: itemList.length,
                 itemBuilder: (context, index) {
                   final item = itemList[index];
-                  final isSelected = selectedItems.contains(item.text); // <-- check by item.text
+                  final isSelected = selectedItems
+                      .contains(item.text); // <-- check by item.text
 
                   return GestureDetector(
                     onTap: () {
@@ -95,7 +94,9 @@ class OnBoard14 extends ConsumerWidget {
 
           // Continue Button
           Container(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),color: Color.fromARGB(255,61,60,124)),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Color.fromARGB(255, 61, 60, 124)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
@@ -103,7 +104,8 @@ class OnBoard14 extends ConsumerWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => OnBoard15(), // Replace with your next screen
+                      builder: (context) =>
+                          OnBoard15(), // Replace with your next screen
                     ),
                   );
                 },

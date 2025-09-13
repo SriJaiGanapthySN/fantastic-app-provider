@@ -4,12 +4,15 @@ import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/message_provider.dart';
 import 'package:fantastic_app_riverpod/providers/speech_recognition_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
+import 'package:fantastic_app_riverpod/providers/nav_provider.dart';
+import 'package:fantastic_app_riverpod/screens/main_screen.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_app_bar.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_background.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String email;
@@ -62,13 +65,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           await apiService.authenticate(defaultEmail, defaultPassword);
       if (token != null) {
         ref.read(authStatusProvider.notifier).state = true;
-        print('✅ Authentication successful in ChatScreen');
-      } else {
-        print('❌ Authentication failed in ChatScreen');
-      }
-    } catch (e) {
-      print('💥 Authentication error in ChatScreen: $e');
-    }
+      } else {}
+    } catch (e) {}
   }
 
   void _setupAnimationCallback() {
@@ -117,6 +115,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   void dispose() {
     _scrollController.removeListener(_scrollListener);
     _textController.removeListener(_handleTextInputChange);
+    // Dispose animation controllers created by providers that use this state's ticker
+    try {
+      final animationNotifier = ref.read(animationProvider(this).notifier);
+      animationNotifier.dispose();
+    } catch (_) {
+      // ignore — provider might not be created or already disposed
+    }
+    try {
+      final messageNotifier = ref.read(messageProvider(this).notifier);
+      messageNotifier.dispose();
+    } catch (_) {
+      // ignore — provider might not be created or already disposed
+    }
+
     super.dispose();
   }
 
@@ -224,47 +236,109 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final voiceText = ref.watch(speechRecognitionProvider).recognizedText.value;
 
     return Scaffold(
-      // Prevent the body from resizing when keyboard appears
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Background
-            ChatBackground(
+      body: Stack(
+        children: [
+          // Background stretches to full screen
+          ChatBackground(
+            isThresholdReached: chatState.isThresholdReached,
+          ),
+          // App bar positioned at the top, overlays background
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: ChatAppBar(
               isThresholdReached: chatState.isThresholdReached,
+              onMenuPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  builder: (sheetContext) {
+                    final providerContainer =
+                        ProviderScope.containerOf(sheetContext, listen: false);
+                    final pageController =
+                        providerContainer.read(pageControllerProvider);
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: SvgPicture.asset('assets/icons/heart.svg',
+                              color: Colors.black),
+                          title: const Text('Rituals'),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            providerContainer
+                                .read(selectedTabProvider.notifier)
+                                .state = 1;
+                            pageController.jumpToPage(1);
+                          },
+                        ),
+                        ListTile(
+                          leading: SvgPicture.asset('assets/icons/route.svg',
+                              color: Colors.black),
+                          title: const Text('Journey'),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            providerContainer
+                                .read(selectedTabProvider.notifier)
+                                .state = 2;
+                            pageController.jumpToPage(2);
+                          },
+                        ),
+                        ListTile(
+                          leading: SvgPicture.asset('assets/icons/search.svg',
+                              color: Colors.black),
+                          title: const Text('Discover'),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            providerContainer
+                                .read(selectedTabProvider.notifier)
+                                .state = 3;
+                            pageController.jumpToPage(3);
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
-            // App bar
-            ChatAppBar(
-              isThresholdReached: chatState.isThresholdReached,
-            ),
-            // Main chat content
-            if (animationManager != null)
-              Positioned.fill(
-                top: 60, // Account for app bar
-                child: ChatContent(
-                  messages: chatState.messages,
-                  scrollController: _scrollController,
-                  textController: _textController,
-                  focusNode: _focusNode,
-                  isMessageBoxVisible: chatState.isMessageBoxVisible,
-                  isSendingMessage: chatState.isSendingMessage,
-                  isLongPressing: chatState.isLongPressing,
-                  rippleController: animationManager.rippleController,
-                  opacity: chatState.opacity,
-                  displayText: chatState.displayText,
-                  voiceText: voiceText,
-                  shouldShowTextBox: chatState.shouldShowTextBox,
-                  showMindText: chatState.showMindText,
-                  showContainer: chatState.showContainer,
-                  mindController: animationManager.mindController,
-                  toggleMessageBoxVisibility: _toggleMessageBoxVisibility,
-                  onLongPressStart: _onLongPressStart,
-                  onLongPressEnd: _onLongPressEnd,
-                  sendMessage: _sendMessage,
-                ),
+          ),
+          // Main chat content, offset below app bar
+          if (animationManager != null)
+            Positioned.fill(
+              top: kToolbarHeight +
+                  MediaQuery.of(context)
+                      .padding
+                      .top, // Offset by app bar height + safe area
+              child: ChatContent(
+                messages: chatState.messages,
+                scrollController: _scrollController,
+                textController: _textController,
+                focusNode: _focusNode,
+                isMessageBoxVisible: chatState.isMessageBoxVisible,
+                isSendingMessage: chatState.isSendingMessage,
+                isLongPressing: chatState.isLongPressing,
+                rippleController: animationManager.rippleController,
+                opacity: chatState.opacity,
+                displayText: chatState.displayText,
+                voiceText: voiceText,
+                shouldShowTextBox: chatState.shouldShowTextBox,
+                showMindText: chatState.showMindText,
+                showContainer: chatState.showContainer,
+                mindController: animationManager.mindController,
+                toggleMessageBoxVisibility: _toggleMessageBoxVisibility,
+                onLongPressStart: _onLongPressStart,
+                onLongPressEnd: _onLongPressEnd,
+                sendMessage: _sendMessage,
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

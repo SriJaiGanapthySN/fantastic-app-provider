@@ -1,9 +1,13 @@
+// ignore_for_file: deprecated_member_use, prefer_interpolation_to_compose_strings
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle; // For potential future asset loading (though not used in remove-only)
+import 'package:flutter/services.dart'
+    show
+        rootBundle; // For potential future asset loading (though not used in remove-only)
 import 'package:webview_flutter/webview_flutter.dart'; // Import WebView
-import 'package:http/http.dart' as http;             // Import HTTP client
-import 'dart:async';                                // For TimeoutException
-import 'package:html/parser.dart' as html_parser;      // For parsing HTML
+import 'package:http/http.dart' as http; // Import HTTP client
+import 'dart:async'; // For TimeoutException
+import 'package:html/parser.dart' as html_parser; // For parsing HTML
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 
@@ -22,12 +26,15 @@ class MeditationActionScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<MeditationActionScreen> createState() => _MeditationActionScreenState();
+  ConsumerState<MeditationActionScreen> createState() =>
+      _MeditationActionScreenState();
 }
 
-class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen> {
+class _MeditationActionScreenState
+    extends ConsumerState<MeditationActionScreen> {
   bool _isPlaying = false;
-  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
 
   final double _minSheetSize = 0.13;
   final double _initialSheetSize = 0.13;
@@ -38,7 +45,8 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
   late final WebViewController _webViewController;
   bool _isWebViewLoading = false; // Tracks HTML loading state specifically
   bool _contentLoadAttempted = false;
-  String? _htmlContentError; // Stores error related to initial fetch or HTML processing/loading
+  String?
+      _htmlContentError; // Stores error related to initial fetch or HTML processing/loading
 
   // --- For Done Button Animation ---
   bool _showDoneButton = false;
@@ -57,7 +65,10 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
           onProgress: (int progress) {},
           onPageStarted: (String url) {},
           onPageFinished: (String url) {
-            if (mounted) setState(() { _isWebViewLoading = false; });
+            if (mounted)
+              setState(() {
+                _isWebViewLoading = false;
+              });
           },
           onWebResourceError: (WebResourceError error) {
             if (mounted && _htmlContentError == null) {
@@ -78,23 +89,37 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
       if (skillLevel?.contentUrl != null) {
         final contentUrl = skillLevel!.contentUrl!;
         Uri? parsedUri = Uri.tryParse(contentUrl);
-        if (contentUrl.isNotEmpty && parsedUri != null && (parsedUri.isScheme("http") || parsedUri.isScheme("https"))) {
+        if (contentUrl.isNotEmpty &&
+            parsedUri != null &&
+            (parsedUri.isScheme("http") || parsedUri.isScheme("https"))) {
           await _fetchAndLoadHtml(contentUrl);
         } else {
-          setState(() { _htmlContentError = "Invalid content URL found."; _isWebViewLoading = false; });
+          setState(() {
+            _htmlContentError = "Invalid content URL found.";
+            _isWebViewLoading = false;
+          });
         }
       } else {
-        setState(() { _htmlContentError = "Content details not available."; _isWebViewLoading = false; });
+        setState(() {
+          _htmlContentError = "Content details not available.";
+          _isWebViewLoading = false;
+        });
       }
     }).catchError((error) {
-      if (mounted) setState(() { _htmlContentError = "Failed to load details."; _isWebViewLoading = false; });
+      if (mounted)
+        setState(() {
+          _htmlContentError = "Failed to load details.";
+          _isWebViewLoading = false;
+        });
     });
   }
 
   void _handleSheetSizeChange() {
     final isAtMax = (_sheetController.size >= _maxSheetSize - 0.01);
     if (isAtMax != _showDoneButton) {
-      setState(() { _showDoneButton = isAtMax; });
+      setState(() {
+        _showDoneButton = isAtMax;
+      });
     }
   }
 
@@ -106,14 +131,17 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
     // Set loading state, clear previous HTML-specific errors
     setState(() {
       _isWebViewLoading = true;
-      if (_htmlContentError != "Failed to load details." && _htmlContentError != "Content details not available." && _htmlContentError != "Invalid content URL found.") {
+      if (_htmlContentError != "Failed to load details." &&
+          _htmlContentError != "Content details not available." &&
+          _htmlContentError != "Invalid content URL found.") {
         _htmlContentError = null;
       }
     });
 
     try {
       // 1. Fetch HTML
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 20));
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 20));
       if (!mounted) return;
 
       if (response.statusCode == 200) {
@@ -127,30 +155,37 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
           userName = userEmail;
         }
         String personalizedHtml = originalHtml.replaceAll('{{NAME}}', userName);
-        print('HTML content fetched successfully, removing local asset links...');
 
         // 2. Remove problematic file:/// links
         String cleanedHtml = _removeLocalAssetLinks(personalizedHtml);
 
-        print('HTML link removal complete, loading cleaned content into WebView.');
-
         // 3. Load the CLEANED HTML string
         await _webViewController.loadHtmlString(cleanedHtml, baseUrl: url);
         // Let NavigationDelegate's onPageFinished handle setting _isWebViewLoading = false
-
       } else {
         // Handle HTTP error during fetch
-        setState(() { _htmlContentError = 'Failed to load content (Code: ${response.statusCode})'; _isWebViewLoading = false; });
+        setState(() {
+          _htmlContentError =
+              'Failed to load content (Code: ${response.statusCode})';
+          _isWebViewLoading = false;
+        });
       }
-    } catch (e) { // Catch errors during fetch OR processing (_removeLocalAssetLinks)
+    } catch (e) {
+      // Catch errors during fetch OR processing (_removeLocalAssetLinks)
       if (!mounted) return;
-      print("Error during fetch or processing: $e");
       setState(() {
-        if (e is TimeoutException) { _htmlContentError = 'Content server timed out.'; }
-        else if (e is http.ClientException) { _htmlContentError = 'Network error fetching content.';}
+        if (e is TimeoutException) {
+          _htmlContentError = 'Content server timed out.';
+        } else if (e is http.ClientException) {
+          _htmlContentError = 'Network error fetching content.';
+        }
         // Check for error from HTML processing helper
-        else if (e is Exception && e.toString().contains("Failed to process HTML")) { _htmlContentError = 'Could not prepare content.';}
-        else { _htmlContentError = 'Could not process content.'; } // Generic
+        else if (e is Exception &&
+            e.toString().contains("Failed to process HTML")) {
+          _htmlContentError = 'Could not prepare content.';
+        } else {
+          _htmlContentError = 'Could not process content.';
+        } // Generic
         _isWebViewLoading = false;
       });
     }
@@ -162,23 +197,18 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
       var document = html_parser.parse(htmlContent);
 
       // Select link tags whose href starts with file:///android_asset/
-      var linksToRemove = document.querySelectorAll('link[href^="file:///android_asset/"]');
+      var linksToRemove =
+          document.querySelectorAll('link[href^="file:///android_asset/"]');
 
       if (linksToRemove.isNotEmpty) {
-        print("Found ${linksToRemove.length} local asset link(s) to remove.");
         for (var link in linksToRemove) {
-          print("Removing link: ${link.outerHtml}");
           link.remove(); // Remove the tag from the document
         }
-      } else {
-        print("No local asset links found to remove.");
-      }
+      } else {}
 
       // Return the modified HTML
       return document.outerHtml;
-
     } catch (e) {
-      print("Error parsing/modifying HTML to remove links: $e");
       // Return original HTML as a fallback if parsing fails? Or throw?
       // Throwing is better to indicate failure clearly.
       throw Exception("Failed to process HTML for link removal: $e");
@@ -211,7 +241,8 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
           userName = userEmail;
         }
         final String title = skillLevel?.contentTitle ?? "...";
-        final String subtitle = (skillLevel?.headline ?? "...").replaceAll('{{NAME}}', userName);
+        final String subtitle =
+            (skillLevel?.headline ?? "...").replaceAll('{{NAME}}', userName);
         final String durationText = skillLevel?.contentReadingTime ?? "";
 
         return Scaffold(
@@ -219,12 +250,34 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            leading: IconButton( icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.of(context).pop(), ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             actions: [
-              IconButton( icon: const Icon(Icons.equalizer_rounded, color: Colors.white), onPressed: () { /* Action */ },),
-              IconButton( icon: const Icon(Icons.share_outlined, color: Colors.white), onPressed: () { /* Action */ },),
-              IconButton( icon: const Icon(Icons.check, color: Colors.white), onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> GoalScreen(skillTrackId: widget.objectId,))); }, ),
-              IconButton( icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () { /* Action */ },),
+              IconButton(
+                icon: const Icon(Icons.equalizer_rounded, color: Colors.white),
+                onPressed: () {/* Action */},
+              ),
+              IconButton(
+                icon: const Icon(Icons.share_outlined, color: Colors.white),
+                onPressed: () {/* Action */},
+              ),
+              IconButton(
+                icon: const Icon(Icons.check, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GoalScreen(
+                                skillTrackId: widget.objectId,
+                              )));
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.white),
+                onPressed: () {/* Action */},
+              ),
             ],
           ),
           body: Stack(
@@ -234,8 +287,16 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                 child: Image.network(
                   widget.imageUrl,
                   fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator(color: Colors.white)),
-                  errorBuilder: (context, error, stackTrace) => Container(color: Colors.blueGrey[800], child: const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60))),
+                  loadingBuilder: (context, child, progress) => progress == null
+                      ? child
+                      : const Center(
+                          child:
+                              CircularProgressIndicator(color: Colors.white)),
+                  errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.blueGrey[800],
+                      child: const Center(
+                          child: Icon(Icons.broken_image,
+                              color: Colors.white54, size: 60))),
                 ),
               ),
 
@@ -244,7 +305,11 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.black.withOpacity(0.55), Colors.transparent, Colors.black.withOpacity(0.35)],
+                      colors: [
+                        Colors.black.withOpacity(0.55),
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.35)
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       stops: const [0.0, 0.45, 1.0],
@@ -259,17 +324,56 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                 left: 20,
                 right: 20,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text( title, textAlign: TextAlign.center, style: TextStyle( color: Colors.white.withOpacity(0.9), fontSize: 18, fontWeight: FontWeight.w500, shadows: [Shadow(color: Colors.black.withOpacity(0.6), blurRadius: 5)],),),
-                    const SizedBox(height: 10),
-                    Text( subtitle, textAlign: TextAlign.center, style: TextStyle( color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2, shadows: [Shadow(color: Colors.black.withOpacity(0.8), blurRadius: 7)],),),
-                    const SizedBox(height: 6),
-                    if (durationText.isNotEmpty)
-                      Text( durationText, textAlign: TextAlign.center, style: TextStyle( color: Colors.white.withOpacity(0.9), fontSize: 19, fontWeight: FontWeight.w500, shadows: [Shadow(color: Colors.black.withOpacity(0.6), blurRadius: 5)],),),
-                  ]
-                ),
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          shadows: [
+                            Shadow(
+                                color: Colors.black.withOpacity(0.6),
+                                blurRadius: 5)
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        subtitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                          shadows: [
+                            Shadow(
+                                color: Colors.black.withOpacity(0.8),
+                                blurRadius: 7)
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      if (durationText.isNotEmpty)
+                        Text(
+                          durationText,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w500,
+                            shadows: [
+                              Shadow(
+                                  color: Colors.black.withOpacity(0.6),
+                                  blurRadius: 5)
+                            ],
+                          ),
+                        ),
+                    ]),
               ),
 
               // 4. Central Play/Pause Button
@@ -277,17 +381,36 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                 top: screenHeight * 0.5 - 45,
                 left: screenWidth * 0.5 - 45,
                 child: GestureDetector(
-                    onTap: () { setState(() { _isPlaying = !_isPlaying; }); },
+                    onTap: () {
+                      setState(() {
+                        _isPlaying = !_isPlaying;
+                      });
+                    },
                     child: Container(
-                      width: 90, height: 90,
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
-                          color: const Color(0xFFE91E63), shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black.withOpacity(0.15), width: 3.0),
-                          boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.45), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 5) ) ]
-                      ),
-                      child: Center( child: Icon(_isPlaying ? Icons.pause_rounded : Icons.equalizer_rounded, color: Colors.white, size: 55,)),
-                    )
-                ),
+                          color: const Color(0xFFE91E63),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: Colors.black.withOpacity(0.15),
+                              width: 3.0),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.45),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 5))
+                          ]),
+                      child: Center(
+                          child: Icon(
+                        _isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.equalizer_rounded,
+                        color: Colors.white,
+                        size: 55,
+                      )),
+                    )),
               ),
 
               // 5. Draggable Bottom Sheet
@@ -296,27 +419,54 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                 initialChildSize: _initialSheetSize,
                 minChildSize: _minSheetSize,
                 maxChildSize: _maxSheetSize,
-                builder: (BuildContext context, ScrollController scrollController) {
+                builder:
+                    (BuildContext context, ScrollController scrollController) {
                   return Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.only( topLeft: Radius.circular(24.0), topRight: Radius.circular(24.0),),
-                      boxShadow: [ BoxShadow( color: Colors.black38, blurRadius: 18.0, spreadRadius: 0.0, offset: Offset(0, -6), ), ],
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(24.0),
+                        topRight: Radius.circular(24.0),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black38,
+                          blurRadius: 18.0,
+                          spreadRadius: 0.0,
+                          offset: Offset(0, -6),
+                        ),
+                      ],
                     ),
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.only( topLeft: Radius.circular(24.0), topRight: Radius.circular(24.0),),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24.0),
+                        topRight: Radius.circular(24.0),
+                      ),
                       child: Stack(
                         children: [
                           ListView(
                             controller: scrollController,
-                            padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 80.0), // Extra bottom padding for button
+                            padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0,
+                                80.0), // Extra bottom padding for button
                             children: [
                               // --- Handle/Hint ---
                               Center(
                                 child: Column(
                                   children: [
-                                    const Icon(Icons.arrow_drop_up, color: Color(0xFFE91E63), size: 28,),
-                                    Text("READ THIS LETTER", style: TextStyle( color: Colors.grey[700], fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.6, ),),
+                                    const Icon(
+                                      Icons.arrow_drop_up,
+                                      color: Color(0xFFE91E63),
+                                      size: 28,
+                                    ),
+                                    Text(
+                                      "READ THIS LETTER",
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.6,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -333,7 +483,9 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                           ),
                           // --- Animated Done Button ---
                           Positioned(
-                            left: 0, right: 0, bottom: 20,
+                            left: 0,
+                            right: 0,
+                            bottom: 20,
                             child: AnimatedOpacity(
                               opacity: _showDoneButton ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 350),
@@ -343,14 +495,29 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFE91E63),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 32, vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
                                     elevation: 6,
                                   ),
-                                  onPressed: _showDoneButton ? () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=> GoalScreen(skillTrackId: widget.objectId,)));
-                                  } : null,
-                                  child: const Text("Done, What's Next?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                  onPressed: _showDoneButton
+                                      ? () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      GoalScreen(
+                                                        skillTrackId:
+                                                            widget.objectId,
+                                                      )));
+                                        }
+                                      : null,
+                                  child: const Text("Done, What's Next?",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold)),
                                 ),
                               ),
                             ),
@@ -373,36 +540,59 @@ class _MeditationActionScreenState extends ConsumerState<MeditationActionScreen>
     // This helper function remains the same as the previous correct version
     return Container(
       constraints: const BoxConstraints(minHeight: 250), // Minimum height
-      child: Builder(
-          builder: (context) {
-            // Check for any error first
-            if (_htmlContentError != null) {
-              return Center( child: Padding( padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0), child: Text( "Error: $_htmlContentError", textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 16), ),),);
-            }
-            // Check if HTML is loading
-            else if (_isWebViewLoading) {
-              return const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 40.0), child: CircularProgressIndicator(color: Color(0xFFE91E63))));
-            }
-            // Check if we haven't even started loading HTML yet (waiting for initial fetch)
-            else if (!_contentLoadAttempted && _htmlContentError == null) {
-              return const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 40.0), child: Text("Loading content...", style: TextStyle(color: Colors.grey))));
-            }
-            // If content attempted, no error, not loading -> Show WebView
-            else if (_contentLoadAttempted && _htmlContentError == null && !_isWebViewLoading) {
-              return SizedBox( // Give explicit height to WebView inside ListView
-                height: MediaQuery.of(context).size.height * 0.6, // Example: 60% screen height. Adjust as needed.
-                child: WebViewWidget(
-                  key: ValueKey(widget.objectId + "_webview"), // Unique key
-                  controller: _webViewController,
-                ),
-              );
-            }
-            // Fallback state
-            else {
-              return const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 40.0), child: Text("Content not available.", style: TextStyle(color: Colors.grey))));
-            }
-          }
-      ),
+      child: Builder(builder: (context) {
+        // Check for any error first
+        if (_htmlContentError != null) {
+          return Center(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
+              child: Text(
+                "Error: $_htmlContentError",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+              ),
+            ),
+          );
+        }
+        // Check if HTML is loading
+        else if (_isWebViewLoading) {
+          return const Center(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: CircularProgressIndicator(color: Color(0xFFE91E63))));
+        }
+        // Check if we haven't even started loading HTML yet (waiting for initial fetch)
+        else if (!_contentLoadAttempted && _htmlContentError == null) {
+          return const Center(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: Text("Loading content...",
+                      style: TextStyle(color: Colors.grey))));
+        }
+        // If content attempted, no error, not loading -> Show WebView
+        else if (_contentLoadAttempted &&
+            _htmlContentError == null &&
+            !_isWebViewLoading) {
+          return SizedBox(
+            // Give explicit height to WebView inside ListView
+            height: MediaQuery.of(context).size.height *
+                0.6, // Example: 60% screen height. Adjust as needed.
+            child: WebViewWidget(
+              key: ValueKey(widget.objectId + "_webview"), // Unique key
+              controller: _webViewController,
+            ),
+          );
+        }
+        // Fallback state
+        else {
+          return const Center(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: Text("Content not available.",
+                      style: TextStyle(color: Colors.grey))));
+        }
+      }),
     );
   }
 }
