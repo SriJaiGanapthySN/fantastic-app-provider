@@ -17,9 +17,10 @@ class _OnBoard29State extends ConsumerState<OnBoard30> {
   @override
   void initState() {
     super.initState();
-    final personalDetails = ref.read(selectedSleepProvider.notifier).personalDetails;
+    final personalDetails =
+        ref.read(selectedSleepProvider.notifier).personalDetails;
     final name = personalDetails.isNotEmpty ? personalDetails.first : 'Name';
-    displayText = "$name";
+    displayText = name;
   }
 
   @override
@@ -31,7 +32,10 @@ class _OnBoard29State extends ConsumerState<OnBoard30> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color.fromARGB(255,55,32,77), Color.fromARGB(255,33,43,90)],
+                colors: [
+                  Color.fromARGB(255, 55, 32, 77),
+                  Color.fromARGB(255, 33, 43, 90)
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -63,7 +67,7 @@ class _OnBoard29State extends ConsumerState<OnBoard30> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          "Thank you, ${displayText}!",
+                          "Thank you, $displayText!",
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -84,7 +88,7 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
 Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 Always your friend 
-Future ${displayText}
+Future $displayText
                           ''',
                           style: TextStyle(
                             fontSize: 16,
@@ -92,7 +96,8 @@ Future ${displayText}
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 100), // Add some space above button
+                        const SizedBox(
+                            height: 100), // Add some space above button
                       ],
                     ),
                   ),
@@ -114,7 +119,10 @@ Future ${displayText}
             child: Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color.fromARGB(255,176,1,113), Color.fromARGB(255,178,0,49)],
+                  colors: [
+                    Color.fromARGB(255, 176, 1, 113),
+                    Color.fromARGB(255, 178, 0, 49)
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -151,4 +159,3 @@ Future ${displayText}
     );
   }
 }
-

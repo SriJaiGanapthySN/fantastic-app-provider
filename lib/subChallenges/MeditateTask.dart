@@ -5,8 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // --- REQUIRED: Adjust these import paths to match your project structure ---
 import '../providers/challengeProvider.dart'; // For Skill, SkillGoal, getSkillByTrackId, etc.
-import '../screens/Discoverscreen.dart';     // For navigating back
-import '../providers/auth_provider.dart' as auth; // Assuming your auth provider is here (used alias to avoid potential name clashes)
+// Assuming your auth provider is here (used alias to avoid potential name clashes)
 
 // --- OPTIONAL: Persistence Imports (replace/remove as needed) ---
 // Example using SharedPreferences:
@@ -19,7 +18,8 @@ import '../providers/auth_provider.dart' as auth; // Assuming your auth provider
 // GoalScreen Widget
 //----------------------------------------------------------------------
 
-class GoalScreen extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget
+class GoalScreen extends ConsumerStatefulWidget {
+  // Changed to ConsumerStatefulWidget
   final String skillTrackId; // Expecting only the ID
 
   const GoalScreen({
@@ -28,20 +28,23 @@ class GoalScreen extends ConsumerStatefulWidget { // Changed to ConsumerStateful
   });
 
   @override
-  ConsumerState<GoalScreen> createState() => _GoalScreenState(); // Changed return type
+  ConsumerState<GoalScreen> createState() =>
+      _GoalScreenState(); // Changed return type
 }
 
 //----------------------------------------------------------------------
 // _GoalScreenState
 //----------------------------------------------------------------------
 
-class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to ConsumerState
+class _GoalScreenState extends ConsumerState<GoalScreen> {
+  // Changed to ConsumerState
   // State variables
   Skill? _skill;
   SkillGoal? _skillGoal;
   bool _isLoading = true;
   String? _error;
-  int _completedCount = 0; // Tracks completed steps for this specific goal instance
+  int _completedCount =
+      0; // Tracks completed steps for this specific goal instance
 
   @override
   void initState() {
@@ -118,7 +121,8 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
           _completedCount = newCount;
         });
 
-        debugPrint("Marked day $_completedCount as complete for ${widget.skillTrackId}. Goal completed: $goalJustCompleted.");
+        debugPrint(
+            "Marked day $_completedCount as complete for ${widget.skillTrackId}. Goal completed: $goalJustCompleted.");
 
         // --- Show Feedback SnackBar ---
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +163,9 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
       print("Error starting challenge: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error starting challenge: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error starting challenge: ${e.toString()}'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -179,14 +185,17 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
       print("Error restarting challenge: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error restarting challenge: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error restarting challenge: ${e.toString()}'),
+              backgroundColor: Colors.red),
         );
       }
     }
   }
 
   // --- Helper method to build the circular progress indicators ---
-  Widget _buildProgressIndicator(int number, bool isCompleted, Color completedColor) {
+  Widget _buildProgressIndicator(
+      int number, bool isCompleted, Color completedColor) {
     return Container(
       width: 36,
       height: 36,
@@ -201,18 +210,18 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
       child: Center(
         child: isCompleted
             ? const Icon(
-          Icons.check_rounded, // Use a rounded check
-          color: Colors.white,
-          size: 22,
-        )
+                Icons.check_rounded, // Use a rounded check
+                color: Colors.white,
+                size: 22,
+              )
             : Text(
-          '$number',
-          style: TextStyle(
-            color: Colors.grey[700],
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-          ),
-        ),
+                '$number',
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
       ),
     );
   }
@@ -222,12 +231,14 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
   Widget build(BuildContext context) {
     // Define colors used in the UI
     const Color primaryGreen = Color(0xFF00695C); // Tealish green
-    const Color buttonGreen = Color(0xFF00BFA5); // Brighter teal/aqua for button & highlights
+    const Color buttonGreen =
+        Color(0xFF00BFA5); // Brighter teal/aqua for button & highlights
 
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white), // White spinner
+          valueColor:
+              AlwaysStoppedAnimation<Color>(Colors.white), // White spinner
         ),
       );
     }
@@ -242,9 +253,11 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
               Icon(Icons.error_outline, color: Colors.red[200], size: 60),
               const SizedBox(height: 20),
               Text(
-                _error ?? 'An unexpected error occurred. Could not load goal details.',
+                _error ??
+                    'An unexpected error occurred. Could not load goal details.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 17, height: 1.4),
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 17, height: 1.4),
               ),
               const SizedBox(height: 30),
               ElevatedButton.icon(
@@ -253,7 +266,8 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: primaryGreen,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 onPressed: _fetchGoalData, // Allow user to retry fetching data
               ),
@@ -269,15 +283,19 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
     return Scaffold(
       backgroundColor: primaryGreen, // Set the background for the whole screen
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Make AppBar transparent to show scaffold background
+        backgroundColor: Colors
+            .transparent, // Make AppBar transparent to show scaffold background
         elevation: 0, // Remove shadow
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), // Use iOS style back arrow
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: Colors.white), // Use iOS style back arrow
           tooltip: 'Back',
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          _isLoading ? 'Loading Goal...' : (_skillGoal?.title ?? 'Goal Details'),
+          _isLoading
+              ? 'Loading Goal...'
+              : (_skillGoal?.title ?? 'Goal Details'),
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -287,15 +305,18 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
         centerTitle: true, // Center the title
         actions: [
           // Show share button only if data is loaded successfully
-          if (!_isLoading && _error == null && _skill != null && _skillGoal != null)
+          if (!_isLoading &&
+              _error == null &&
+              _skill != null &&
+              _skillGoal != null)
             IconButton(
               icon: const Icon(Icons.share_outlined, color: Colors.white),
               tooltip: 'Share Goal',
               onPressed: () {
-                // TODO: Implement share functionality
                 // You might want to share the goal title, description, or a link.
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Share feature not implemented yet.')),
+                  const SnackBar(
+                      content: Text('Share feature not implemented yet.')),
                 );
               },
             ),
@@ -310,27 +331,36 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
             flex: 3, // Give more space to the top area
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 20.0), // Adjust padding
+              padding: const EdgeInsets.fromLTRB(
+                  24.0, 10.0, 24.0, 20.0), // Adjust padding
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
-                crossAxisAlignment: CrossAxisAlignment.center, // Center content horizontally
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center content vertically
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // Center content horizontally
                 children: [
                   // Skill Icon
                   if (_skill!.iconUrl.isNotEmpty) // Check if icon URL is valid
                     SvgPicture.network(
                       _skill!.iconUrl,
-                      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                      colorFilter:
+                          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                       height: 70, // Slightly larger icon
                       placeholderBuilder: (context) => const SizedBox(
-                        width: 70, height: 70,
-                        child: Center(child: CircularProgressIndicator(color: Colors.white54)),
+                        width: 70,
+                        height: 70,
+                        child: Center(
+                            child: CircularProgressIndicator(
+                                color: Colors.white54)),
                       ),
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.bubble_chart_outlined, // Fallback icon
-                          color: Colors.white.withOpacity(0.7), size: 70),
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.bubble_chart_outlined, // Fallback icon
+                              color: Colors.white.withOpacity(0.7),
+                              size: 70),
                     )
                   else // Provide a default icon if URL is empty
-                    Icon(Icons.bubble_chart_outlined, color: Colors.white.withOpacity(0.7), size: 70),
+                    Icon(Icons.bubble_chart_outlined,
+                        color: Colors.white.withOpacity(0.7), size: 70),
 
                   const SizedBox(height: 20),
 
@@ -352,7 +382,8 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
                     _skillGoal!.description,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9), // Slightly less bright
+                      color:
+                          Colors.white.withOpacity(0.9), // Slightly less bright
                       fontSize: 16,
                       height: 1.4,
                     ),
@@ -383,15 +414,16 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
                   topLeft: Radius.circular(30.0), // Larger border radius
                   topRight: Radius.circular(30.0),
                 ),
-                boxShadow: [ // Add a subtle shadow for depth
+                boxShadow: [
+                  // Add a subtle shadow for depth
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 10.0,
                     offset: Offset(0, -2),
                   )
-                ]
-            ),
-            padding: const EdgeInsets.fromLTRB(20.0, 28.0, 20.0, 32.0), // Adjust padding
+                ]),
+            padding: const EdgeInsets.fromLTRB(
+                20.0, 28.0, 20.0, 32.0), // Adjust padding
             child: Builder(
               builder: (context) {
                 // --- If not started, show Start Challenge button ---
@@ -469,7 +501,7 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
                     // Progress Title
                     Text(
                       totalDays > 0
-                          ? "Your Progress (${_completedCount}/$totalDays)"
+                          ? "Your Progress ($_completedCount/$totalDays)"
                           : "Goal Progress", // Fallback if totalDays is 0
                       style: TextStyle(
                         color: Colors.grey[800],
@@ -481,28 +513,28 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
 
                     // Progress Indicators Row (handle potential overflow with Wrap)
                     if (totalDays > 0) // Only show if there's a goal value > 0
-                      Wrap( // Use Wrap for better handling of many indicators
+                      Wrap(
+                        // Use Wrap for better handling of many indicators
                         alignment: WrapAlignment.center,
                         spacing: 6.0, // Horizontal space between indicators
                         runSpacing: 8.0, // Vertical space if they wrap
-                        children: List.generate(
-                            totalDays,
-                                (index) {
-                              bool completed = index < _completedCount;
-                              return _buildProgressIndicator(
-                                index + 1, // Day number (1-based)
-                                completed,
-                                buttonGreen, // Use button color for completed state
-                              );
-                            }
-                        ),
+                        children: List.generate(totalDays, (index) {
+                          bool completed = index < _completedCount;
+                          return _buildProgressIndicator(
+                            index + 1, // Day number (1-based)
+                            completed,
+                            buttonGreen, // Use button color for completed state
+                          );
+                        }),
                       )
                     else // Show a message if the goal value is 0 or invalid
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10.0),
                         child: Text(
                           "No specific duration set for this goal.",
-                          style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic),
+                          style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic),
                         ),
                       ),
 
@@ -511,11 +543,14 @@ class _GoalScreenState extends ConsumerState<GoalScreen> { // Changed to Consume
                     // Action Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonGreen, // Always enabled in progress
+                        backgroundColor:
+                            buttonGreen, // Always enabled in progress
                         foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 52), // Full width, fixed height
+                        minimumSize: const Size(
+                            double.infinity, 52), // Full width, fixed height
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.0), // More rounded corners
+                          borderRadius: BorderRadius.circular(
+                              16.0), // More rounded corners
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         textStyle: const TextStyle(

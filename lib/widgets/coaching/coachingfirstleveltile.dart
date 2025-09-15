@@ -22,7 +22,6 @@ class CoachingFirstTile extends StatefulWidget {
 
 class _CoachingFirstTileState extends State<CoachingFirstTile> {
   final GlobalKey _subtitleKey = GlobalKey(); // Key to measure subtitle widget
-  final double _subtitleHeight = 0;
 
   Color colorFromString(String colorString) {
     String hexColor = colorString.replaceAll('#', '');

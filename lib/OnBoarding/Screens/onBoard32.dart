@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../States/StateNotifiers.dart';
 import '../Widgets/habitList.dart';
-import '../Widgets/imageCard.dart';
 import '../Widgets/imageCard1.dart';
 import 'OnBoard33.dart';
 
 class OnBoard32 extends ConsumerWidget {
+  const OnBoard32({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
     final selectedItems = ref.watch(selectedSleepProvider);
     final List<HabitList> itemList = habitList; // your list of items
 

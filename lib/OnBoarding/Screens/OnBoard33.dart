@@ -10,14 +10,16 @@ class OnBoard33 extends ConsumerStatefulWidget {
   @override
   ConsumerState<OnBoard33> createState() => _OnBoard33State();
 }
+
 class _OnBoard33State extends ConsumerState<OnBoard33> {
   late String displayText;
   @override
   void initState() {
     super.initState();
-    final personalDetails = ref.read(selectedSleepProvider.notifier).personalDetails;
+    final personalDetails =
+        ref.read(selectedSleepProvider.notifier).personalDetails;
     final name = personalDetails.isNotEmpty ? personalDetails.first : 'Name';
-    displayText = "$name";
+    displayText = name;
   }
 
   @override
@@ -30,7 +32,8 @@ class _OnBoard33State extends ConsumerState<OnBoard33> {
             decoration: BoxDecoration(
               color: Colors.purple, // Purple base color
               image: DecorationImage(
-                image: AssetImage('assets/images/onboardingImages/8bc243b8878eebf35dac9034ad5ddf71_img_enchant_hypnosis_eat_for_your_health_inner_step_opt.jpg'), // Replace with your image
+                image: AssetImage(
+                    'assets/images/onboardingImages/8bc243b8878eebf35dac9034ad5ddf71_img_enchant_hypnosis_eat_for_your_health_inner_step_opt.jpg'), // Replace with your image
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.purple.withOpacity(0.5), // Purple overlay
@@ -46,7 +49,7 @@ class _OnBoard33State extends ConsumerState<OnBoard33> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "${displayText}'s First Step",
+                  "$displayText's First Step",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 32,
@@ -62,10 +65,12 @@ class _OnBoard33State extends ConsumerState<OnBoard33> {
                     fontWeight: FontWeight.normal,
                   ),
                 ),
-                SizedBox(height: 20,),
+                SizedBox(
+                  height: 20,
+                ),
                 SizedBox(
                   width: double.infinity,
-                  height: MediaQuery.of(context).size.height*0.1,
+                  height: MediaQuery.of(context).size.height * 0.1,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pushReplacement(

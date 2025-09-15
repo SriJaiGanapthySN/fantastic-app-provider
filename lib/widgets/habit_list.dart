@@ -6,8 +6,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/_providers.dart';
 import '../utils/blur_container.dart';
-import '../services/task_services.dart';
-import '../providers/duration_provider.dart';
 import '../providers/habit_list_provider.dart';
 
 class HabitList extends ConsumerStatefulWidget {

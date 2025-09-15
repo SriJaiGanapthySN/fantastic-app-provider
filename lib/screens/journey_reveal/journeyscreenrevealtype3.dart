@@ -7,9 +7,9 @@ class Journeyscreentype3 extends StatefulWidget {
   final Map<String, dynamic> motivatorData;
 
   const Journeyscreentype3({
-    Key? key,
+    super.key,
     required this.motivatorData,
-  }) : super(key: key);
+  });
 
   @override
   State<Journeyscreentype3> createState() => _Journeyscreentype3State();
@@ -40,7 +40,9 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
 
     final dynamic contentSource = widget.motivatorData['contentUrl'];
 
-    if (contentSource == null || contentSource is! String || contentSource.isEmpty) {
+    if (contentSource == null ||
+        contentSource is! String ||
+        contentSource.isEmpty) {
       if (mounted) {
         setState(() {
           _resolvedHtmlContent = '<p>No content available.</p>';
@@ -50,7 +52,7 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
       return;
     }
 
-    String contentUrlString = contentSource as String;
+    String contentUrlString = contentSource;
 
     // Check if it's a URL that needs fetching
     if (contentUrlString.trim().toLowerCase().startsWith('http://') ||
@@ -67,7 +69,8 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
         } else {
           if (mounted) {
             setState(() {
-              _errorMessage = 'Failed to load content (Status: ${response.statusCode})';
+              _errorMessage =
+                  'Failed to load content (Status: ${response.statusCode})';
               _resolvedHtmlContent = '<p>Error: $_errorMessage</p>';
               _isLoadingContent = false;
             });
@@ -96,7 +99,8 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
   @override
   Widget build(BuildContext context) {
     // Extracting data with fallbacks - ensure motivatorData is not null first
-    final String headlineImageUrl = widget.motivatorData['headlineImageUrl'] ?? '';
+    final String headlineImageUrl =
+        widget.motivatorData['headlineImageUrl'] ?? '';
     final String headline = widget.motivatorData['headline'] ?? 'No Headline';
 
     return Scaffold(
@@ -111,7 +115,8 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
           IconButton(
             icon: Icon(Icons.share, color: Colors.black54),
             onPressed: () {
-              print("Share button pressed for ${widget.motivatorData['objectId']}");
+              print(
+                  "Share button pressed for ${widget.motivatorData['objectId']}");
               // Implement share functionality
             },
           ),
@@ -134,7 +139,9 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
                 errorWidget: (context, url, error) => Container(
                   height: 250,
                   color: Colors.grey[300],
-                  child: Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey[600])),
+                  child: Center(
+                      child: Icon(Icons.broken_image,
+                          size: 50, color: Colors.grey[600])),
                 ),
               ),
             Padding(
@@ -152,28 +159,36 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: _isLoadingContent
-                  ? Center(child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
-              ))
+                  ? Center(
+                      child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ))
                   : Html(
-                data: _resolvedHtmlContent ?? '<p>Content not available.</p>', // Fallback for safety
-                style: {
-                  "p": Style(
-                    fontSize: FontSize(16.0),
-                    lineHeight: LineHeight.em(1.5),
-                    color: Colors.black.withOpacity(0.75),
-                  ),
-                  // You can add more styles for other HTML tags if needed
-                  "a": Style(
-                    color: Theme.of(context).colorScheme.secondary, // Example: make links use accent color
-                    textDecoration: TextDecoration.underline,
-                  ),
-                  "h1": Style(fontSize: FontSize(22.0), fontWeight: FontWeight.bold),
-                  "h2": Style(fontSize: FontSize(20.0), fontWeight: FontWeight.w600),
-                  // Add other tags as needed
-                },
-              ),
+                      data: _resolvedHtmlContent ??
+                          '<p>Content not available.</p>', // Fallback for safety
+                      style: {
+                        "p": Style(
+                          fontSize: FontSize(16.0),
+                          lineHeight: LineHeight.em(1.5),
+                          color: Colors.black.withOpacity(0.75),
+                        ),
+                        // You can add more styles for other HTML tags if needed
+                        "a": Style(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary, // Example: make links use accent color
+                          textDecoration: TextDecoration.underline,
+                        ),
+                        "h1": Style(
+                            fontSize: FontSize(22.0),
+                            fontWeight: FontWeight.bold),
+                        "h2": Style(
+                            fontSize: FontSize(20.0),
+                            fontWeight: FontWeight.w600),
+                        // Add other tags as needed
+                      },
+                    ),
             ),
             SizedBox(height: 80), // Space for the button at the bottom
           ],
@@ -200,7 +215,8 @@ class _Journeyscreentype3State extends State<Journeyscreentype3> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Done! What\'s next? ', style: TextStyle(color: Colors.white)),
+              Text('Done! What\'s next? ',
+                  style: TextStyle(color: Colors.white)),
               Icon(Icons.arrow_forward, color: Colors.white, size: 20),
             ],
           ),

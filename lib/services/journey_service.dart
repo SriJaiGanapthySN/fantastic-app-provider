@@ -207,11 +207,11 @@ class JourneyService {
   }
 
   Future<int> getTotalSkillLevels(String id) async {
-    var _querysnapshot = await _firestore
+    var querysnapshot = await _firestore
         .collection('skillLevel')
         .where('skillId', isEqualTo: id)
         .get();
-    return _querysnapshot.docs.length;
+    return querysnapshot.docs.length;
   }
 
   Future<List<String>> addSkillLevel(List<Skill> skills, String email) async {

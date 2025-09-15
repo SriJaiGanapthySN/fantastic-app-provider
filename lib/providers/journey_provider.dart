@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/journey_service.dart';
-import '../models/skillTrack.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
@@ -172,7 +171,7 @@ final journeyStatsProvider =
 
         // Debug: Show some completed levels
         for (var levelDoc in completedLevelsSnapshot.docs.take(3)) {
-          final levelData = levelDoc.data();
+          levelDoc.data();
         }
       }
 
@@ -251,7 +250,7 @@ final journeyStatsProvider =
   skillGoalsStream.listen((snapshot) {
     for (var change in snapshot.docChanges) {
       if (change.type == DocumentChangeType.modified) {
-        final data = change.doc.data();
+        change.doc.data();
       }
     }
     controller.add(null);
@@ -260,7 +259,7 @@ final journeyStatsProvider =
   skillLevelsStream.listen((snapshot) {
     for (var change in snapshot.docChanges) {
       if (change.type == DocumentChangeType.modified) {
-        final data = change.doc.data();
+        change.doc.data();
       }
     }
     controller.add(null);
@@ -269,7 +268,7 @@ final journeyStatsProvider =
   skillsStream.listen((snapshot) {
     for (var change in snapshot.docChanges) {
       if (change.type == DocumentChangeType.modified) {
-        final data = change.doc.data();
+        change.doc.data();
       }
     }
     controller.add(null);
@@ -277,7 +276,7 @@ final journeyStatsProvider =
 
   journeyStream.listen((snapshot) {
     if (snapshot.exists) {
-      final data = snapshot.data();
+      snapshot.data();
     }
     controller.add(null);
   });

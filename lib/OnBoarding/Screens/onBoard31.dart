@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../States/StateNotifiers.dart';
@@ -6,9 +8,10 @@ import '../Widgets/socialList.dart';
 import 'onBoard32.dart';
 
 class OnBoard31 extends ConsumerWidget {
+  const OnBoard31({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
     final selectedItems = ref.watch(selectedSleepProvider);
     final List<SocialList> itemList = socialMediaList; // your list of items
 

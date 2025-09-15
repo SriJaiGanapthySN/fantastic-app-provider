@@ -5,16 +5,12 @@ import 'package:fantastic_app_riverpod/profile/profile.dart';
 import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/providers/discover_provider.dart';
 import 'package:fantastic_app_riverpod/setting/settingPage.dart';
-import 'package:fantastic_app_riverpod/subChallenges/SubChallengeScreen.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/buttonimage.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/discoverbuttons.dart';
 import 'package:fantastic_app_riverpod/widgets/discover/discoverstrip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lottie/lottie.dart';
-
 import 'ChallengeScreen.dart';
-import '../OnBoarding/Screens/onBoard36.dart';
 import 'notification_tone_screen.dart';
 
 class Discoverscreen extends ConsumerStatefulWidget {

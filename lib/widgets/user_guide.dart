@@ -96,7 +96,6 @@ class UserGuide extends StatefulWidget {
       final overlay = Overlay.of(context);
       final overlayEntry = OverlayEntry(
         builder: (context) => UserGuide(
-          child: const SizedBox.shrink(),
           steps: [
             GuideStep(
               title: "Chat with Fabulous",
@@ -152,6 +151,7 @@ class UserGuide extends StatefulWidget {
           onComplete: () async {
             await prefs.setBool('has_seen_guide', true);
           },
+          child: const SizedBox.shrink(),
         ),
       );
 

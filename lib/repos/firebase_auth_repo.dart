@@ -244,10 +244,9 @@ class FirebaseAuthRepo implements AuthRepo {
           AppleIDAuthorizationScopes.fullName,
         ],
         webAuthenticationOptions: WebAuthenticationOptions(
-          clientId:
-              'com.example.fantastic_app_riverpod', //TODO: Replace with our app's client ID (When Published of course)
+          clientId: 'com.example.fantastic_app_riverpod',
           redirectUri: Uri.parse(
-              'https://example.com/callbacks/sign_in_with_apple'), //TODO: Replace with our redirect URI (When Published of course)
+              'https://example.com/callbacks/sign_in_with_apple'), //Replace with our redirect URI (When Published of course)
         ),
       );
 

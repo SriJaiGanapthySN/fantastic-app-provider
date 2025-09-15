@@ -274,10 +274,10 @@ class TaskServices {
       }
 
       print("Combined Tasks:");
-      combinedTasks.forEach((task) {
+      for (var task in combinedTasks) {
         print(task['objectID']); // Print objectID of combined tasks
         print(task['isdailyroutine']);
-      });
+      }
 
       // Yield the combined list of tasks as a stream
       yield combinedTasks;

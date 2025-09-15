@@ -36,8 +36,14 @@ class ChallengeSectionData {
 class Sub_Challenge_Screen extends StatelessWidget {
   final List<Map<String, dynamic>> cardData;
   final List<String> _sectionTitles = const [
-    'Mindset', 'Productivity', 'Hobbies', 'Movement',
-    'Nutrition', 'Focus', 'Wellbeing', 'Growth'
+    'Mindset',
+    'Productivity',
+    'Hobbies',
+    'Movement',
+    'Nutrition',
+    'Focus',
+    'Wellbeing',
+    'Growth'
   ];
 
   const Sub_Challenge_Screen({
@@ -78,12 +84,13 @@ class Sub_Challenge_Screen extends StatelessWidget {
         challenges = cardData.sublist(startIndex, endIndex).map((item) {
           final title = item['title'] as String? ?? 'Untitled Challenge';
           final imageUrl = item['imageUrl'] as String? ?? '';
-          final bool isValidUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+          final bool isValidUrl =
+              imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
 
           return Challenge(
             title: title,
             imageUrl: isValidUrl ? imageUrl : '',
-            originalData: item ?? {},
+            originalData: item,
           );
         }).toList();
       }
@@ -114,11 +121,12 @@ class Sub_Challenge_Screen extends StatelessWidget {
     for (final item in cardData) {
       final title = item['title'] as String? ?? 'Untitled Challenge';
       final imageUrl = item['imageUrl'] as String? ?? '';
-      final bool isValidUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+      final bool isValidUrl =
+          imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
       allChallenges.add(Challenge(
         title: title,
         imageUrl: isValidUrl ? imageUrl : '',
-        originalData: item ?? {},
+        originalData: item,
       ));
     }
     return allChallenges;
@@ -130,9 +138,9 @@ class Sub_Challenge_Screen extends StatelessWidget {
     final List<Challenge> allChallenges = _getAllChallenges();
 
     if (allChallenges.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No challenges available to choose from!'), duration: Duration(seconds: 2))
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No challenges available to choose from!'),
+          duration: Duration(seconds: 2)));
       return;
     }
 
@@ -151,31 +159,49 @@ class Sub_Challenge_Screen extends StatelessWidget {
   }
   // --- End Dice Roll Action ---
 
-
   @override
   Widget build(BuildContext context) {
-    final List<ChallengeSectionData> displayedSections = _processAndPartitionData();
+    final List<ChallengeSectionData> displayedSections =
+        _processAndPartitionData();
     const backgroundColor = Color(0xFFF0FAFD);
     const horizontalPadding = 18.0;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: backgroundColor, elevation: 0,
-        leading: IconButton(icon: Icon(Icons.close, color: Colors.grey[600]), onPressed: () => Navigator.maybePop(context)),
-        title: const Text('Challenge', style: TextStyle(color: Color(0xFF333333), fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        leading: IconButton(
+            icon: Icon(Icons.close, color: Colors.grey[600]),
+            onPressed: () => Navigator.maybePop(context)),
+        title: const Text('Challenge',
+            style: TextStyle(
+                color: Color(0xFF333333),
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
-        bottom: PreferredSize(preferredSize: const Size.fromHeight(18.0), child: Padding(padding: const EdgeInsets.only(bottom: 4.0), child: Text('Pick below or roll the dice', style: TextStyle(color: Colors.grey[600], fontSize: 14)))),
+        bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(18.0),
+            child: Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Text('Pick below or roll the dice',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14)))),
         toolbarHeight: 50,
       ),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: 90.0), // Adjusted padding to prevent FAB overlap issue
+        padding: const EdgeInsets.only(
+            bottom: 90.0), // Adjusted padding to prevent FAB overlap issue
         children: [
-          const Padding(padding: EdgeInsets.only(top: 8.0, bottom: 24.0), child: FlagWidget()),
+          const Padding(
+              padding: EdgeInsets.only(top: 8.0, bottom: 24.0),
+              child: FlagWidget()),
           const HostChallengeBanner(horizontalPadding: horizontalPadding),
           const OrJoinDivider(),
           if (displayedSections.isEmpty)
-            const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text("No sections defined.")))
+            const Center(
+                child: Padding(
+                    padding: EdgeInsets.all(30.0),
+                    child: Text("No sections defined.")))
           else
             ...displayedSections.map((sectionData) {
               if (sectionData == null) return const SizedBox.shrink();
@@ -186,14 +212,15 @@ class Sub_Challenge_Screen extends StatelessWidget {
                   horizontalPadding: horizontalPadding,
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         // Updated onPressed
         onPressed: () => _rollDiceAndNavigate(context), // Call the new method
         backgroundColor: Colors.white, foregroundColor: Colors.blueGrey[400],
-        elevation: 3.0, shape: const CircleBorder(), child: const Icon(Icons.casino_outlined),
+        elevation: 3.0, shape: const CircleBorder(),
+        child: const Icon(Icons.casino_outlined),
       ),
     );
   }
@@ -238,15 +265,16 @@ class _DiceRollVideoDialogState extends State<_DiceRollVideoDialog> {
 
       // Start the timer *after* initialization
       _startTimer();
-
     } catch (e) {
       print("Error initializing video player: $e");
       // Handle error: Maybe close dialog and show snackbar?
       if (mounted) {
         Navigator.pop(context); // Close the dialog
-        ScaffoldMessenger.of(widget.parentNavigator.context).showSnackBar( // Use parent context
-            const SnackBar(content: Text('Error loading dice animation.'), duration: Duration(seconds: 2))
-        );
+        ScaffoldMessenger.of(widget.parentNavigator.context).showSnackBar(
+            // Use parent context
+            const SnackBar(
+                content: Text('Error loading dice animation.'),
+                duration: Duration(seconds: 2)));
       }
     }
   }
@@ -260,7 +288,6 @@ class _DiceRollVideoDialogState extends State<_DiceRollVideoDialog> {
       }
     });
   }
-
 
   void _selectAndNavigate() {
     // Stop video and dispose controller before navigating
@@ -289,7 +316,6 @@ class _DiceRollVideoDialogState extends State<_DiceRollVideoDialog> {
     });
   }
 
-
   @override
   void dispose() {
     _timer?.cancel(); // Cancel timer if dialog is disposed early
@@ -304,15 +330,18 @@ class _DiceRollVideoDialogState extends State<_DiceRollVideoDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       contentPadding: EdgeInsets.zero, // Remove default padding
-      content: Container(
+      content: SizedBox(
         width: 250, // Adjust size as needed
         height: 250, // Adjust size as needed
-        child: _isVideoInitialized && _controller != null && _controller!.value.isInitialized
+        child: _isVideoInitialized &&
+                _controller != null &&
+                _controller!.value.isInitialized
             ? AspectRatio(
-          aspectRatio: _controller!.value.aspectRatio,
-          child: VideoPlayer(_controller!),
-        )
-            : const Center(child: CircularProgressIndicator()), // Loading indicator
+                aspectRatio: _controller!.value.aspectRatio,
+                child: VideoPlayer(_controller!),
+              )
+            : const Center(
+                child: CircularProgressIndicator()), // Loading indicator
       ),
       // Optional: remove buttons if you only want the video
       actions: const <Widget>[], // Hide default buttons
@@ -322,11 +351,13 @@ class _DiceRollVideoDialogState extends State<_DiceRollVideoDialog> {
   }
 }
 
-
 // --- FlagWidget (Keep as is) ---
 class FlagWidget extends StatelessWidget {
   const FlagWidget({super.key});
-  @override Widget build(BuildContext context) { return Center(child: Icon(Icons.flag, color: Colors.pink[400], size: 28.0)); }
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Icon(Icons.flag, color: Colors.pink[400], size: 28.0));
+  }
 }
 
 // --- HostChallengeBanner (Keep as is) ---
@@ -334,61 +365,86 @@ class HostChallengeBanner extends StatelessWidget {
   final double horizontalPadding;
   const HostChallengeBanner({required this.horizontalPadding, super.key});
 
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     // ... (Keep your existing implementation)
     return Padding(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12.0),
+        padding:
+            EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12.0),
         child: ClipRRect(
             borderRadius: BorderRadius.circular(16.0),
-            child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  // IMPORTANT: Ensure this image exists
-                  Image.asset(
-                    'assets/images/06714b8cb3d074a22b22b30b25ad5ac5.png',
-                    height: 115, width: double.infinity, fit: BoxFit.cover,
-                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                      if (wasSynchronouslyLoaded) return child;
-                      return AnimatedOpacity(
-                        opacity: frame == null ? 0 : 1,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                        child: child,
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      print("Error loading host_banner.png: $error");
-                      return Container(
-                        height: 115,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Center(child: Icon(Icons.error_outline, color: Colors.grey[600])),
-                      );
-                    },
-                  ),
-                  const Padding(
-                      padding: EdgeInsets.only(left: 24.0, right: 16.0),
-                      child: Text(
-                          'Host Your Own Live Challenge',
-                          style: TextStyle(
-                              color: Colors.white, fontSize: 18.5, fontWeight: FontWeight.bold,
-                              shadows: [Shadow(blurRadius: 6.0, color: Colors.black54, offset: Offset(1.5, 1.5))]
-                          )
-                      )
-                  ),
-                ]
-            )
-        )
-    );
+            child: Stack(alignment: Alignment.centerLeft, children: [
+              // IMPORTANT: Ensure this image exists
+              Image.asset(
+                'assets/images/06714b8cb3d074a22b22b30b25ad5ac5.png',
+                height: 115,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) return child;
+                  return AnimatedOpacity(
+                    opacity: frame == null ? 0 : 1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    child: child,
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print("Error loading host_banner.png: $error");
+                  return Container(
+                    height: 115,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: Center(
+                        child:
+                            Icon(Icons.error_outline, color: Colors.grey[600])),
+                  );
+                },
+              ),
+              const Padding(
+                  padding: EdgeInsets.only(left: 24.0, right: 16.0),
+                  child: Text('Host Your Own Live Challenge',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.5,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                                blurRadius: 6.0,
+                                color: Colors.black54,
+                                offset: Offset(1.5, 1.5))
+                          ]))),
+            ])));
   }
 }
 
 // --- OrJoinDivider (Keep as is) ---
 class OrJoinDivider extends StatelessWidget {
   const OrJoinDivider({super.key});
-  @override Widget build(BuildContext context) { return Padding( padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0), child: Row( children: [ Expanded(child: Divider(thickness: 0.8, color: Colors.grey[350])), Padding( padding: const EdgeInsets.symmetric(horizontal: 12.0), child: Text( 'or', style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500), ), ), Expanded(child: Divider(thickness: 0.8, color: Colors.grey[350])), ], ), ); }
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+      child: Row(
+        children: [
+          Expanded(child: Divider(thickness: 0.8, color: Colors.grey[350])),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Text(
+              'or',
+              style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(child: Divider(thickness: 0.8, color: Colors.grey[350])),
+        ],
+      ),
+    );
+  }
 }
 
 // --- ChallengeSection (Keep as is) ---
@@ -410,8 +466,11 @@ class ChallengeSection extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.only(left: horizontalPadding, bottom: 14.0),
-          child: Text(sectionData.title ?? 'Section',
-              style: const TextStyle(fontSize: 19.0, fontWeight: FontWeight.bold, color: Color(0xFF444444))),
+          child: Text(sectionData.title,
+              style: const TextStyle(
+                  fontSize: 19.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF444444))),
         ),
         if (sectionData.challenges != null && sectionData.challenges.isNotEmpty)
           SizedBox(
@@ -423,7 +482,8 @@ class ChallengeSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final challenge = sectionData.challenges[index];
                 if (challenge == null || challenge.originalData == null) {
-                  print("Warning: Null challenge data at index $index in section '${sectionData.title}'");
+                  print(
+                      "Warning: Null challenge data at index $index in section '${sectionData.title}'");
                   return const SizedBox.shrink();
                 }
                 return ChallengeCard(
@@ -436,15 +496,17 @@ class ChallengeSection extends StatelessWidget {
                         MaterialPageRoute(
                           // --- Make sure ChallengeDetailScreen accepts challengeData ---
                           builder: (_) => ChallengeDetailScreen(
-                            challengeData: challenge.originalData!,
+                            challengeData: challenge.originalData,
                           ),
                         ),
                       );
                     } else {
-                      print("Cannot navigate: challenge.originalData is null for '${challenge.title}'");
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Error: Could not load challenge details.'), duration: Duration(seconds: 2))
-                      );
+                      print(
+                          "Cannot navigate: challenge.originalData is null for '${challenge.title}'");
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content:
+                              Text('Error: Could not load challenge details.'),
+                          duration: Duration(seconds: 2)));
                     }
                   },
                 );
@@ -454,13 +516,14 @@ class ChallengeSection extends StatelessWidget {
         else
           Padding(
             padding: EdgeInsets.only(left: horizontalPadding, bottom: 10),
-            child: Text("No challenges in this section yet.", style: TextStyle(color: Colors.grey[500], fontStyle: FontStyle.italic)),
+            child: Text("No challenges in this section yet.",
+                style: TextStyle(
+                    color: Colors.grey[500], fontStyle: FontStyle.italic)),
           ),
       ],
     );
   }
 }
-
 
 // --- ChallengeCard (Keep as is) ---
 class ChallengeCard extends StatelessWidget {
@@ -482,49 +545,101 @@ class ChallengeCard extends StatelessWidget {
     const cardHeight = 145.0;
     const cardBorderRadius = 14.0;
     // Added null check for imageUrl itself before checking content
-    final bool hasValidImageUrl = imageUrl != null && imageUrl.isNotEmpty && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'));
+    final bool hasValidImageUrl = imageUrl != null &&
+        imageUrl.isNotEmpty &&
+        (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'));
 
     return Container(
-      width: cardWidth, height: cardHeight, margin: const EdgeInsets.only(right: 14.0),
+      width: cardWidth,
+      height: cardHeight,
+      margin: const EdgeInsets.only(right: 14.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(cardBorderRadius),
-        child: Stack(
-            children: [
-              Positioned.fill(
-                child: hasValidImageUrl
-                    ? Image.network(
-                  imageUrl, // No '!' needed due to check above
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(cardBorderRadius)),
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2.0, valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!), value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null)),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    print("Error loading image $imageUrl: $error");
-                    return Container(
-                      decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(cardBorderRadius)),
-                      child: Center(child: Icon(Icons.broken_image_outlined, color: Colors.grey[400], size: 40)),
-                    );
-                  },
-                )
-                    : Container( // Case for null, empty, or invalid URL
-                  decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(cardBorderRadius)),
-                  child: Center(child: Icon(Icons.image_not_supported_outlined, color: Colors.grey[400], size: 40)),
-                ),
-              ),
-              // Overlay
-              Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.white.withOpacity(0.20), Colors.white.withOpacity(0.80)], begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: const [0.0, 0.8]), borderRadius: BorderRadius.circular(cardBorderRadius)))),
-              // Text
-              Positioned(bottom: 12, left: 12, right: 12, child: Text(title ?? 'Challenge', maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, color: Color(0xFF222222), height: 1.25))),
-              // Tap Handler
-              Positioned.fill(child: Material(color: Colors.transparent, child: InkWell(borderRadius: BorderRadius.circular(cardBorderRadius), onTap: onTap, splashColor: Colors.black.withOpacity(0.1), highlightColor: Colors.black.withOpacity(0.05)))),
-            ]
-        ),
+        child: Stack(children: [
+          Positioned.fill(
+            child: hasValidImageUrl
+                ? Image.network(
+                    imageUrl, // No '!' needed due to check above
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius:
+                                BorderRadius.circular(cardBorderRadius)),
+                        child: Center(
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.grey[400]!),
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null)),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      print("Error loading image $imageUrl: $error");
+                      return Container(
+                        decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius:
+                                BorderRadius.circular(cardBorderRadius)),
+                        child: Center(
+                            child: Icon(Icons.broken_image_outlined,
+                                color: Colors.grey[400], size: 40)),
+                      );
+                    },
+                  )
+                : Container(
+                    // Case for null, empty, or invalid URL
+                    decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(cardBorderRadius)),
+                    child: Center(
+                        child: Icon(Icons.image_not_supported_outlined,
+                            color: Colors.grey[400], size: 40)),
+                  ),
+          ),
+          // Overlay
+          Positioned.fill(
+              child: Container(
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.20),
+                            Colors.white.withOpacity(0.80)
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: const [0.0, 0.8]),
+                      borderRadius: BorderRadius.circular(cardBorderRadius)))),
+          // Text
+          Positioned(
+              bottom: 12,
+              left: 12,
+              right: 12,
+              child: Text(title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15.5,
+                      color: Color(0xFF222222),
+                      height: 1.25))),
+          // Tap Handler
+          Positioned.fill(
+              child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                      borderRadius: BorderRadius.circular(cardBorderRadius),
+                      onTap: onTap,
+                      splashColor: Colors.black.withOpacity(0.1),
+                      highlightColor: Colors.black.withOpacity(0.05)))),
+        ]),
       ),
     );
   }
 }
-

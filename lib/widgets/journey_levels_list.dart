@@ -1,5 +1,4 @@
 import 'package:fantastic_app_riverpod/providers/journey_provider.dart';
-import 'package:fantastic_app_riverpod/screens/journey_path.dart';
 import 'package:fantastic_app_riverpod/screens/journey_reveal/journeyscreenrevealtype4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +13,6 @@ import '../screens/journey_reveal/journeyscreenrevealtype3.dart';
 import '../models/skill.dart';
 import '../models/skillTrack.dart';
 import '../services/journey_service.dart' as js;
-import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:fantastic_app_riverpod/screens/journey_reveal/motivator_paged_screen.dart';
 import 'package:fantastic_app_riverpod/screens/journey_reveal/content_audio_screen.dart';
@@ -328,7 +326,7 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
                       skill: skillMap,
                       journeyTile: widget.tile,
                     );
-                  }).toList(),
+                  }),
                 ],
               );
             });
@@ -897,8 +895,9 @@ class _LevelItem extends StatelessWidget {
         }
       }
 
-      if (Navigator.canPop(context))
+      if (Navigator.canPop(context)) {
         Navigator.pop(context); // Close loading dialog only
+      }
 
       if (foundMotivatorLevel != null) {
         final String motivatorItemObjectId =

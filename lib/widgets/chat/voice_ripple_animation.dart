@@ -121,7 +121,7 @@ class _VoiceRippleAnimationState extends State<VoiceRippleAnimation>
                 );
               },
             );
-          }).toList(),
+          }),
 
           // Center pulse
           AnimatedContainer(

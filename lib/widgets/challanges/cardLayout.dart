@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'dart:ui'; // Important: for the frosted glass effect
 import '../../subChallenges/SubChallengePage.dart';
 import 'customCard.dart';
@@ -7,7 +6,7 @@ import 'customCard.dart';
 class CardLayout extends StatefulWidget {
   final List<Map<String, dynamic>> cardData;
 
-  const CardLayout({Key? key, required this.cardData}) : super(key: key);
+  const CardLayout({super.key, required this.cardData});
 
   @override
   State<CardLayout> createState() => _CardLayoutState();
@@ -127,9 +126,13 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
       });
     }
   }
+
   void _onCardTap(Map<String, dynamic> cardData) {
     // Prevent navigation if a swipe or undo animation is in progress
-    if ( _isUndoing || _isDragging || _animationController.isAnimating || _undoAnimationController.isAnimating) {
+    if (_isUndoing ||
+        _isDragging ||
+        _animationController.isAnimating ||
+        _undoAnimationController.isAnimating) {
       print("Navigation prevented: Animation/Drag in progress.");
       return;
     }
@@ -158,7 +161,11 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
                 clipBehavior: Clip.none,
                 children: [
                   // ===== Cards =====
-                  ...visibleCards.reversed.toList().asMap().entries.map((entry) {
+                  ...visibleCards.reversed
+                      .toList()
+                      .asMap()
+                      .entries
+                      .map((entry) {
                     final index = entry.key;
                     final card = entry.value;
                     final relativeIndex = visibleCards.length - 1 - index;
@@ -168,7 +175,8 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
                     double topOffset = relativeIndex * -10.0;
                     double sideOffset = relativeIndex * 10.0;
 
-                    Widget cardWidget = _buildCard(parentWidth, parentHeight, card);
+                    Widget cardWidget =
+                        _buildCard(parentWidth, parentHeight, card);
 
                     if (isTop && _isUndoing) {
                       cardWidget = SlideTransition(
@@ -187,7 +195,8 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
                         onPanUpdate: (details) {
                           setState(() {
                             _dragOffset += details.delta;
-                            _opacity = (1.0 - (_dragOffset.dx.abs() / 300)).clamp(0.0, 1.0);
+                            _opacity = (1.0 - (_dragOffset.dx.abs() / 300))
+                                .clamp(0.0, 1.0);
                           });
                         },
                         onPanEnd: (_) => _onDragEnd(),
@@ -198,7 +207,8 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
                                 ? _slideAnimation.value
                                 : _dragOffset;
 
-                            double rotationAngle = (offset.dx / parentWidth) * 0.3;
+                            double rotationAngle =
+                                (offset.dx / parentWidth) * 0.3;
 
                             return Opacity(
                               opacity: _opacity,
@@ -217,17 +227,21 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
                     }
 
                     return AnimatedPositioned(
-                      duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+                      duration: _isDragging
+                          ? Duration.zero
+                          : const Duration(milliseconds: 300),
                       top: topOffset,
                       left: sideOffset,
                       right: sideOffset,
                       child: AnimatedScale(
                         scale: scale,
-                        duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+                        duration: _isDragging
+                            ? Duration.zero
+                            : const Duration(milliseconds: 300),
                         child: cardWidget,
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -273,7 +287,8 @@ class _CardLayoutState extends State<CardLayout> with TickerProviderStateMixin {
           ),
         ],
       ),
-      child: ClipRect( // <- important for the blur to not overflow
+      child: ClipRect(
+        // <- important for the blur to not overflow
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Container(
