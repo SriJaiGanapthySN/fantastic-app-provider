@@ -1,4 +1,3 @@
-import 'package:fantastic_app_riverpod/screens/main_screen.dart';
 import 'package:fantastic_app_riverpod/screens/ritual/notesscreen.dart';
 import 'package:fantastic_app_riverpod/services/coaching_service.dart';
 import 'package:fantastic_app_riverpod/services/task_services.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/nav_provider.dart';
 import '../../providers/habit_play_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -266,13 +266,18 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
             // Navigate back when all tasks are completed
             if (currentTaskIndex >= tasks.length) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MainScreen(),
-                  ),
-                  (route) => false,
-                );
+                // Pop back to the first route (assumed to be the original MainScreen)
+                Navigator.popUntil(context, (route) => route.isFirst);
+
+                // Ensure the main screen tab is set to Ritual (index 1) so the
+                // BottomNavBar and PageView remain in a consistent state.
+                try {
+                  ref.read(selectedTabProvider.notifier).state = 1;
+                } catch (e) {
+                  // If we can't update the provider for any reason, just ignore
+                  // — popping back should restore the UI state in most cases.
+                  print('Error resetting selectedTabProvider: $e');
+                }
               });
               return SizedBox.shrink();
             }

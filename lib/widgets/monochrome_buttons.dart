@@ -87,24 +87,16 @@ class _ButtonInsideTFState extends State<ButtonInsideTF> {
         onPressed: widget.onPressed,
         style: TextButton.styleFrom(
           elevation: 1,
-          backgroundColor: Theme.of(context).colorScheme.primary,
           textStyle: const TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: 16,
-          ),
-          shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(10),
-            ),
+            color: Colors.black,
           ),
         ),
         child: Text(
           widget.text,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.inversePrimary,
+            color: Colors.black,
           ),
         ),
       ),

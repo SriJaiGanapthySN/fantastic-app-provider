@@ -252,12 +252,30 @@ class _HabitListState extends ConsumerState<HabitList> {
                                               width: 2,
                                             ),
                                             onChanged: (bool? newValue) async {
-                                              if (newValue != null) {
+                                              if (newValue == true &&
+                                                  objectId.isNotEmpty) {
+                                                // Navigate to habitPlay screen
+                                                Navigator.of(context)
+                                                    .push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        habitPlay(
+                                                      email: email,
+                                                      startIndex: habitIndex,
+                                                    ),
+                                                  ),
+                                                )
+                                                    .then((_) {
+                                                  _loadHabits();
+                                                });
+                                              } else if (newValue == false &&
+                                                  objectId.isNotEmpty) {
+                                                // If unchecking, just toggle the completion
                                                 await ref
                                                     .read(habitListProvider
                                                         .notifier)
-                                                    .fetchHabits(email);
-                                                _loadHabits();
+                                                    .toggleHabitCompletion(
+                                                        objectId, email);
                                               }
                                             },
                                           ),

@@ -267,7 +267,7 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                     selectedButtonIndex: uiState.selectedButtonIndex == 3
                         ? 0
                         : uiState.selectedButtonIndex),
-                SizedBox(height: screenHeight * 0.06),
+                SizedBox(height: screenHeight * 0.02),
                 Discoverstrip(currentData: currentData, email: widget.email)
               ],
             ),

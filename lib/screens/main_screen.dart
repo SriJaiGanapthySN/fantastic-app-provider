@@ -5,7 +5,7 @@ import 'chat_screen.dart';
 import 'discoverscreen.dart';
 import 'journey_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
-import '../providers/auth_provider.dart' as auth;
+import 'package:fantastic_app_riverpod/providers/auth_provider.dart' as auth;
 import '../widgets/user_guide.dart';
 
 import 'ritual_screen.dart';
