@@ -102,7 +102,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               Spacer(),
               SizedBox(
                 width: double.infinity,

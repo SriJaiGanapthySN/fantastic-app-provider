@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../States/StateNotifiers.dart';
 import 'finalScreen.dart';
-import 'onBoard26.dart';
 import 'onBoard36.dart';
 
 class Onboard35 extends ConsumerStatefulWidget {
   const Onboard35({super.key});
 
   @override
-  _OnBoard35 createState() => _OnBoard35();
+  _OnBoard35 createState() {
+    return _OnBoard35();
+  }
 }
 
 class _OnBoard35 extends ConsumerState<Onboard35> {
@@ -39,7 +40,8 @@ class _OnBoard35 extends ConsumerState<Onboard35> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.indigo,
-      body: SafeArea( // Added SafeArea to avoid going behind status bar
+      body: SafeArea(
+        // Added SafeArea to avoid going behind status bar
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -119,12 +121,15 @@ class _OnBoard35 extends ConsumerState<Onboard35> {
                         child: ElevatedButton(
                           onPressed: _isButtonEnabled
                               ? () {
-                            ref.read(selectedSleepProvider.notifier).addPersonalDetails(_nameController.text);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => OnBoard36()),
-                            );
-                          }
+                                  ref
+                                      .read(selectedSleepProvider.notifier)
+                                      .addPersonalDetails(_nameController.text);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => OnBoard36()),
+                                  );
+                                }
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
@@ -144,7 +149,8 @@ class _OnBoard35 extends ConsumerState<Onboard35> {
                                   color: Colors.indigo,
                                 ),
                               ),
-                              Icon(Icons.arrow_right_alt_rounded, color: Colors.indigo),
+                              Icon(Icons.arrow_right_alt_rounded,
+                                  color: Colors.indigo),
                             ],
                           ),
                         ),

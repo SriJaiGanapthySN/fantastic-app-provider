@@ -1,7 +1,6 @@
 import 'package:fantastic_app_riverpod/subChallenges/SuperPower.dart';
 
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Required for ImageFilter
 
 class NameChallengeScreen extends StatefulWidget {
   final String imageUrl; // Expect the URL for the main image

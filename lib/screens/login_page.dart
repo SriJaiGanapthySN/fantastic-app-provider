@@ -38,10 +38,10 @@ class SignInPageState extends State<SignInPage> {
               _buildPasswordTextBox(),
               _buildForgotPasswordButton(),
               _buildLoginButton(),
-              _buildCreateAccountButton(),
               const Text('or'),
               buildLoginWithGoogleButton(),
               buildLoginWithAppleButton(),
+              _buildCreateAccountButton(),
             ],
           ),
         ),
@@ -182,9 +182,18 @@ class SignInPageState extends State<SignInPage> {
   }
 
   Widget _buildCreateAccountButton() {
-    return ColoredButton(
-      onPressed: widget.togglePages,
-      labelText: "Create Account",
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Are you a new user?"),
+        GestureDetector(
+          onTap: widget.togglePages,
+          child: const Text(
+            " Register",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/task_services.dart';
 import '../services/coaching_service.dart';
@@ -15,22 +14,23 @@ final isTaskSkippedProvider = StateProvider<bool>((ref) => false);
 
 // Provider to manage the audio state
 final audioStateProvider = StateProvider<Map<String, bool>>((ref) => {
-  'isPlaying': false,
-  'isBgmPlaying': false,
-  'isDragPlaying': false,
-});
+      'isPlaying': false,
+      'isBgmPlaying': false,
+      'isDragPlaying': false,
+    });
 
 // Provider to manage the task data
 final taskDataProvider = StateProvider<Map<String, dynamic>?>((ref) => null);
 
 // Provider to manage the notes data
 final notesDataProvider = StateProvider<Map<String, dynamic>>((ref) => {
-  'items': '',
-  'timestamp': '',
-});
+      'items': '',
+      'timestamp': '',
+    });
 
 // Provider to manage the habit coaching data
-final habitCoachingDataProvider = StateProvider<Map<String, dynamic>?>((ref) => null);
+final habitCoachingDataProvider =
+    StateProvider<Map<String, dynamic>?>((ref) => null);
 
 // Provider to manage the scroll controller
 final scrollControllerProvider = Provider<ScrollController>((ref) {
@@ -43,4 +43,5 @@ final scrollControllerProvider = Provider<ScrollController>((ref) {
 final taskServicesProvider = Provider<TaskServices>((ref) => TaskServices());
 
 // Provider to manage the coaching service
-final coachingServiceProvider = Provider<CoachingService>((ref) => CoachingService()); 
+final coachingServiceProvider =
+    Provider<CoachingService>((ref) => CoachingService());

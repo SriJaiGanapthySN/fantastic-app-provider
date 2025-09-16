@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lottie/lottie.dart';
 import 'package:video_player/video_player.dart';
 import '../providers/journey_provider.dart';
 import '../providers/discover_provider.dart';
@@ -8,18 +7,12 @@ import '../providers/nav_provider.dart';
 import '../widgets/journey_card.dart';
 import '../widgets/journey_list_item.dart';
 import '../widgets/stats_card.dart';
-import '../widgets/bottom_nav_bar.dart';
-import '../utils/blur_container.dart';
 import '../widgets/journey_levels_list.dart';
-import '../widgets/premium_button.dart';
 import '../services/journey_service.dart';
-import '../models/skill.dart';
-import '../models/skillTrack.dart';
-import '../providers/auth_provider.dart';
 
 class JourneyScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? tile;
-  JourneyScreen({Key? key, this.tile, required this.userEmail})
+  const JourneyScreen({Key? key, this.tile, required this.userEmail})
       : super(key: key);
   final String userEmail;
 

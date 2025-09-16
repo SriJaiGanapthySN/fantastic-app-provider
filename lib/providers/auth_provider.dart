@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/app_user.dart';
 import '../repos/auth_repo.dart';
 import '../repos/firebase_auth_repo.dart';
@@ -28,7 +27,6 @@ class AuthState {
 // AuthNotifier extends StateNotifier to manage authentication
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepo authRepo;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   AuthNotifier({required this.authRepo}) : super(const AuthState()) {
     checkAuth();
@@ -161,7 +159,7 @@ final userEmailProvider = Provider<String>((ref) {
         print('Warning: No authenticated user found');
         return '';
       }
-      final email = user.email ?? '';
+      final email = user.email;
       if (email.isEmpty) {
         print('Warning: Authenticated user has empty email');
       } else {

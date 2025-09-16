@@ -7,10 +7,11 @@ import '../../services/journey_service.dart';
 
 class MotivatorPagedScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> motivatorData;
-  const MotivatorPagedScreen({Key? key, required this.motivatorData}) : super(key: key);
+  const MotivatorPagedScreen({super.key, required this.motivatorData});
 
   @override
-  ConsumerState<MotivatorPagedScreen> createState() => _MotivatorPagedScreenState();
+  ConsumerState<MotivatorPagedScreen> createState() =>
+      _MotivatorPagedScreenState();
 }
 
 class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
@@ -44,9 +45,11 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
 
   Future<void> _checkIfCompleted() async {
     final email = ref.read(currentEmailProvider);
-    final skillLevelId = widget.motivatorData['objectId'] ?? widget.motivatorData['skillLevelId'];
+    final skillLevelId = widget.motivatorData['objectId'] ??
+        widget.motivatorData['skillLevelId'];
     if (email.isEmpty || skillLevelId == null) return;
-    final completed = await _journeyService.isSkillLevelCompleted(email, skillLevelId);
+    final completed =
+        await _journeyService.isSkillLevelCompleted(email, skillLevelId);
     if (completed) {
       setState(() {
         _isCompleted = true;
@@ -55,21 +58,30 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
   }
 
   Future<void> _handleDonePressed() async {
-    setState(() { _isSaving = true; });
+    setState(() {
+      _isSaving = true;
+    });
     final email = ref.read(currentEmailProvider);
     final goalId = widget.motivatorData['goalId'] ?? '';
     final skillLevelId = widget.motivatorData['objectId'] ?? '';
     final skillId = widget.motivatorData['skillId'] ?? '';
     final skillTrackId = widget.motivatorData['skillTrackId'] ?? '';
     final success = await _journeyService.updateGoalCompletion(
-      email, goalId, skillLevelId, skillId, skillTrackId,
+      email,
+      goalId,
+      skillLevelId,
+      skillId,
+      skillTrackId,
     );
     setState(() {
       _isSaving = false;
       if (success) _isCompleted = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(success ? 'Marked as completed!' : 'Failed to mark as completed.')),
+      SnackBar(
+          content: Text(success
+              ? 'Marked as completed!'
+              : 'Failed to mark as completed.')),
     );
   }
 
@@ -107,9 +119,9 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String contentTitle = widget.motivatorData['contentTitle'] ?? 'No Title';
+    final String contentTitle =
+        widget.motivatorData['contentTitle'] ?? 'No Title';
     final String readingTime = widget.motivatorData['contentReadingTime'] ?? '';
-    final String? contentUrl = widget.motivatorData['contentUrl'] as String?;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -134,7 +146,8 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -158,7 +171,8 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(top: 8, right: 4),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.blueGrey.shade50,
                               borderRadius: BorderRadius.circular(12),
@@ -166,7 +180,8 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.timer_outlined, size: 18, color: Colors.blueGrey),
+                                const Icon(Icons.timer_outlined,
+                                    size: 18, color: Colors.blueGrey),
                                 const SizedBox(width: 4),
                                 Text(
                                   readingTime,
@@ -187,7 +202,8 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
                       if (_htmlError != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Text(_htmlError!, style: TextStyle(color: Colors.red)),
+                          child: Text(_htmlError!,
+                              style: TextStyle(color: Colors.red)),
                         ),
                       if (_fetchedHtml != null && _htmlError == null)
                         Padding(
@@ -243,18 +259,27 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: ElevatedButton(
-                          onPressed: _isCompleted || _isSaving ? null : _handleDonePressed,
+                          onPressed: _isCompleted || _isSaving
+                              ? null
+                              : _handleDonePressed,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24)),
                             backgroundColor: Colors.blueAccent,
                             foregroundColor: Colors.white,
-                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            textStyle: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           child: _isCompleted
                               ? const Text('Completed')
                               : _isSaving
-                                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2))
                                   : const Text("Done, what's next?"),
                         ),
                       ),
@@ -288,15 +313,15 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
                 return const Center(
                   child: SizedBox(
                       height: 200,
-                      child: Center(child: CircularProgressIndicator())
-                  ),
+                      child: Center(child: CircularProgressIndicator())),
                 );
               },
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   height: 200,
                   color: Colors.grey.shade200,
-                  child: Icon(Icons.broken_image, color: Colors.grey.shade400, size: 50),
+                  child: Icon(Icons.broken_image,
+                      color: Colors.grey.shade400, size: 50),
                 );
               },
             ),
@@ -313,7 +338,8 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
               fontWeight: FontWeight.w400,
               textAlign: TextAlign.center,
             ),
-            "em": Style(fontStyle: FontStyle.italic, color: Colors.grey.shade700),
+            "em":
+                Style(fontStyle: FontStyle.italic, color: Colors.grey.shade700),
           },
         ),
       ],
@@ -348,4 +374,4 @@ class _MotivatorPagedScreenState extends ConsumerState<MotivatorPagedScreen> {
       }),
     );
   }
-} 
+}

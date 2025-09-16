@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
   final DraggableScrollableController _controller =
-  DraggableScrollableController();
+      DraggableScrollableController();
+
+  ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -87,8 +89,7 @@ class _DraggableSheetWithCloseState extends State<_DraggableSheetWithClose> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (_) => FollowScreen()),
+                          MaterialPageRoute(builder: (_) => FollowScreen()),
                         );
                       },
                     ),
@@ -100,7 +101,7 @@ class _DraggableSheetWithCloseState extends State<_DraggableSheetWithClose> {
                       CircleAvatar(
                         radius: 30,
                         backgroundImage:
-                        NetworkImage('https://via.placeholder.com/150'),
+                            NetworkImage('https://via.placeholder.com/150'),
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -129,6 +130,8 @@ class _DraggableSheetWithCloseState extends State<_DraggableSheetWithClose> {
 }
 
 class FollowScreen extends StatelessWidget {
+  const FollowScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -8,7 +8,8 @@ import '../../services/journey_service.dart';
 
 class ContentAudioScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> audioData;
-  const ContentAudioScreen({Key? key, required this.audioData}) : super(key: key);
+  const ContentAudioScreen({Key? key, required this.audioData})
+      : super(key: key);
 
   @override
   ConsumerState<ContentAudioScreen> createState() => _ContentAudioScreenState();
@@ -94,9 +95,11 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
 
   Future<void> _checkIfCompletedToday() async {
     final email = ref.read(currentEmailProvider);
-    final skillLevelId = widget.audioData['objectId'] ?? widget.audioData['skillLevelId'];
+    final skillLevelId =
+        widget.audioData['objectId'] ?? widget.audioData['skillLevelId'];
     if (email.isEmpty || skillLevelId == null) return;
-    final completed = await _journeyService.isSkillLevelCompleted(email, skillLevelId);
+    final completed =
+        await _journeyService.isSkillLevelCompleted(email, skillLevelId);
     if (completed) {
       setState(() {
         _isCompletedToday = true;
@@ -105,21 +108,30 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
   }
 
   Future<void> _handleDonePressed() async {
-    setState(() { _isSaving = true; });
+    setState(() {
+      _isSaving = true;
+    });
     final email = ref.read(currentEmailProvider);
     final goalId = widget.audioData['goalId'] ?? '';
     final skillLevelId = widget.audioData['objectId'] ?? '';
     final skillId = widget.audioData['skillId'] ?? '';
     final skillTrackId = widget.audioData['skillTrackId'] ?? '';
     final success = await _journeyService.updateGoalCompletion(
-      email, goalId, skillLevelId, skillId, skillTrackId,
+      email,
+      goalId,
+      skillLevelId,
+      skillId,
+      skillTrackId,
     );
     setState(() {
       _isSaving = false;
       if (success) _isCompletedToday = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(success ? 'Marked as completed!' : 'Failed to mark as completed.')),
+      SnackBar(
+          content: Text(success
+              ? 'Marked as completed!'
+              : 'Failed to mark as completed.')),
     );
   }
 
@@ -141,7 +153,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
       userName = email.split('@')[0];
     }
     final String? headline = rawHeadline?.replaceAll('{{NAME}}', userName);
-    final String? headlineImageUrl = widget.audioData['headlineImageUrl'] as String?;
+    final String? headlineImageUrl =
+        widget.audioData['headlineImageUrl'] as String?;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -166,7 +179,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -190,7 +204,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(top: 8, right: 4),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.blueGrey.shade50,
                               borderRadius: BorderRadius.circular(12),
@@ -198,7 +213,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.timer_outlined, size: 18, color: Colors.blueGrey),
+                                const Icon(Icons.timer_outlined,
+                                    size: 18, color: Colors.blueGrey),
                                 const SizedBox(width: 4),
                                 Text(
                                   readingTime,
@@ -211,7 +227,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                           ),
                         ),
                       // Headline image
-                      if (headlineImageUrl != null && headlineImageUrl.isNotEmpty)
+                      if (headlineImageUrl != null &&
+                          headlineImageUrl.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: ClipRRect(
@@ -221,10 +238,12 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                               height: 180,
                               width: double.infinity,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
                                 height: 180,
                                 color: Colors.grey.shade200,
-                                child: Icon(Icons.broken_image, color: Colors.grey.shade400, size: 50),
+                                child: Icon(Icons.broken_image,
+                                    color: Colors.grey.shade400, size: 50),
                               ),
                             ),
                           ),
@@ -250,11 +269,13 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                         ),
                         color: Colors.white.withOpacity(0.95),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16),
                           child: _isAudioLoading
                               ? const Center(child: CircularProgressIndicator())
                               : _isAudioError
-                                  ? const Text('Failed to load audio', style: TextStyle(color: Colors.red))
+                                  ? const Text('Failed to load audio',
+                                      style: TextStyle(color: Colors.red))
                                   : _buildAudioPlayer(),
                         ),
                       ),
@@ -267,7 +288,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                       if (_htmlError != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Text(_htmlError!, style: TextStyle(color: Colors.red)),
+                          child: Text(_htmlError!,
+                              style: TextStyle(color: Colors.red)),
                         ),
                       if (_fetchedHtml != null && _htmlError == null)
                         Padding(
@@ -286,18 +308,27 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: ElevatedButton(
-                          onPressed: _isCompletedToday || _isSaving ? null : _handleDonePressed,
+                          onPressed: _isCompletedToday || _isSaving
+                              ? null
+                              : _handleDonePressed,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24)),
                             backgroundColor: Colors.blueAccent,
                             foregroundColor: Colors.white,
-                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            textStyle: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           child: _isCompletedToday
                               ? const Text('Completed')
                               : _isSaving
-                                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2))
                                   : const Text("Done, what's next?"),
                         ),
                       ),
@@ -322,7 +353,8 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
             final playerState = snapshot.data;
             final playing = playerState?.playing ?? false;
             final processingState = playerState?.processingState;
-            if (processingState == ProcessingState.loading || processingState == ProcessingState.buffering) {
+            if (processingState == ProcessingState.loading ||
+                processingState == ProcessingState.buffering) {
               return const SizedBox(
                 width: 48,
                 height: 48,
@@ -330,12 +362,14 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
               );
             } else if (playing) {
               return IconButton(
-                icon: const Icon(Icons.pause_circle_filled, size: 48, color: Colors.blueAccent),
+                icon: const Icon(Icons.pause_circle_filled,
+                    size: 48, color: Colors.blueAccent),
                 onPressed: _audioPlayer.pause,
               );
             } else {
               return IconButton(
-                icon: const Icon(Icons.play_circle_fill, size: 48, color: Colors.blueAccent),
+                icon: const Icon(Icons.play_circle_fill,
+                    size: 48, color: Colors.blueAccent),
                 onPressed: _audioPlayer.play,
               );
             }
@@ -348,7 +382,7 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
             final position = snapshot.data ?? Duration.zero;
             final duration = _audioPlayer.duration ?? Duration.zero;
             return Text(
-              _formatDuration(position) + ' / ' + _formatDuration(duration),
+              '${_formatDuration(position)} / ${_formatDuration(duration)}',
               style: const TextStyle(fontWeight: FontWeight.w500),
             );
           },
@@ -363,4 +397,4 @@ class _ContentAudioScreenState extends ConsumerState<ContentAudioScreen> {
     final seconds = twoDigits(d.inSeconds.remainder(60));
     return '$minutes:$seconds';
   }
-} 
+}

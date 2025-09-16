@@ -1,8 +1,9 @@
 import 'package:fantastic_app_riverpod/profile/profile.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomScreen extends StatelessWidget {
+  const CustomScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -21,7 +22,7 @@ class CustomScreen extends StatelessWidget {
                   // Top Image with blend
                   Stack(
                     children: [
-                      Container(
+                      SizedBox(
                         height: screenHeight * 0.3,
                         width: double.infinity,
                         child: Image.asset(
@@ -158,7 +159,7 @@ class CustomScreen extends StatelessWidget {
                       Container(
                         color: Colors.white,
                         width: double.infinity,
-                        height: 40,// Sets the background to white
+                        height: 40, // Sets the background to white
                         child: SizedBox(
                           height: 20,
                           child: Center(
@@ -166,7 +167,8 @@ class CustomScreen extends StatelessWidget {
                               "Create Profile",
                               style: TextStyle(
                                 color: Color(0xFF00008B),
-                                fontSize: screenWidth * 0.045,// Deep blue color
+                                fontSize:
+                                    screenWidth * 0.045, // Deep blue color
                               ),
                             ),
                           ),
@@ -238,7 +240,7 @@ class CustomScreen extends StatelessWidget {
 
 class DummyPage extends StatelessWidget {
   final String title;
-  const DummyPage({required this.title});
+  const DummyPage({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {

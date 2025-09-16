@@ -1,6 +1,5 @@
 import 'package:fantastic_app_riverpod/widgets/glowing_card.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class AllJourney extends StatefulWidget {
   const AllJourney({super.key});
@@ -45,22 +44,23 @@ class _AllJourneyState extends State<AllJourney> {
             // GlowingCard(),
             Expanded(
               child: ListView.builder(
-              itemCount: allJourney.length,
-              physics: const BouncingScrollPhysics(),
-              itemBuilder: (context, index) {
-                return Column(
-                children: [
-                  if (index == 0)
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  GlowingCard(
-                  title: allJourney[index].title,
-                  subtitle: allJourney[index].description,
-                  isCompleted: allJourney[index].isCompleted,
-                  progress: "${index + 1}/${allJourney.length}",
-                  ),
-                ],
-                );
-              },
+                itemCount: allJourney.length,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return Column(
+                    children: [
+                      if (index == 0)
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.02),
+                      GlowingCard(
+                        title: allJourney[index].title,
+                        subtitle: allJourney[index].description,
+                        isCompleted: allJourney[index].isCompleted,
+                        progress: "${index + 1}/${allJourney.length}",
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             // Container(
@@ -142,13 +142,13 @@ class _AllJourneyState extends State<AllJourney> {
   }
 }
 
-class data {
+class Data {
   final int id;
   final String title;
   final String description;
   final bool isCompleted;
 
-  data({
+  Data({
     required this.id,
     required this.title,
     required this.description,
@@ -161,51 +161,51 @@ class data {
   }
 }
 
-List<data> raw = [
-  data(
+List<Data> raw = [
+  Data(
     id: 1,
     title: 'Journey 1',
     description: 'Description of Journey 1',
     isCompleted: false,
   ),
-  data(
+  Data(
     id: 2,
     title: 'Journey 2',
     description: 'Description of Journey 2',
     isCompleted: true,
   ),
-  data(
+  Data(
     id: 3,
     title: 'Journey 3',
     description: 'Description of Journey 3',
     isCompleted: false,
   ),
-  data(
+  Data(
     id: 4,
     title: 'Journey 4',
     description: 'Description of Journey 4',
     isCompleted: true,
   ),
-  data(
+  Data(
     id: 5,
     title: 'Journey 5',
     description: 'Description of Journey 5',
     isCompleted: false,
   ),
-  data(
+  Data(
     id: 6,
     title: 'Journey 6',
     description: 'Description of Journey 6',
     isCompleted: true,
   ),
-  data(
+  Data(
     id: 7,
     title: 'Journey 7',
     description: 'Description of Journey 7',
     isCompleted: false,
   ),
 ];
-List<data> allJourney = [
+List<Data> allJourney = [
   ...raw.where((journey) => journey.isCompleted),
   ...raw.where((journey) => !journey.isCompleted),
 ];

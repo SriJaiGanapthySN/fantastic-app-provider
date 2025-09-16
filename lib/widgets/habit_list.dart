@@ -6,8 +6,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/_providers.dart';
 import '../utils/blur_container.dart';
-import '../services/task_services.dart';
-import '../providers/duration_provider.dart';
 import '../providers/habit_list_provider.dart';
 
 class HabitList extends ConsumerStatefulWidget {
@@ -254,12 +252,30 @@ class _HabitListState extends ConsumerState<HabitList> {
                                               width: 2,
                                             ),
                                             onChanged: (bool? newValue) async {
-                                              if (newValue != null) {
+                                              if (newValue == true &&
+                                                  objectId.isNotEmpty) {
+                                                // Navigate to habitPlay screen
+                                                Navigator.of(context)
+                                                    .push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        habitPlay(
+                                                      email: email,
+                                                      startIndex: habitIndex,
+                                                    ),
+                                                  ),
+                                                )
+                                                    .then((_) {
+                                                  _loadHabits();
+                                                });
+                                              } else if (newValue == false &&
+                                                  objectId.isNotEmpty) {
+                                                // If unchecking, just toggle the completion
                                                 await ref
                                                     .read(habitListProvider
                                                         .notifier)
-                                                    .fetchHabits(email);
-                                                _loadHabits();
+                                                    .toggleHabitCompletion(
+                                                        objectId, email);
                                               }
                                             },
                                           ),

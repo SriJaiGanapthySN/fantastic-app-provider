@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http/http.dart' as http; // Import the http package
-import 'dart:convert'; // For jsonDecode if needed
 
 import '../providers/challengeProvider.dart';
 
 class SkillLevelDetailScreen extends StatefulWidget {
   final String skillTrackId;
-  const SkillLevelDetailScreen({Key? key, required this.skillTrackId}) : super(key: key);
+  const SkillLevelDetailScreen({super.key, required this.skillTrackId});
   @override
   _SkillLevelDetailScreenState createState() => _SkillLevelDetailScreenState();
 }
@@ -22,7 +21,8 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
   @override
   void initState() {
     super.initState();
-    print('initState: Setting up SkillLevelDetailScreen for ${widget.skillTrackId}');
+    print(
+        'initState: Setting up SkillLevelDetailScreen for ${widget.skillTrackId}');
 
     // --- Initialize WebViewController (BEFORE fetching) ---
     _webViewController = WebViewController()
@@ -32,20 +32,26 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
         NavigationDelegate(
           onProgress: (int progress) {/* ... */},
           onPageStarted: (String url) {
-            print('WebView started loading (likely base URL for loadHtmlString)');
+            print(
+                'WebView started loading (likely base URL for loadHtmlString)');
             // For loadHtmlString, onPageStarted/Finished might be less relevant
             // unless the HTML itself navigates. Manage loading state manually.
           },
           onPageFinished: (String url) {
-            print('WebView finished loading (likely base URL for loadHtmlString)');
+            print(
+                'WebView finished loading (likely base URL for loadHtmlString)');
             if (mounted) {
-              setState(() { _isWebViewLoading = false; });
+              setState(() {
+                _isWebViewLoading = false;
+              });
             }
           },
           onWebResourceError: (WebResourceError error) {
             print('WebView Resource Error: ${error.description}');
             if (mounted) {
-              setState(() { _isWebViewLoading = false; });
+              setState(() {
+                _isWebViewLoading = false;
+              });
             }
           },
           // No need for onNavigationRequest unless HTML content has links
@@ -58,11 +64,15 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
     // After skill data is fetched, THEN fetch and load HTML content
     _skillLevelFuture.then((skillLevel) {
       if (mounted && skillLevel?.contentUrl != null) {
-        print('SkillLevel data fetched, now fetching HTML from ${skillLevel!.contentUrl}');
+        print(
+            'SkillLevel data fetched, now fetching HTML from ${skillLevel!.contentUrl}');
         _fetchAndLoadHtml(skillLevel.contentUrl!);
       } else if (mounted) {
-        print('SkillLevel fetch complete, but no contentUrl or widget unmounted.');
-        setState(() { _isWebViewLoading = false; }); // Ensure loading stops
+        print(
+            'SkillLevel fetch complete, but no contentUrl or widget unmounted.');
+        setState(() {
+          _isWebViewLoading = false;
+        }); // Ensure loading stops
       }
     }).catchError((error) {
       print('Error fetching skill level data: $error');
@@ -83,7 +93,7 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
     if (mounted) {
       setState(() {
         _isWebViewLoading = true; // Start loading indicator
-        _htmlContentError = null;   // Clear previous errors
+        _htmlContentError = null; // Clear previous errors
       });
     }
 
@@ -115,12 +125,13 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
         // Setting _isWebViewLoading = false here might be too soon if the HTML
         // itself loads resources. Relying on onPageFinished is safer.
         // Let NavigationDelegate handle setting _isWebViewLoading to false on finish
-
       } else {
         // --- HTTP Error ---
-        print('Failed to load HTML content. Status code: ${response.statusCode}');
+        print(
+            'Failed to load HTML content. Status code: ${response.statusCode}');
         setState(() {
-          _htmlContentError = 'Failed to load content (Code: ${response.statusCode})';
+          _htmlContentError =
+              'Failed to load content (Code: ${response.statusCode})';
           _isWebViewLoading = false;
         });
       }
@@ -138,7 +149,6 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
     // unless there was an immediate error before even calling loadHtmlString.
   }
 
-
   @override
   Widget build(BuildContext context) {
     print('Building SkillLevelDetailScreen widget...');
@@ -152,10 +162,14 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
             return Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error loading skill base data: ${snapshot.error}'));
+            return Center(
+                child:
+                    Text('Error loading skill base data: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text('Skill Level with ID ${widget.skillTrackId} not found.'));
+            return Center(
+                child: Text(
+                    'Skill Level with ID ${widget.skillTrackId} not found.'));
           }
 
           final skillLevel = snapshot.data!;
@@ -171,36 +185,42 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
                 Divider(height: 24),
 
                 // --- WebView Section ---
-                Text('Content:', style: Theme.of(context).textTheme.titleMedium),
+                Text('Content:',
+                    style: Theme.of(context).textTheme.titleMedium),
                 SizedBox(height: 8),
 
                 // Display error OR loading indicator OR WebView
                 if (_htmlContentError != null) // Show error if fetching failed
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20.0),
-                    child: Center(child: Text('Error: $_htmlContentError', style: TextStyle(color: Colors.red))),
+                    child: Center(
+                        child: Text('Error: $_htmlContentError',
+                            style: TextStyle(color: Colors.red))),
                   )
-                else if (skillLevel.contentUrl != null && skillLevel.contentUrl!.isNotEmpty) // Only show WebView area if URL exists
+                else if (skillLevel.contentUrl != null &&
+                    skillLevel.contentUrl!
+                        .isNotEmpty) // Only show WebView area if URL exists
                   SizedBox(
                     height: MediaQuery.of(context).size.height * 0.6,
                     child: Stack(
                       children: [
                         // Key is important if the underlying data changes dramatically
-                        WebViewWidget(key: ValueKey(skillLevel.contentUrl), controller: _webViewController),
+                        WebViewWidget(
+                            key: ValueKey(skillLevel.contentUrl),
+                            controller: _webViewController),
                         if (_isWebViewLoading)
                           const Center(child: CircularProgressIndicator()),
                       ],
                     ),
                   )
                 else // Message if no URL provided
-                  Text('No content URL provided.', style: TextStyle(fontStyle: FontStyle.italic)),
-
+                  Text('No content URL provided.',
+                      style: TextStyle(fontStyle: FontStyle.italic)),
 
                 Divider(height: 24),
 
                 // --- Other Details ---
                 // ... (Track ID, Skill ID, etc.) ...
-
               ],
             ),
           );

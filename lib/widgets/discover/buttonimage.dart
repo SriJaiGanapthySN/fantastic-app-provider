@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class Buttonimage extends StatelessWidget {
   const Buttonimage({super.key, required this.currentImage});

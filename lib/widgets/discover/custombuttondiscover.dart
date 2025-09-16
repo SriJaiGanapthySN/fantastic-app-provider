@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CustomButtonDiscover extends StatelessWidget {
-  CustomButtonDiscover({
+  const CustomButtonDiscover({
     super.key,
     required this.routineName,
     required this.handleButtonPress,

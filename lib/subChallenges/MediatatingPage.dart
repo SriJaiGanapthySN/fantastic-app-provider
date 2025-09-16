@@ -1,17 +1,13 @@
 // ignore_for_file: deprecated_member_use, prefer_interpolation_to_compose_strings
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show
-        rootBundle; // For potential future asset loading (though not used in remove-only)
+// For potential future asset loading (though not used in remove-only)
 import 'package:webview_flutter/webview_flutter.dart'; // Import WebView
 import 'package:http/http.dart' as http; // Import HTTP client
 import 'dart:async'; // For TimeoutException
 import 'package:html/parser.dart' as html_parser; // For parsing HTML
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
-
-// TODO: Ensure these are correctly defined and imported
 import '../providers/challengeProvider.dart'; // Needed for getSkillLevelByTrackId and SkillLevel model
 import 'MeditateTask.dart'; // Assuming GoalScreen is here
 
@@ -65,10 +61,11 @@ class _MeditationActionScreenState
           onProgress: (int progress) {},
           onPageStarted: (String url) {},
           onPageFinished: (String url) {
-            if (mounted)
+            if (mounted) {
               setState(() {
                 _isWebViewLoading = false;
               });
+            }
           },
           onWebResourceError: (WebResourceError error) {
             if (mounted && _htmlContentError == null) {
@@ -106,11 +103,12 @@ class _MeditationActionScreenState
         });
       }
     }).catchError((error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _htmlContentError = "Failed to load details.";
           _isWebViewLoading = false;
         });
+      }
     });
   }
 

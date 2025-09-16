@@ -23,8 +23,8 @@ class _WaveTextAnimationState extends State<WaveTextAnimation>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  List<AnimationController> _characterControllers = [];
-  List<Animation<double>> _characterAnimations = [];
+  final List<AnimationController> _characterControllers = [];
+  final List<Animation<double>> _characterAnimations = [];
 
   @override
   void initState() {

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'dart:ui';
 import '../utils/blur_container.dart';
 
 class JourneyCard extends StatelessWidget {
@@ -23,7 +21,7 @@ class JourneyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     // Calculate dynamic dimensions
     final cardHeight = screenHeight * 0.20; // 20% of screen height
     final cardWidth = screenWidth - 32; // Full width minus padding
@@ -43,7 +41,8 @@ class JourneyCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius),
           image: const DecorationImage(
-            image: AssetImage('assets/images/06714b8cb3d074a22b22b30b25ad5ac5.png'),
+            image: AssetImage(
+                'assets/images/06714b8cb3d074a22b22b30b25ad5ac5.png'),
             fit: BoxFit.cover,
           ),
           gradient: LinearGradient(
@@ -79,9 +78,11 @@ class JourneyCard extends StatelessWidget {
               top: padding * 0.8,
               left: padding,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: padding * 0.8, vertical: padding * 0.4),
+                padding: EdgeInsets.symmetric(
+                    horizontal: padding * 0.8, vertical: padding * 0.4),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
+                  color:
+                      const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(borderRadius * 0.5),
                 ),
                 child: Text(
@@ -104,7 +105,8 @@ class JourneyCard extends StatelessWidget {
                 blur: 10,
                 borderRadius: borderRadius * 0.5,
                 color: Colors.white.withOpacity(0.1),
-                padding: EdgeInsets.symmetric(horizontal: padding, vertical: padding * 0.4),
+                padding: EdgeInsets.symmetric(
+                    horizontal: padding, vertical: padding * 0.4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -114,7 +116,7 @@ class JourneyCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            " "+title,
+                            " $title",
                             style: TextStyle(
                               fontSize: titleFontSize,
                               fontWeight: FontWeight.w400,
@@ -127,7 +129,7 @@ class JourneyCard extends StatelessWidget {
                           ),
                           SizedBox(height: padding * 0.15),
                           Text(
-                            ' '+subtitle,
+                            ' $subtitle',
                             style: TextStyle(
                               fontSize: subtitleFontSize,
                               color: Colors.white.withOpacity(0.7),
@@ -177,4 +179,4 @@ class JourneyCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Import for ImageFilter
 
@@ -15,9 +17,8 @@ class _BlurFadeAndColorTextEffectState extends State<BlurFadeAndColorTextEffect>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _blurAnimation;
-  late Animation<double> _fadeAnimation;
   late Animation<Color?> _colorAnimation;
-  late Animation<Offset> _offsetAnimation; // Animation for vertical offset
+// Animation for vertical offset
 
   List<String> words = [];
   int currentWordIndex = 0;
@@ -40,7 +41,6 @@ class _BlurFadeAndColorTextEffectState extends State<BlurFadeAndColorTextEffect>
     _blurAnimation = Tween<double>(begin: 0.0, end: 10.0).animate(_controller);
 
     // Define the fade animation
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
 
     // Define the color animation
     _colorAnimation = ColorTween(
@@ -49,13 +49,6 @@ class _BlurFadeAndColorTextEffectState extends State<BlurFadeAndColorTextEffect>
     ).animate(_controller);
 
     // Define the offset animation (word comes from below)
-    _offsetAnimation = Tween<Offset>(
-      begin: Offset(0, 1.0), // Start from below (y = 1.0)
-      end: Offset(0, 0.0), // Settle in place (y = 0.0)
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut, // Smooth easing curve
-    ));
 
     // Start the animation for the first word
     _startWordAnimation();
