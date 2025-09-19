@@ -114,7 +114,7 @@ Future<void> initializeNotificationTones() async {
       'isSelected': false,
     },
     {
-      'name': 'Fabulous Beep',
+      'name': 'Fantastic Beep',
       'category': 'Fabulous',
       'audioPath': 'assets/audio/fabulous_beep.mp3',
       'isSelected': true,
@@ -161,4 +161,4 @@ Future<void> initializeNotificationTones() async {
   for (final tone in defaultTones) {
     await tones.add(tone);
   }
-} 
+}

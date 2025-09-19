@@ -37,9 +37,11 @@ class OnBoard24 extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                Spacer(flex: 3,),
+                Spacer(
+                  flex: 3,
+                ),
                 Text(
-                  'Track many more habits, and create healthy routines from within your Fabulous account.',
+                  'Track many more habits, and create healthy routines from within your Fantastic account.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: height * 0.02,
@@ -58,8 +60,10 @@ class OnBoard24 extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent, // Make button background transparent
-                      shadowColor: Colors.transparent,     // Remove shadow if you want clean look
+                      backgroundColor: Colors
+                          .transparent, // Make button background transparent
+                      shadowColor: Colors
+                          .transparent, // Remove shadow if you want clean look
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -67,7 +71,10 @@ class OnBoard24 extends StatelessWidget {
                     child: Ink(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color.fromARGB(255, 1, 94, 195), Color.fromARGB(255, 2, 133, 193)],
+                          colors: [
+                            Color.fromARGB(255, 1, 94, 195),
+                            Color.fromARGB(255, 2, 133, 193)
+                          ],
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                         ),
@@ -87,7 +94,6 @@ class OnBoard24 extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 SizedBox(height: height * 0.05),
               ],
             ),
@@ -97,4 +103,3 @@ class OnBoard24 extends StatelessWidget {
     );
   }
 }
-

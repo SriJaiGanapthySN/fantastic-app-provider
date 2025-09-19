@@ -105,7 +105,7 @@ class _UpgradesScreenState extends State<UpgradesScreen> {
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        "Fabulous Premium",
+                        "Fantastic Premium",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

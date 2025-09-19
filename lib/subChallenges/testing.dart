@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http/http.dart' as http; // Import the http package
 
 import '../providers/challengeProvider.dart';
+import '../providers/discover_provider.dart';
 
-class SkillLevelDetailScreen extends StatefulWidget {
+class SkillLevelDetailScreen extends ConsumerStatefulWidget {
   final String skillTrackId;
   const SkillLevelDetailScreen({super.key, required this.skillTrackId});
   @override
-  _SkillLevelDetailScreenState createState() => _SkillLevelDetailScreenState();
+  ConsumerState<SkillLevelDetailScreen> createState() =>
+      _SkillLevelDetailScreenState();
 }
 
-class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
+class _SkillLevelDetailScreenState
+    extends ConsumerState<SkillLevelDetailScreen> {
   late Future<SkillLevel?> _skillLevelFuture;
   late final WebViewController _webViewController;
   bool _isWebViewLoading = false;
   bool _contentLoadAttempted = false; // Renamed for clarity
   String? _htmlContentError; // To store potential fetching errors
+  bool _listenerSetup = false; // Flag to ensure listener is set up only once
 
   @override
   void initState() {
@@ -59,7 +64,9 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
       );
 
     // Fetch skill level data first
-    _skillLevelFuture = getSkillLevelByTrackId(widget.skillTrackId);
+    final isParentMode = ref.read(personaProvider).isParentMode;
+    _skillLevelFuture =
+        getSkillLevelByTrackId(widget.skillTrackId, isParentMode: isParentMode);
 
     // After skill data is fetched, THEN fetch and load HTML content
     _skillLevelFuture.then((skillLevel) {
@@ -151,6 +158,22 @@ class _SkillLevelDetailScreenState extends State<SkillLevelDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Set up persona listener only once
+    if (!_listenerSetup) {
+      ref.listen<PersonaState>(personaProvider, (previous, next) {
+        if (previous?.isParentMode != next.isParentMode) {
+          print(
+              '🔄 Persona changed in testing, refetching skill level data. Parent mode: ${next.isParentMode}');
+          final isParentMode = next.isParentMode;
+          setState(() {
+            _skillLevelFuture = getSkillLevelByTrackId(widget.skillTrackId,
+                isParentMode: isParentMode);
+          });
+        }
+      });
+      _listenerSetup = true;
+    }
+
     print('Building SkillLevelDetailScreen widget...');
     return Scaffold(
       appBar: AppBar(title: Text('Skill Level Details')),

@@ -7,6 +7,8 @@ class ChatMessage {
   final bool saved;
   final List<dynamic> resources;
   final List<dynamic> buttons;
+  final String? audioUrl;
+  final Map<String, dynamic>? audioMetadata;
 
   ChatMessage({
     required this.id,
@@ -17,6 +19,8 @@ class ChatMessage {
     this.saved = false,
     this.resources = const [],
     this.buttons = const [],
+    this.audioUrl,
+    this.audioMetadata,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -24,11 +28,14 @@ class ChatMessage {
       id: json['id'] ?? '',
       message: json['message'] ?? '',
       isUser: json['is_user'] ?? false,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
       messageType: json['message_type'] ?? 'text',
       saved: json['saved'] ?? false,
       resources: json['resources'] ?? [],
       buttons: json['buttons'] ?? [],
+      audioUrl: json['audio_url'],
+      audioMetadata: json['audio_metadata'],
     );
   }
 
@@ -42,6 +49,11 @@ class ChatMessage {
       'saved': saved,
       'resources': resources,
       'buttons': buttons,
+      'audio_url': audioUrl,
+      'audio_metadata': audioMetadata,
     };
   }
+
+  // Helper method to check if this message has audio
+  bool get hasAudio => audioUrl != null && audioUrl!.isNotEmpty;
 }

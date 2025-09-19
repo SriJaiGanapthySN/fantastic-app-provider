@@ -98,7 +98,7 @@ class UserGuide extends StatefulWidget {
         builder: (context) => UserGuide(
           steps: [
             GuideStep(
-              title: "Chat with Fabulous",
+              title: "Chat with Fantastic",
               description:
                   "Get personalized guidance and support from your AI companion. Ask questions, share thoughts, and get motivation.",
               target: _buildPreviewCard(

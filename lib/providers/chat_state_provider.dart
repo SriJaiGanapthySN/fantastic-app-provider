@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fantastic_app_riverpod/models/chat_message_data.dart';
 
 // Chat state class to hold all the state variables
 class ChatState {
-  final List<Widget> messages;
+  final List<ChatMessageData> messageData; // Changed from Widget to data
+  final List<Widget> messages; // Keep widgets for backward compatibility
   final bool isThresholdReached;
   final bool isMessageBoxVisible;
   final double opacity;
@@ -20,6 +22,7 @@ class ChatState {
   final bool isQuestion;
 
   ChatState({
+    required this.messageData,
     required this.messages,
     this.isThresholdReached = false,
     this.isMessageBoxVisible = false,
@@ -38,6 +41,7 @@ class ChatState {
 
   // Create a new state based on the current one
   ChatState copyWith({
+    List<ChatMessageData>? messageData,
     List<Widget>? messages,
     bool? isThresholdReached,
     bool? isMessageBoxVisible,
@@ -54,6 +58,7 @@ class ChatState {
     bool? isQuestion,
   }) {
     return ChatState(
+      messageData: messageData ?? this.messageData,
       messages: messages ?? this.messages,
       isThresholdReached: isThresholdReached ?? this.isThresholdReached,
       isMessageBoxVisible: isMessageBoxVisible ?? this.isMessageBoxVisible,
@@ -78,7 +83,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Timer? _timer;
   bool _disposed = false;
 
-  ChatNotifier(this.ref) : super(ChatState(messages: [])) {
+  ChatNotifier(this.ref) : super(ChatState(messageData: [], messages: [])) {
     _initialize();
   }
 
@@ -147,6 +152,40 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void addMessage(Widget message) {
     final updatedMessages = [...state.messages, message];
     state = state.copyWith(messages: updatedMessages);
+  }
+
+  // New method to add message data
+  void addMessageData(ChatMessageData messageData) {
+    final updatedMessageData = [...state.messageData, messageData];
+    state = state.copyWith(messageData: updatedMessageData);
+  }
+
+  // Method to mark a message as animated
+  void markMessageAsAnimated(String messageId) {
+    final updatedMessageData = state.messageData.map((msg) {
+      if (msg.id == messageId) {
+        return msg.copyWith(hasAnimated: true);
+      }
+      return msg;
+    }).toList();
+    state = state.copyWith(messageData: updatedMessageData);
+  }
+
+  void removeLastMessage() {
+    if (state.messages.isNotEmpty) {
+      final updatedMessages =
+          state.messages.sublist(0, state.messages.length - 1);
+      state = state.copyWith(messages: updatedMessages);
+    }
+  }
+
+  // New method to remove last message data
+  void removeLastMessageData() {
+    if (state.messageData.isNotEmpty) {
+      final updatedMessageData =
+          state.messageData.sublist(0, state.messageData.length - 1);
+      state = state.copyWith(messageData: updatedMessageData);
+    }
   }
 
   void setIsSendingMessage(bool value) {

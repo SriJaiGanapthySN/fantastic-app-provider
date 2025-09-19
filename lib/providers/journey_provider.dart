@@ -20,7 +20,7 @@ final currentJourneyProvider =
           '', // Use imageUrl or bigImageUrl from server
       // 'subtitle':
       //     journey['subtitle'] ?? 'Build habits to help you sleep soundly',
-      // 'title': journey['title'] ?? 'A Fabulous Night',
+      // 'title': journey['title'] ?? 'AFantastic  Night',
     };
   }
   return null;

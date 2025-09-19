@@ -53,7 +53,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: selectedTab == 'General' ? Colors.red : Colors.transparent,
+                          color: selectedTab == 'General'
+                              ? Colors.red
+                              : Colors.transparent,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(12),
                             bottomLeft: Radius.circular(12),
@@ -64,7 +66,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           child: Text(
                             'General',
                             style: TextStyle(
-                              color: selectedTab == 'General' ? Colors.white : Colors.black,
+                              color: selectedTab == 'General'
+                                  ? Colors.white
+                                  : Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -81,7 +85,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: selectedTab == 'Premium' ? Colors.red : Colors.transparent,
+                          color: selectedTab == 'Premium'
+                              ? Colors.red
+                              : Colors.transparent,
                           borderRadius: const BorderRadius.only(
                             topRight: Radius.circular(12),
                             bottomRight: Radius.circular(12),
@@ -92,7 +98,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           child: Text(
                             'Premium',
                             style: TextStyle(
-                              color: selectedTab == 'Premium' ? Colors.white : Colors.black,
+                              color: selectedTab == 'Premium'
+                                  ? Colors.white
+                                  : Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -109,13 +117,16 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.star, color: Colors.amber),
-                  title: const Text('Rate The Fabulous!'),
+                  title: const Text('Rate The Fantastic!'),
                   onTap: () {},
                 ),
                 const Divider(),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text('GENERAL SETTINGS', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text('GENERAL SETTINGS',
+                      style: TextStyle(
+                          color: Colors.grey, fontWeight: FontWeight.bold)),
                 ),
                 ListTile(
                   title: Row(
@@ -128,8 +139,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   onTap: () {},
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text('NOTIFICATION SETTINGS', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text('NOTIFICATION SETTINGS',
+                      style: TextStyle(
+                          color: Colors.grey, fontWeight: FontWeight.bold)),
                 ),
                 SwitchListTile(
                   title: const Text('Notification Sound'),
@@ -160,7 +174,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 SwitchListTile(
                   title: const Text('Background Music'),
-                  subtitle: const Text('Soothing background music will play during the routine'),
+                  subtitle: const Text(
+                      'Soothing background music will play during the routine'),
                   value: backgroundMusic,
                   onChanged: (val) {
                     setState(() {
@@ -193,7 +208,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   leading: const Icon(Icons.camera_alt, color: Colors.purple),
                   title: const Text('Follow us on Instagram'),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.yellow,
                       borderRadius: BorderRadius.circular(8),
@@ -209,15 +225,19 @@ class _SettingsPageState extends State<SettingsPage> {
                   onTap: () {},
                 ),
                 ListTile(
-                  leading: const Icon(Icons.alternate_email, color: Colors.lightBlue),
+                  leading: const Icon(Icons.alternate_email,
+                      color: Colors.lightBlue),
                   title: const Text('Follow us on X (Twitter)'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {},
                 ),
                 const Divider(),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text('ACCOUNT', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text('ACCOUNT',
+                      style: TextStyle(
+                          color: Colors.grey, fontWeight: FontWeight.bold)),
                 ),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.black),
@@ -230,8 +250,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const Divider(),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text('PRIVACY', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text('PRIVACY',
+                      style: TextStyle(
+                          color: Colors.grey, fontWeight: FontWeight.bold)),
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),

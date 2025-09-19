@@ -44,7 +44,8 @@ class _PremiumButtonState extends State<PremiumButton> {
       _isPremium = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Payment Successful! Premium features unlocked.')),
+      const SnackBar(
+          content: Text('Payment Successful! Premium features unlocked.')),
     );
   }
 
@@ -60,10 +61,7 @@ class _PremiumButtonState extends State<PremiumButton> {
       'amount': 10000, // Amount in paise (100 INR)
       'name': 'Premium Features',
       'description': 'Unlock all premium features',
-      'prefill': {
-        'email': 'test@example.com',
-        'name': 'Test User'
-      }
+      'prefill': {'email': 'test@example.com', 'name': 'Test User'}
     };
 
     try {
@@ -104,16 +102,18 @@ class _PremiumButtonState extends State<PremiumButton> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _isPremium ? null : () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => UpgradesScreen(
-                  onPremiumStatusChanged: _handlePremiumStatusChanged,
-                ),
-              ),
-            );
-          },
+          onTap: _isPremium
+              ? null
+              : () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UpgradesScreen(
+                        onPremiumStatusChanged: _handlePremiumStatusChanged,
+                      ),
+                    ),
+                  );
+                },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -140,7 +140,7 @@ class _PremiumButtonState extends State<PremiumButton> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _isPremium ? 'Premium Unlocked' : 'Fabulous Premium',
+                        _isPremium ? 'Premium Unlocked' : 'Fantastic Premium',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -149,7 +149,9 @@ class _PremiumButtonState extends State<PremiumButton> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _isPremium ? 'Enjoy all premium features' : 'Transformation is just moments away',
+                        _isPremium
+                            ? 'Enjoy all premium features'
+                            : 'Transformation is just moments away',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 14,
@@ -170,4 +172,4 @@ class _PremiumButtonState extends State<PremiumButton> {
       ),
     );
   }
-} 
+}

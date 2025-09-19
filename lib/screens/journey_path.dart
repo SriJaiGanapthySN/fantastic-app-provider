@@ -74,7 +74,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  "A Fabulous Night",
+                  "A FFantastic Night",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

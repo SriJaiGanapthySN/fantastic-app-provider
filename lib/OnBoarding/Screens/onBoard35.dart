@@ -108,7 +108,7 @@ class _OnBoard35 extends ConsumerState<Onboard35> {
                       ),
                       SizedBox(height: 30),
                       Text(
-                        "By using your full name, you help our fun and supportive community thrive. Our Fabulous community embraces positivity based on trust and encouragement. We're in this together.",
+                        "By using your full name, you help our fun and supportive community thrive. Our Fantastic community embraces positivity based on trust and encouragement. We're in this together.",
                         style: TextStyle(
                           fontSize: 15,
                           color: Colors.white,

@@ -34,9 +34,9 @@ class _Onboard1State extends State<Onboard1> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 160.0,left: 40,right: 40),
+            padding: const EdgeInsets.only(bottom: 160.0, left: 40, right: 40),
             child: Text(
-              'Enter the Fabulous world , where you will turn your intentions into into reality',
+              'Enter the Fantastic world , where you will turn your intentions into into reality',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -46,5 +46,3 @@ class _Onboard1State extends State<Onboard1> {
     );
   }
 }
-
-

@@ -2,10 +2,12 @@ import 'package:fantastic_app_riverpod/widgets/chat/empty_chat_placeholder.dart'
 import 'package:fantastic_app_riverpod/widgets/chat/message_input_bar.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/message_list.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/voice_input_overlay.dart';
+import 'package:fantastic_app_riverpod/models/chat_message_data.dart';
 import 'package:flutter/material.dart';
 
 class ChatContent extends StatelessWidget {
-  final List<Widget> messages;
+  final List<ChatMessageData> messageData;
+  final List<Widget> messages; // Keep for backward compatibility
   final ScrollController scrollController;
   final TextEditingController textController;
   final FocusNode focusNode;
@@ -20,6 +22,7 @@ class ChatContent extends StatelessWidget {
   final bool showMindText;
   final bool showContainer;
   final AnimationController mindController;
+  final TickerProvider tickerProvider;
   final Function() toggleMessageBoxVisibility;
   final Function(LongPressStartDetails) onLongPressStart;
   final Function(LongPressEndDetails) onLongPressEnd;
@@ -27,6 +30,7 @@ class ChatContent extends StatelessWidget {
 
   const ChatContent({
     super.key,
+    required this.messageData,
     required this.messages,
     required this.scrollController,
     required this.textController,
@@ -42,6 +46,7 @@ class ChatContent extends StatelessWidget {
     required this.showMindText,
     required this.showContainer,
     required this.mindController,
+    required this.tickerProvider,
     required this.toggleMessageBoxVisibility,
     required this.onLongPressStart,
     required this.onLongPressEnd,
@@ -53,7 +58,7 @@ class ChatContent extends StatelessWidget {
     return Stack(
       children: [
         // Empty chat placeholder when no messages
-        if (messages.isEmpty)
+        if (messageData.isEmpty)
           EmptyChatPlaceholder(
             shouldShowTextBox: shouldShowTextBox,
             showContainer: showContainer,
@@ -63,11 +68,12 @@ class ChatContent extends StatelessWidget {
 
         Column(
           children: [
-            // Messages list
+            // Messages list using new message data approach
             MessageList(
-              messages: messages,
+              messageData: messageData,
               scrollController: scrollController,
               isLongPressing: isLongPressing,
+              tickerProvider: tickerProvider,
             ),
             // Message input bar component
             MessageInputBar(

@@ -150,7 +150,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       final voiceText =
           ref.read(speechRecognitionProvider).recognizedText.value;
       if (voiceText.isNotEmpty) {
-        _sendMessage(voiceText);
+        _sendVoiceMessage(
+            voiceText); // Use voice message method for voice input
       }
 
       ref.read(chatProvider.notifier).onLongPressEnd();
@@ -200,8 +201,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     _textController.clear();
 
-    // Use the message provider to send the message with animations
-    ref.read(messageProvider(this).notifier).sendMessage(finalMessageText);
+    // Use the message provider to send the message with animations (text input)
+    ref
+        .read(messageProvider(this).notifier)
+        .sendMessage(finalMessageText, inputType: 'text');
+
+    _scrollToBottomWithKeyboard();
+  }
+
+  void _sendVoiceMessage(String voiceText) async {
+    if (!mounted) return;
+
+    final trimmedVoiceText = voiceText.trim();
+    if (trimmedVoiceText.isEmpty) return;
+
+    // Use the message provider to send the voice message with animations (voice input)
+    ref
+        .read(messageProvider(this).notifier)
+        .sendMessage(trimmedVoiceText, inputType: 'voice');
 
     _scrollToBottomWithKeyboard();
   }
@@ -317,6 +334,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       .padding
                       .top, // Offset by app bar height + safe area
               child: ChatContent(
+                messageData: chatState.messageData,
                 messages: chatState.messages,
                 scrollController: _scrollController,
                 textController: _textController,
@@ -332,6 +350,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 showMindText: chatState.showMindText,
                 showContainer: chatState.showContainer,
                 mindController: animationManager.mindController,
+                tickerProvider: this,
                 toggleMessageBoxVisibility: _toggleMessageBoxVisibility,
                 onLongPressStart: _onLongPressStart,
                 onLongPressEnd: _onLongPressEnd,
