@@ -5,10 +5,13 @@ import 'package:fantastic_app_riverpod/widgets/common/generalcompenentfornotes.d
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:video_player/video_player.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/taskreveal_video_provider.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 
-class Taskreveal extends StatefulWidget {
+class Taskreveal extends ConsumerStatefulWidget {
   final String email;
 
   const Taskreveal({
@@ -17,10 +20,10 @@ class Taskreveal extends StatefulWidget {
   });
 
   @override
-  State<Taskreveal> createState() => _TaskrevealState();
+  ConsumerState<Taskreveal> createState() => _TaskrevealState();
 }
 
-class _TaskrevealState extends State<Taskreveal> {
+class _TaskrevealState extends ConsumerState<Taskreveal> {
   bool _isAnimationVisible = false;
   int _currentIndex = 0; // Track the current task
   bool _isSnoozed = false; // Track snooze state
@@ -90,6 +93,17 @@ class _TaskrevealState extends State<Taskreveal> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _audioPlayer.dispose();
+    _audioPlayerBgm.dispose();
+    _audioPlayerDrag.dispose();
+
+    // Ensure video is properly disposed when screen is disposed
+    try {
+      ref.read(taskRevealVideoProvider.notifier).dispose();
+    } catch (e) {
+      print('Error disposing video provider: $e');
+    }
+
     super.dispose();
   }
 
@@ -171,7 +185,12 @@ class _TaskrevealState extends State<Taskreveal> {
     });
 
     // Stop the audio when snooze is pressed
-    _stopAudio();
+    if (_isSnoozed) {
+      _stopAudio();
+      ref.read(taskRevealVideoProvider.notifier).pauseVideo();
+    } else {
+      ref.read(taskRevealVideoProvider.notifier).resumeVideo();
+    }
   }
 
   double _calculateDynamicMaxChildSize(
@@ -244,6 +263,8 @@ class _TaskrevealState extends State<Taskreveal> {
 
   @override
   Widget build(BuildContext context) {
+    final videoState = ref.watch(taskRevealVideoProvider);
+
     return Scaffold(
       appBar: null, // Hide the app bar
       body: GestureDetector(
@@ -282,6 +303,51 @@ class _TaskrevealState extends State<Taskreveal> {
 
             Text(currentTask["voiceUrl"]);
 
+            // Initialize video controller when the task changes
+            String? videoUrl = currentTask['videoUrl'];
+            String? fallbackImageUrl = currentTask['iconUrl'];
+
+            // Only initialize video if URL exists and is different from current
+            if (videoUrl != null &&
+                videoUrl.isNotEmpty &&
+                videoState.currentVideoUrl != videoUrl &&
+                mounted) {
+              Future.microtask(() {
+                if (mounted) {
+                  try {
+                    ref
+                        .read(taskRevealVideoProvider.notifier)
+                        .initializeVideo(videoUrl);
+                  } catch (e) {
+                    print('Error initializing video: $e');
+                  }
+                }
+              });
+            }
+
+            // Show loading screen while video is loading (but only for a reasonable time)
+            if (videoState.isLoading &&
+                videoUrl != null &&
+                videoUrl.isNotEmpty &&
+                !videoState.hasError) {
+              return const Scaffold(
+                backgroundColor: Colors.black,
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Colors.white),
+                      SizedBox(height: 20),
+                      Text(
+                        'Loading video...',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             // Play audio when background is shown
             if (!_isSnoozed) {
               _playAudio(currentTask['voiceUrl']);
@@ -294,12 +360,100 @@ class _TaskrevealState extends State<Taskreveal> {
 
             return Stack(
               children: [
-                // Background Image
+                // Background Video or Fallback Image
                 Positioned.fill(
-                  child: Image.network(
-                    currentTask['backgroundLink'],
-                    fit: BoxFit.cover,
-                  ),
+                  child: videoState.isInitialized &&
+                          videoState.controller != null
+                      ? Builder(
+                          builder: (context) {
+                            try {
+                              return FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width:
+                                      videoState.controller!.value.size.width,
+                                  height:
+                                      videoState.controller!.value.size.height,
+                                  child: VideoPlayer(videoState.controller!),
+                                ),
+                              );
+                            } catch (e) {
+                              print('Video rendering error: $e');
+                              return Container(
+                                color: Colors.grey[900],
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.video_call_outlined,
+                                    color: Colors.white,
+                                    size: 50,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        )
+                      : videoState.hasError ||
+                              (videoUrl == null || videoUrl.isEmpty)
+                          ? (fallbackImageUrl != null &&
+                                  fallbackImageUrl.isNotEmpty)
+                              ? Image.network(
+                                  fallbackImageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.black,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.error,
+                                          color: Colors.white,
+                                          size: 50,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  color: Colors.black,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.video_library,
+                                          color: Colors.white,
+                                          size: 50,
+                                        ),
+                                        if (videoState.hasError) ...[
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            'Video Error: ${videoState.errorMessage}',
+                                            style: const TextStyle(
+                                                color: Colors.white),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                )
+                          : Container(
+                              color: Colors.black,
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                        color: Colors.white),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      'Preparing video...',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                 ),
                 // Title Positioned 20% from the Top
                 Positioned(

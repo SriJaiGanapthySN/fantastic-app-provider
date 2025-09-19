@@ -124,6 +124,36 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
             ),
           ),
           centerTitle: true,
+          actions: [
+            // Persona toggle button
+            Consumer(
+              builder: (context, ref, child) {
+                final personaState = ref.watch(personaProvider);
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      personaState.isParentMode ? 'Parent' : 'Regular',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color.fromARGB(255, 21, 21, 21),
+                      ),
+                    ),
+                    Switch(
+                      value: personaState.isParentMode,
+                      onChanged: (value) {
+                        ref.read(personaProvider.notifier).togglePersona();
+                        // Challenges will automatically refetch via provider listener
+                      },
+                      activeColor: Colors.indigo,
+                      inactiveThumbColor: Colors.grey,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
         drawer: Drawer(
           child: ListView(

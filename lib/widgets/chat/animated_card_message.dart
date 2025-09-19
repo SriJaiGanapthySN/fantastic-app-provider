@@ -7,12 +7,14 @@ class AnimatedCardMessage extends StatefulWidget {
   final bool isQuestion;
   final String apiResponse;
   final Function()? onAnimationComplete;
+  final bool shouldAnimate; // Add flag to control animation
 
   const AnimatedCardMessage({
     Key? key,
     this.isQuestion = false,
     this.apiResponse = "Here is a reference to the card",
     this.onAnimationComplete,
+    this.shouldAnimate = true, // Default to true for new messages
   }) : super(key: key);
 
   @override
@@ -73,9 +75,14 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
     print(
         '🎯 Initial states - isGlowVisible: $isGlowVisible, isQuesAnimVisible: $isQuesAnimVisible');
 
-    // Begin animations sequence
+    // Begin animations sequence only if shouldAnimate is true
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAnimations();
+      if (widget.shouldAnimate) {
+        _startAnimations();
+      } else {
+        // For existing messages, skip animations and show final state
+        _showFinalState();
+      }
     });
   }
 
@@ -86,7 +93,8 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
         .clamp(3000, 8000); // 50ms per character, min 3s, max 8s
 
     // Show localized sparkles first - like Claude's thinking animation
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(Duration(milliseconds: 1500), () {
+      // Increased from 500 to 1500ms
       if (mounted) {
         print('🔮 Starting sparkle animation');
         setState(() {
@@ -96,7 +104,8 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
     });
 
     // Initial fade sequence
-    Future.delayed(Duration(milliseconds: 2100), () {
+    Future.delayed(Duration(milliseconds: 3100), () {
+      // Increased from 2100 to 3100ms
       if (mounted) {
         print('🌟 Starting background fade');
         setState(() {
@@ -115,8 +124,9 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
       }
     });
 
-    // Box visibility - start showing the box earlier
-    Future.delayed(Duration(milliseconds: widget.isQuestion ? 2800 : 2400), () {
+    // Box visibility - start showing the box with increased delay
+    Future.delayed(Duration(milliseconds: widget.isQuestion ? 3800 : 3400), () {
+      // Increased by 1000ms
       if (mounted) {
         print('💬 Showing message box');
         setState(() {
@@ -139,6 +149,24 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
         });
       }
     });
+  }
+
+  void _showFinalState() {
+    // Set final state immediately for existing messages
+    setState(() {
+      iconOpacity = 1.0;
+      repeatGlow = false;
+      isGlowVisible = false;
+      isBoxVisible = true;
+      opacityLevel = 0.0; // Fully faded
+      isQuesAnimVisible = false;
+      showLocalSparkles = false;
+    });
+
+    // Call completion callback immediately
+    if (widget.onAnimationComplete != null) {
+      widget.onAnimationComplete!();
+    }
   }
 
   void _decreaseOpacity() async {

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // --- REQUIRED: Adjust these import paths to match your project structure ---
 import '../providers/challengeProvider.dart'; // For Skill, SkillGoal, getSkillByTrackId, etc.
+import '../providers/discover_provider.dart'; // For persona state
 // Assuming your auth provider is here (used alias to avoid potential name clashes)
 
 // --- OPTIONAL: Persistence Imports (replace/remove as needed) ---
@@ -45,6 +46,7 @@ class _GoalScreenState extends ConsumerState<GoalScreen> {
   String? _error;
   int _completedCount =
       0; // Tracks completed steps for this specific goal instance
+  bool _listenerSetup = false; // Flag to ensure listener is set up only once
 
   @override
   void initState() {
@@ -66,9 +68,12 @@ class _GoalScreenState extends ConsumerState<GoalScreen> {
       _completedCount = prefs.getInt('progress_${widget.skillTrackId}') ?? 0;
 
       // Fetch Skill and SkillGoal details concurrently using your provider functions
+      // Get current persona state
+      final isParentMode = ref.read(personaProvider).isParentMode;
+
       final results = await Future.wait([
-        getSkillByTrackId(widget.skillTrackId),
-        getSkillGoalByTrackId(widget.skillTrackId),
+        getSkillByTrackId(widget.skillTrackId, isParentMode: isParentMode),
+        getSkillGoalByTrackId(widget.skillTrackId, isParentMode: isParentMode),
       ]);
 
       if (!mounted) return; // Check again after async operation
@@ -229,6 +234,18 @@ class _GoalScreenState extends ConsumerState<GoalScreen> {
   // --- Main Build Method ---
   @override
   Widget build(BuildContext context) {
+    // Set up persona listener only once
+    if (!_listenerSetup) {
+      ref.listen<PersonaState>(personaProvider, (previous, next) {
+        if (previous?.isParentMode != next.isParentMode) {
+          print(
+              '🔄 Persona changed in MeditateTask, refetching goal data. Parent mode: ${next.isParentMode}');
+          _fetchGoalData();
+        }
+      });
+      _listenerSetup = true;
+    }
+
     // Define colors used in the UI
     const Color primaryGreen = Color(0xFF00695C); // Tealish green
     const Color buttonGreen =

@@ -109,6 +109,19 @@ class DiscoverUIState {
   }
 }
 
+// Persona State for toggle between parent and regular mode
+class PersonaState {
+  final bool isParentMode;
+
+  PersonaState({required this.isParentMode});
+
+  PersonaState copyWith({bool? isParentMode}) {
+    return PersonaState(
+      isParentMode: isParentMode ?? this.isParentMode,
+    );
+  }
+}
+
 // Define images for each button
 final List<String> buttonImages = [
   "assets/images/image (5).png", // Journeys image
@@ -126,6 +139,24 @@ final activitiesServiceProvider =
     Provider<GuidedActivities>((ref) => GuidedActivities());
 final challengesServiceProvider =
     Provider<ChallengesService>((ref) => ChallengesService());
+
+// Persona provider
+final personaProvider =
+    StateNotifierProvider<PersonaNotifier, PersonaState>((ref) {
+  return PersonaNotifier();
+});
+
+class PersonaNotifier extends StateNotifier<PersonaState> {
+  PersonaNotifier() : super(PersonaState(isParentMode: false));
+
+  void togglePersona() {
+    state = state.copyWith(isParentMode: !state.isParentMode);
+  }
+
+  void setParentMode(bool isParent) {
+    state = state.copyWith(isParentMode: isParent);
+  }
+}
 
 // UI state provider
 final discoverUIStateProvider =
@@ -225,24 +256,72 @@ class ActivitiesNotifier extends StateNotifier<ActivitiesState> {
 final challengesProvider =
     StateNotifierProvider<ChallengesNotifier, ChallengesState>((ref) {
   final challengesService = ref.watch(challengesServiceProvider);
-  return ChallengesNotifier(challengesService);
+  return ChallengesNotifier(challengesService, ref);
 });
 
 class ChallengesNotifier extends StateNotifier<ChallengesState> {
   final ChallengesService _challengesService;
+  final Ref _ref;
 
-  ChallengesNotifier(this._challengesService)
-      : super(ChallengesState(challenges: [], isLoading: true));
+  ChallengesNotifier(this._challengesService, this._ref)
+      : super(ChallengesState(challenges: [], isLoading: true)) {
+    // Listen to persona changes and refetch automatically
+    _ref.listen<PersonaState>(personaProvider, (previous, next) {
+      if (previous?.isParentMode != next.isParentMode) {
+        fetchChallenges();
+      }
+    });
+  }
 
   Future<void> fetchChallenges() async {
     try {
       state = state.copyWith(isLoading: true);
-      final challenges = await _challengesService.fetchChallenges();
+      final isParentMode = _ref.read(personaProvider).isParentMode;
+      final challenges =
+          await _challengesService.fetchChallenges(isParentMode: isParentMode);
       state = state.copyWith(challenges: challenges, isLoading: false);
     } catch (e) {
       state = state.copyWith(
           error: 'Error fetching challenges: $e', isLoading: false);
     }
+  }
+
+  // Manual refresh method
+  Future<void> refreshChallenges() async {
+    await fetchChallenges();
+  }
+
+  // Fetch user-specific challenges
+  Future<void> fetchUserChallenges(String email) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final isParentMode = _ref.read(personaProvider).isParentMode;
+      final challenges = await _challengesService.fetchUserChallenges(email,
+          isParentMode: isParentMode);
+      state = state.copyWith(challenges: challenges, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+          error: 'Error fetching user challenges: $e', isLoading: false);
+    }
+  }
+
+  // Fetch unreleased challenge for user
+  Future<void> fetchUnreleasedChallenge(String email) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final isParentMode = _ref.read(personaProvider).isParentMode;
+      final challenges = await _challengesService
+          .fetchUnreleasedChallenge(email, isParentMode: isParentMode);
+      state = state.copyWith(challenges: challenges, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+          error: 'Error fetching unreleased challenge: $e', isLoading: false);
+    }
+  }
+
+  // Reset challenges state
+  void resetChallenges() {
+    state = ChallengesState(challenges: [], isLoading: false);
   }
 }
 

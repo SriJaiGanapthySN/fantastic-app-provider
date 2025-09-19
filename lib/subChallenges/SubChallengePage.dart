@@ -514,7 +514,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                             horizontal: tagBarHPadding,
                             vertical: tagBarVPadding),
                         child: Text(
-                          "Fabulous Challenge",
+                          "Fantastic Challenge",
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,

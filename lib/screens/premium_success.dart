@@ -46,7 +46,7 @@ class PremiumSuccessDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  "Enter Fabulous Premium",
+                  "Enter Fantastic Premium",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -74,7 +74,7 @@ class PremiumSuccessDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  "The Fabulous Journey Awaits!",
+                  "The Fantastic Journey Awaits!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -113,4 +113,4 @@ class PremiumSuccessDialog extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -9,6 +9,7 @@ import 'package:html/parser.dart' as html_parser; // For parsing HTML
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../providers/challengeProvider.dart'; // Needed for getSkillLevelByTrackId and SkillLevel model
+import '../providers/discover_provider.dart'; // For persona state
 import 'MeditateTask.dart'; // Assuming GoalScreen is here
 
 class MeditationActionScreen extends ConsumerStatefulWidget {
@@ -46,12 +47,15 @@ class _MeditationActionScreenState
 
   // --- For Done Button Animation ---
   bool _showDoneButton = false;
+  bool _listenerSetup = false; // Flag to ensure listener is set up only once
 
   @override
   void initState() {
     super.initState();
     _sheetController.addListener(_handleSheetSizeChange);
-    _skillLevelFuture = getSkillLevelByTrackId(widget.objectId);
+    final isParentMode = ref.read(personaProvider).isParentMode;
+    _skillLevelFuture =
+        getSkillLevelByTrackId(widget.objectId, isParentMode: isParentMode);
     // WebViewController setup is unchanged
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -222,6 +226,22 @@ class _MeditationActionScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Set up persona listener only once
+    if (!_listenerSetup) {
+      ref.listen<PersonaState>(personaProvider, (previous, next) {
+        if (previous?.isParentMode != next.isParentMode) {
+          print(
+              '🔄 Persona changed in MediatatingPage, refetching skill level data. Parent mode: ${next.isParentMode}');
+          final isParentMode = next.isParentMode;
+          setState(() {
+            _skillLevelFuture = getSkillLevelByTrackId(widget.objectId,
+                isParentMode: isParentMode);
+          });
+        }
+      });
+      _listenerSetup = true;
+    }
+
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final topPadding = MediaQuery.of(context).padding.top;

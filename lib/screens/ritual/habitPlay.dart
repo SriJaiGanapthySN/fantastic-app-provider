@@ -8,8 +8,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 import '../../providers/nav_provider.dart';
 import '../../providers/habit_play_provider.dart';
+import '../../providers/habitplay_video_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 class habitPlay extends ConsumerStatefulWidget {
@@ -77,6 +79,15 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
     _stopBgm();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _audioPlayerBgm.dispose();
+
+    // Ensure video is properly disposed when screen is disposed
+    try {
+      ref.read(habitPlayVideoProvider.notifier).dispose();
+    } catch (e) {
+      print('HabitPlay: Error disposing video provider: $e');
+    }
+
     super.dispose();
   }
 
@@ -144,6 +155,13 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   void _onSnoozePressed() {
     final isSnoozed = !ref.read(isTaskSnoozedProvider);
     ref.read(isTaskSnoozedProvider.notifier).state = isSnoozed;
+
+    // Pause/resume video based on snooze state
+    if (isSnoozed) {
+      ref.read(habitPlayVideoProvider.notifier).pauseVideo();
+    } else {
+      ref.read(habitPlayVideoProvider.notifier).resumeVideo();
+    }
   }
 
   double _calculateDynamicMaxChildSize(
@@ -247,6 +265,7 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
     final notesData = ref.watch(notesDataProvider);
     final habitCoachingData = ref.watch(habitCoachingDataProvider);
     final audioState = ref.watch(audioStateProvider);
+    final videoState = ref.watch(habitPlayVideoProvider);
 
     return Scaffold(
       appBar: null, // Hide the app bar
@@ -284,6 +303,51 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
             var currentTask = tasks[currentTaskIndex];
 
+            // Initialize video controller when the task changes
+            String? videoUrl = currentTask['videoUrl'];
+            String? fallbackImageUrl = currentTask['backgroundLink'];
+
+            // Only initialize video if URL exists and is different from current
+            if (videoUrl != null &&
+                videoUrl.isNotEmpty &&
+                videoState.currentVideoUrl != videoUrl &&
+                mounted) {
+              Future.microtask(() {
+                if (mounted) {
+                  try {
+                    ref
+                        .read(habitPlayVideoProvider.notifier)
+                        .initializeVideo(videoUrl);
+                  } catch (e) {
+                    print('HabitPlay: Error initializing video: $e');
+                  }
+                }
+              });
+            }
+
+            // Show loading screen while video is loading (but only for a reasonable time)
+            if (videoState.isLoading &&
+                videoUrl != null &&
+                videoUrl.isNotEmpty &&
+                !videoState.hasError) {
+              return const Scaffold(
+                backgroundColor: Colors.black,
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Colors.white),
+                      SizedBox(height: 20),
+                      Text(
+                        'Loading your habit...',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             // Stop audio when the last task's animation finishes
             if (currentTaskIndex == tasks.length - 1 &&
                 (audioState['isAnimationVisible'] ?? false)) {
@@ -292,25 +356,102 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
             return Stack(
               children: [
+                // Background Video or Fallback Image/Color
                 Positioned.fill(
-                    child: (currentTask.containsKey('backgroundLink') &&
-                            currentTask['backgroundLink'] != null &&
-                            currentTask['backgroundLink'].isNotEmpty)
-                        ? Image.network(
-                            currentTask['backgroundLink'],
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            color: colorFromString(currentTask[
-                                'color']), // Dynamic background color
-                            child: Center(
-                              child: SvgPicture.network(
-                                currentTask["iconUrl"],
-                                width: 100,
-                                height: 100,
+                  child: videoState.isInitialized &&
+                          videoState.controller != null
+                      ? Builder(
+                          builder: (context) {
+                            try {
+                              return FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width:
+                                      videoState.controller!.value.size.width,
+                                  height:
+                                      videoState.controller!.value.size.height,
+                                  child: VideoPlayer(videoState.controller!),
+                                ),
+                              );
+                            } catch (e) {
+                              print('Video rendering error: $e');
+                              return Container(
+                                color: Colors.grey[900],
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.video_call_outlined,
+                                    color: Colors.white,
+                                    size: 50,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        )
+                      : videoState.hasError ||
+                              (videoUrl == null || videoUrl.isEmpty)
+                          ? (fallbackImageUrl != null &&
+                                  fallbackImageUrl.isNotEmpty)
+                              ? Image.network(
+                                  fallbackImageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color:
+                                          colorFromString(currentTask['color']),
+                                      child: Center(
+                                        child: SvgPicture.network(
+                                          currentTask["iconUrl"],
+                                          width: 100,
+                                          height: 100,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  color: colorFromString(currentTask['color']),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SvgPicture.network(
+                                          currentTask["iconUrl"],
+                                          width: 100,
+                                          height: 100,
+                                        ),
+                                        if (videoState.hasError) ...[
+                                          const SizedBox(height: 20),
+                                          Text(
+                                            'Video Error: ${videoState.errorMessage}',
+                                            style: const TextStyle(
+                                                color: Colors.white),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                )
+                          : Container(
+                              color: colorFromString(currentTask['color']),
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                        color: Colors.white),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      'Preparing video...',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          )),
+                ),
 
                 // Title Positioned 20% from the Top
                 Positioned(

@@ -5,6 +5,7 @@ import '../models/chat_message.dart';
 
 class ChatApiService {
   static const String baseUrl = 'https://mental-health.rohanrichard.com';
+  static const String audioUrl = 'https://mental-health.rohanrichard.com/audio';
   static const String tokenKey = 'access_token';
 
   // Store access token
@@ -80,12 +81,13 @@ class ChatApiService {
   }
 
   // Send message to API and return parsed streaming response
-  Future<Map<String, dynamic>?> sendMessage(String message) async {
+  Future<Map<String, dynamic>?> sendMessage(String message,
+      {String inputType = 'text'}) async {
     try {
       final token = await _getToken();
       if (token == null) return null;
 
-      print('📤 Sending message: $message');
+      print('📤 Sending message: $message (input type: $inputType)');
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/'),
@@ -96,14 +98,14 @@ class ChatApiService {
         },
         body: jsonEncode({
           'message': message,
-          'message_type': 'text',
+          'message_type': inputType == 'voice' ? 'voice' : 'text',
         }),
       );
 
       print('📥 Send message response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        return _parseStreamingResponse(response.body);
+        return _parseStreamingResponse(response.body, inputType);
       }
 
       print('❌ Send message failed with status: ${response.statusCode}');
@@ -116,15 +118,17 @@ class ChatApiService {
 
   // Send message with streaming callback for real-time updates
   Future<Map<String, dynamic>?> sendMessageWithStreaming(
-      String message,
-      Function(String chunk) onChunk,
-      Function() onComplete,
-      ) async {
+    String message,
+    Function(String chunk) onChunk,
+    Function() onComplete, {
+    String inputType = 'text',
+  }) async {
     try {
       final token = await _getToken();
       if (token == null) return null;
 
-      print('📤 Sending message with streaming: $message');
+      print(
+          '📤 Sending message with streaming: $message (input type: $inputType)');
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/'),
@@ -135,14 +139,15 @@ class ChatApiService {
         },
         body: jsonEncode({
           'message': message,
-          'message_type': 'text',
+          'message_type': inputType == 'voice' ? 'voice' : 'text',
         }),
       );
 
       print('📥 Send message response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        return _parseStreamingResponseWithCallback(response.body, onChunk, onComplete);
+        return _parseStreamingResponseWithCallback(
+            response.body, onChunk, onComplete, inputType);
       }
 
       print('❌ Send message failed with status: ${response.statusCode}');
@@ -154,7 +159,8 @@ class ChatApiService {
   }
 
   // Parse streaming SSE response
-  Map<String, dynamic>? _parseStreamingResponse(String responseBody) {
+  Map<String, dynamic>? _parseStreamingResponse(
+      String responseBody, String inputType) {
     try {
       final lines = responseBody.trim().split('\n');
       Map<String, dynamic>? metadata;
@@ -188,10 +194,21 @@ class ChatApiService {
       final fullAiMessage = messageChunks.join('');
       print('🤖 Complete AI message: $fullAiMessage');
 
-      // Return metadata with the complete AI message
+      // Return metadata with the complete AI message and audio URL based on input type
       if (metadata != null) {
         metadata['ai_message_content'] = fullAiMessage;
-        print('✅ Successfully parsed streaming response');
+        metadata['input_type'] = inputType;
+
+        // Only generate audio URL for voice input
+        if (inputType == 'voice') {
+          metadata['audio_url'] = getAudioUrl(fullAiMessage);
+          print(
+              '✅ Successfully parsed streaming response with audio URL for voice input');
+        } else {
+          print(
+              '✅ Successfully parsed streaming response for text input (no audio)');
+        }
+
         return metadata;
       }
 
@@ -204,10 +221,11 @@ class ChatApiService {
 
   // Parse streaming response with real-time callbacks
   Map<String, dynamic>? _parseStreamingResponseWithCallback(
-      String responseBody,
-      Function(String chunk) onChunk,
-      Function() onComplete,
-      ) {
+    String responseBody,
+    Function(String chunk) onChunk,
+    Function() onComplete,
+    String inputType,
+  ) {
     try {
       final lines = responseBody.trim().split('\n');
       Map<String, dynamic>? metadata;
@@ -226,6 +244,7 @@ class ChatApiService {
           if (metadata == null) {
             try {
               metadata = jsonDecode(content);
+              metadata!['input_type'] = inputType;
               print('📋 Parsed metadata: $metadata');
               continue;
             } catch (e) {
@@ -264,5 +283,18 @@ class ChatApiService {
   Future<bool> isAuthenticated() async {
     final token = await _getToken();
     return token != null;
+  }
+
+  // Get audio URL for a specific message or general audio
+  String getAudioUrl([String? messageText]) {
+    if (messageText != null && messageText.isNotEmpty) {
+      // URL encode the message text to handle special characters
+      final encodedText = Uri.encodeComponent(messageText);
+      final fullUrl = '$audioUrl?text=$encodedText';
+      print('🎵 Generated audio URL: $fullUrl');
+      return fullUrl;
+    }
+    print('🎵 Using default audio URL: $audioUrl');
+    return audioUrl;
   }
 }

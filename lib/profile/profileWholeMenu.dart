@@ -68,7 +68,7 @@ class CustomScreen extends StatelessWidget {
                             left: 16,
                             bottom: 20,
                             child: Text(
-                              'A Fabulous Night',
+                              'A Fantastic Night',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.05,
@@ -149,8 +149,8 @@ class CustomScreen extends StatelessWidget {
                       menuRow(
                           context,
                           Icons.app_blocking,
-                          'Discover Fabulous Apps',
-                          DummyPage(title: 'Discover Fabulous Apps')),
+                          'Discover Fantastic Apps',
+                          DummyPage(title: 'Discover Fantastic Apps')),
                       SizedBox(
                         height: 8,
                       ),

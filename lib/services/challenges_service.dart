@@ -1,31 +1,53 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:fantastic_app_riverpod/models/skill.dart';
+import 'package:fantastic_app_riverpod/models/skill.dart' as skill_model;
 
 class ChallengesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Fetch all challenges from the skillTrack collection
-  Future<List<Map<String, dynamic>>> fetchChallenges() async {
+  Future<List<Map<String, dynamic>>> fetchChallenges(
+      {bool isParentMode = false}) async {
     try {
+      final collectionName = isParentMode ? 'parent-skillTrack' : 'skillTrack';
+
+      print('🚀 ChallengesService: Fetching from collection: $collectionName');
+      print('🚀 ChallengesService: Parent mode: $isParentMode');
+
       // Fetch documents from the 'skillTrack' collection where type contains 'challenge'
       final querySnapshot = await _firestore
-          .collection('Parent-skillTrack')
+          .collection(collectionName)
           .where('type', isGreaterThanOrEqualTo: 'FREE_CHALLENGE')
           // Efficient string prefix query
           .get();
 
-      return querySnapshot.docs
+      print(
+          '🚀 ChallengesService: Found ${querySnapshot.docs.length} challenges');
+
+      final results = querySnapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
+
+      // Log the skillTrackIds that were found
+      if (results.isNotEmpty) {
+        print('🚀 ChallengesService: Sample challenge IDs:');
+        for (int i = 0; i < results.length && i < 5; i++) {
+          final challenge = results[i];
+          final id = challenge['objectId'] ?? challenge['id'] ?? 'NO_ID';
+          final title = challenge['title'] ?? 'NO_TITLE';
+          print('   - $id (title: $title)');
+        }
+      }
+
+      return results;
     } catch (e) {
+      print('💥 ChallengesService: Error fetching challenges: $e');
       return [];
     }
   }
 
   // Fetch a single unreleased challenge for a specific user
-  Future<List<Map<String, dynamic>>> fetchUnreleasedChallenge(
-      String email) async {
+  Future<List<Map<String, dynamic>>> fetchUnreleasedChallenge(String email,
+      {bool isParentMode = false}) async {
     try {
       final querySnapshot = await _firestore
           .collection('testers')
@@ -45,7 +67,8 @@ class ChallengesService {
   }
 
   // Fetch all challenges for a specific user
-  Future<List<Map<String, dynamic>>> fetchUserChallenges(String email) async {
+  Future<List<Map<String, dynamic>>> fetchUserChallenges(String email,
+      {bool isParentMode = false}) async {
     try {
       final querySnapshot = await _firestore
           .collection('testers')
@@ -83,10 +106,12 @@ class ChallengesService {
   }
 
   // Add a challenge to a user's collection
-  Future<void> addChallenge(String id, String email) async {
+  Future<void> addChallenge(String id, String email,
+      {bool isParentMode = false}) async {
     try {
+      final collectionName = isParentMode ? 'parent-skillTrack' : 'skillTrack';
       // Reference to the document in skillTrack collection
-      final challengeDocRef = _firestore.collection('skillTrack').doc(id);
+      final challengeDocRef = _firestore.collection(collectionName).doc(id);
 
       // Fetch the document snapshot
       final docSnapshot = await challengeDocRef.get();
@@ -115,7 +140,7 @@ class ChallengesService {
   }
 
   // Get skills associated with a specific challenge
-  Future<List<Skill>> getChallengeSkills(
+  Future<List<skill_model.Skill>> getChallengeSkills(
       String challengeId, String email) async {
     try {
       final skillCollection =
@@ -129,8 +154,9 @@ class ChallengesService {
         return [];
       }
 
-      final List<Skill> skills = querySnapshot.docs
-          .map((doc) => Skill.fromMap(doc.data() as Map<String, dynamic>))
+      final List<skill_model.Skill> skills = querySnapshot.docs
+          .map((doc) =>
+              skill_model.Skill.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
 
       // Sort skills by position
@@ -142,11 +168,13 @@ class ChallengesService {
   }
 
   // Add skills for a challenge
-  Future<List<Skill>> addChallengeSkills(
-      String challengeId, String email) async {
+  Future<List<skill_model.Skill>> addChallengeSkills(
+      String challengeId, String email,
+      {bool isParentMode = false}) async {
     try {
+      final collectionName = isParentMode ? 'parent-skill' : 'skill';
       // Reference to the 'skill' collection
-      final skillCollection = _firestore.collection('Parent-skill');
+      final skillCollection = _firestore.collection(collectionName);
 
       // Query to fetch skills associated with this challenge
       final querySnapshot = await skillCollection
@@ -157,8 +185,9 @@ class ChallengesService {
         return [];
       }
 
-      final List<Skill> skills = querySnapshot.docs
-          .map((doc) => Skill.fromMap(doc.data() as Map<String, dynamic>))
+      final List<skill_model.Skill> skills = querySnapshot.docs
+          .map((doc) =>
+              skill_model.Skill.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
 
       // Reference to the user's skill collection
@@ -167,7 +196,8 @@ class ChallengesService {
 
       // Add each skill with proper metadata
       for (var skill in skills) {
-        final totalLevels = await getTotalSkillLevels(skill.objectId);
+        final totalLevels = await getTotalSkillLevels(skill.objectId,
+            isParentMode: isParentMode);
         final skillData = {
           ...skill.toMap(),
           'isCompleted': false,
@@ -185,10 +215,12 @@ class ChallengesService {
   }
 
   // Get total number of skill levels for a skill
-  Future<int> getTotalSkillLevels(String skillId) async {
+  Future<int> getTotalSkillLevels(String skillId,
+      {bool isParentMode = false}) async {
     try {
+      final collectionName = isParentMode ? 'parent-skillLevel' : 'skillLevel';
       var querySnapshot = await _firestore
-          .collection('Parent-skillLevel')
+          .collection(collectionName)
           .where('skillId', isEqualTo: skillId)
           .get();
       return querySnapshot.docs.length;
@@ -199,10 +231,12 @@ class ChallengesService {
 
   // Add skill levels for a challenge
   Future<List<String>> addChallengeSkillLevels(
-      List<Skill> skills, String email) async {
+      List<skill_model.Skill> skills, String email,
+      {bool isParentMode = false}) async {
     try {
       final List<String> goals = [];
-      final skillLevelCollection = _firestore.collection('Parent-skillLevel');
+      final collectionName = isParentMode ? 'parent-skillLevel' : 'skillLevel';
+      final skillLevelCollection = _firestore.collection(collectionName);
       final userSkillLevelPath =
           _firestore.collection('testers').doc(email).collection('skillLevel');
 
@@ -241,11 +275,13 @@ class ChallengesService {
   }
 
   // Add skill goals for a challenge
-  Future<void> addChallengeGoals(List<String> goalIds, String email) async {
+  Future<void> addChallengeGoals(List<String> goalIds, String email,
+      {bool isParentMode = false}) async {
     try {
       final userSkillGoalPath =
           _firestore.collection('testers').doc(email).collection('skillGoal');
-      final skillGoalCollection = _firestore.collection('Parent-skillGoal');
+      final collectionName = isParentMode ? 'skillGoal' : 'skillGoal';
+      final skillGoalCollection = _firestore.collection(collectionName);
 
       // Reference to user's skillLevel collection to find related data
       final userSkillLevelPath =

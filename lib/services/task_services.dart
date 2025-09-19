@@ -37,7 +37,7 @@ class TaskServices {
     try {
       // One-time fetch of documents where isHidden == false
       QuerySnapshot snapshot = await _firestore
-          .collection('habits')
+          .collection('habits-new')
           .where('isHidden', isEqualTo: false)
           .get();
 
@@ -119,7 +119,7 @@ class TaskServices {
       print('TaskServices: Adding habit $id for user: $email');
 
       // Reference to the document path '/skillGoal/{id}'
-      final habitDocRef = _firestore.collection('habits').doc(id);
+      final habitDocRef = _firestore.collection('habits-new').doc(id);
 
       // Fetch the document snapshot
       final docSnapshot = await habitDocRef.get();
