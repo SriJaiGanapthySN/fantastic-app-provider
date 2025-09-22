@@ -24,8 +24,12 @@ class MessageBuilder extends ConsumerStatefulWidget {
 
 class _MessageBuilderState extends ConsumerState<MessageBuilder> {
   late MessageFactory messageFactory;
-  bool _showPreviews = false;
-  double _previewsOpacity = 0.0;
+  bool _showJourneyPreview = false;
+  bool _showHabitPreview = false;
+  double _journeyOpacity = 0.0;
+  double _habitOpacity = 0.0;
+  Offset _journeyOffset = const Offset(0, 0.06);
+  Offset _habitOffset = const Offset(0, 0.08);
 
   @override
   void initState() {
@@ -69,17 +73,34 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
                   .read(chatProvider.notifier)
                   .markMessageAsAnimated(messageData.id);
             }
-            // After the animated text finishes, reveal previews with a fade-in
+            // Reveal previews with smooth staggered fade + slide
             setState(() {
-              _showPreviews = true;
+              _showJourneyPreview = true;
+              _journeyOpacity = 0.0;
+              _journeyOffset = const Offset(0, 0.06);
             });
-            // Delay to trigger AnimatedOpacity nicely
-            Future.delayed(const Duration(milliseconds: 30), () {
-              if (mounted) {
+            Future.delayed(const Duration(milliseconds: 16), () {
+              if (!mounted) return;
+              setState(() {
+                _journeyOpacity = 1.0;
+                _journeyOffset = Offset.zero;
+              });
+            });
+
+            Future.delayed(const Duration(milliseconds: 120), () {
+              if (!mounted) return;
+              setState(() {
+                _showHabitPreview = true;
+                _habitOpacity = 0.0;
+                _habitOffset = const Offset(0, 0.08);
+              });
+              Future.delayed(const Duration(milliseconds: 16), () {
+                if (!mounted) return;
                 setState(() {
-                  _previewsOpacity = 1.0;
+                  _habitOpacity = 1.0;
+                  _habitOffset = Offset.zero;
                 });
-              }
+              });
             });
           },
         );
@@ -107,25 +128,37 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         messageWidget,
-        if (messageData.type == ChatMessageType.cardMessage && _showPreviews) ...[
+        if (messageData.type == ChatMessageType.cardMessage && _showJourneyPreview) ...[
           const SizedBox(height: 8),
-          AnimatedOpacity(
-            opacity: _previewsOpacity,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOut,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: const [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: _ChatJourneyPreview(),
-                ),
-                SizedBox(height: 8),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: _ChatHabitPreview(),
-                ),
-              ],
+          AnimatedSlide(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            offset: _journeyOffset,
+            child: AnimatedOpacity(
+              opacity: _journeyOpacity,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: _ChatJourneyPreview(),
+              ),
+            ),
+          ),
+        ],
+        if (messageData.type == ChatMessageType.cardMessage && _showHabitPreview) ...[
+          const SizedBox(height: 8),
+          AnimatedSlide(
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic,
+            offset: _habitOffset,
+            child: AnimatedOpacity(
+              opacity: _habitOpacity,
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOut,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: _ChatHabitPreview(),
+              ),
             ),
           ),
         ],

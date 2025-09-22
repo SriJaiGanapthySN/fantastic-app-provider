@@ -87,10 +87,20 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
   }
 
   void _startAnimations() {
-    // Calculate animation duration based on API response length
-    int responseLength = widget.apiResponse.length;
-    int estimatedReadingTimeMs = (responseLength * 50)
-        .clamp(3000, 8000); // 50ms per character, min 3s, max 8s
+    // Calculate animation duration closer to TextAnimator timings
+    // TextAnimator config: characterDelay: 10ms, spaceDelay: 100ms,
+    // incomingEffect: 800ms, atRestEffect: 750ms (plays once)
+    final int responseLength = widget.apiResponse.length;
+    final int spacesCount = RegExp(r'\s').allMatches(widget.apiResponse).length;
+    const int incomingMs = 800;
+    const int atRestMs = 750;
+    const int perCharMs = 10;
+    const int perSpaceMs = 100;
+
+    int computedMs = incomingMs + atRestMs +
+        (responseLength * perCharMs) + (spacesCount * perSpaceMs) + 200; // small buffer
+
+    int estimatedReadingTimeMs = computedMs.clamp(2500, 20000);
 
     // Show localized sparkles first - like Claude's thinking animation
     Future.delayed(Duration(milliseconds: 1500), () {
@@ -257,8 +267,8 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
     double finalHeight = textHeight + totalPadding;
 
     // Set reasonable bounds
-    double minHeight = getResponsiveHeight(context, 0.08); // Smaller minimum
-    double maxHeight = getResponsiveHeight(context, 0.40); // Reasonable maximum
+    double minHeight = getResponsiveHeight(context, 0.10);
+    double maxHeight = getResponsiveHeight(context, 0.65); // Allow taller bubbles for long text
 
     return finalHeight.clamp(minHeight, maxHeight);
   }
@@ -332,17 +342,24 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
               ),
             // ======================================================
             if (isBoxVisible) ...[
-              // Dynamic height based on actual text content
+              // Dynamic height based on actual text content, with smooth size transitions
               LayoutBuilder(
                 builder: (context, constraints) {
                   double dynamicHeight = calculateDynamicHeight(context);
 
-                  return Lottie.asset(
-                    "assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json",
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
                     width: getResponsiveWidth(context, 0.87),
                     height: dynamicHeight,
-                    fit: BoxFit.fill,
-                    repeat: false,
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Lottie.asset(
+                        "assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json",
+                        fit: BoxFit.fill,
+                        repeat: false,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -350,12 +367,19 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                 builder: (context, constraints) {
                   double dynamicHeight = calculateDynamicHeight(context);
 
-                  return Lottie.asset(
-                    "assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json",
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
                     width: getResponsiveWidth(context, 0.87),
                     height: dynamicHeight,
-                    fit: BoxFit.fill,
-                    repeat: repeatGlow,
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Lottie.asset(
+                        "assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json",
+                        fit: BoxFit.fill,
+                        repeat: repeatGlow,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -371,37 +395,35 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Flexible(
-                        child: Container(
-                          margin: EdgeInsets.only(
-                            top: getResponsivePadding(context, 10),
-                            left: getResponsivePadding(context, 5),
-                            right: getResponsivePadding(context, 10),
-                          ),
-                          child: TextAnimator(
-                            widget.apiResponse,
-                            incomingEffect: WidgetTransitionEffects(
-                                blur: const Offset(10, 10),
-                                duration: const Duration(milliseconds: 800)),
-                            outgoingEffect: WidgetTransitionEffects(
-                                blur: const Offset(10, 10)),
-                            atRestEffect: WidgetRestingEffects.wave(
-                                effectStrength: 0.2,
-                                duration: Duration(milliseconds: 750),
-                                numberOfPlays: 1),
-                            style: GoogleFonts.lato(
-                                textStyle: TextStyle(
-                              fontFamily: "Original",
-                              letterSpacing: 1,
-                              fontSize: getResponsiveFontSize(context, 14),
-                              color: Colors.white,
-                            )),
-                            textAlign: TextAlign.left,
-                            initialDelay: const Duration(milliseconds: 0),
-                            spaceDelay: const Duration(milliseconds: 100),
-                            characterDelay: const Duration(milliseconds: 10),
-                            maxLines: null, // Allow unlimited lines
-                          ),
+                      Container(
+                        margin: EdgeInsets.only(
+                          top: getResponsivePadding(context, 10),
+                          left: getResponsivePadding(context, 5),
+                          right: getResponsivePadding(context, 10),
+                        ),
+                        child: TextAnimator(
+                          widget.apiResponse,
+                          incomingEffect: WidgetTransitionEffects(
+                              blur: const Offset(10, 10),
+                              duration: const Duration(milliseconds: 800)),
+                          outgoingEffect: WidgetTransitionEffects(
+                              blur: const Offset(10, 10)),
+                          atRestEffect: WidgetRestingEffects.wave(
+                              effectStrength: 0.2,
+                              duration: Duration(milliseconds: 750),
+                              numberOfPlays: 1),
+                          style: GoogleFonts.lato(
+                              textStyle: TextStyle(
+                            fontFamily: "Original",
+                            letterSpacing: 1,
+                            fontSize: getResponsiveFontSize(context, 14),
+                            color: Colors.white,
+                          )),
+                          textAlign: TextAlign.left,
+                          initialDelay: const Duration(milliseconds: 0),
+                          spaceDelay: const Duration(milliseconds: 100),
+                          characterDelay: const Duration(milliseconds: 10),
+                          maxLines: null, // Allow unlimited lines
                         ),
                       ),
 
