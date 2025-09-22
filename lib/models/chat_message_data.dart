@@ -46,4 +46,5 @@ enum ChatMessageType {
   userMessage,
   cardMessage,
   audioMessage,
+  animatedObjectCard,
 }

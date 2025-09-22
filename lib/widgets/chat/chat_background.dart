@@ -10,31 +10,34 @@ class ChatBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/bg.jpeg'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-        if (isThresholdReached)
+    return Container(
+      color: Colors.black, // Prevent flash during image load
+      child: Stack(
+        children: [
           Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Lottie.asset(
-                'assets/animations/All Lottie/BG Glow Gradient/3 in 1/BG Glow Gradient.json',
-                fit: BoxFit.cover,
-                repeat: false,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 500),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bg.jpeg'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
-      ],
+          if (isThresholdReached)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Lottie.asset(
+                  'assets/animations/All Lottie/BG Glow Gradient/3 in 1/BG Glow Gradient.json',
+                  fit: BoxFit.cover,
+                  repeat: false,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

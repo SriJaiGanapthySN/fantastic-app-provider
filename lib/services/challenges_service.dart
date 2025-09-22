@@ -40,7 +40,7 @@ class ChallengesService {
 
       return results;
     } catch (e) {
-      print('💥 ChallengesService: Error fetching challenges: $e');
+      print('ChallengesService: Error fetching challenges: $e');
       return [];
     }
   }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fantastic_app_riverpod/providers/audio_player_provider.dart';
 
-class AudioPlayerWidget extends StatefulWidget {
+class AudioPlayerWidget extends ConsumerWidget {
   final String audioUrl;
   final Color? backgroundColor;
   final Color? iconColor;
   final Color? progressColor;
   final double? height;
+  final bool autoPlay;
 
   const AudioPlayerWidget({
     Key? key,
@@ -16,97 +17,8 @@ class AudioPlayerWidget extends StatefulWidget {
     this.iconColor,
     this.progressColor,
     this.height = 60,
+    this.autoPlay = true,
   }) : super(key: key);
-
-  @override
-  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
-}
-
-class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayer _audioPlayer;
-  bool _isLoading = false;
-  bool _isPlaying = false;
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
-  StreamSubscription<PlayerState>? _playerStateSubscription;
-  StreamSubscription<Duration?>? _durationSubscription;
-  StreamSubscription<Duration>? _positionSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _audioPlayer = AudioPlayer();
-    _initializeAudio();
-  }
-
-  Future<void> _initializeAudio() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // Listen to player state changes
-      _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
-        if (mounted) {
-          setState(() {
-            _isPlaying = state.playing;
-            _isLoading = state.processingState == ProcessingState.loading ||
-                state.processingState == ProcessingState.buffering;
-          });
-        }
-      });
-
-      // Listen to duration changes
-      _durationSubscription = _audioPlayer.durationStream.listen((duration) {
-        if (mounted && duration != null) {
-          setState(() {
-            _duration = duration;
-          });
-        }
-      });
-
-      // Listen to position changes
-      _positionSubscription = _audioPlayer.positionStream.listen((position) {
-        if (mounted) {
-          setState(() {
-            _position = position;
-          });
-        }
-      });
-
-      // Set the audio source
-      await _audioPlayer.setUrl(widget.audioUrl);
-
-      setState(() {
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading audio: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _playPause() async {
-    try {
-      if (_isPlaying) {
-        await _audioPlayer.pause();
-      } else {
-        await _audioPlayer.play();
-      }
-    } catch (e) {
-      print('Error playing/pausing audio: $e');
-    }
-  }
-
-  Future<void> _seek(Duration position) async {
-    try {
-      await _audioPlayer.seek(position);
-    } catch (e) {
-      print('Error seeking audio: $e');
-    }
-  }
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
@@ -116,64 +28,69 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   @override
-  void dispose() {
-    _playerStateSubscription?.cancel();
-    _durationSubscription?.cancel();
-    _positionSubscription?.cancel();
-    _audioPlayer.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioPlayerState = ref.watch(audioPlayerProvider(audioUrl));
+    final audioPlayerNotifier =
+        ref.read(audioPlayerProvider(audioUrl).notifier);
 
-  @override
-  Widget build(BuildContext context) {
+    if (audioPlayerState.duration == Duration.zero &&
+        !audioPlayerState.isLoading) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
-      height: widget.height,
+      height: height,
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? Colors.grey[100],
+        color: backgroundColor ?? Colors.grey[100],
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          // Play/Pause Button
           GestureDetector(
-            onTap: _isLoading ? null : _playPause,
+            onTap: audioPlayerState.isLoading
+                ? null
+                : () {
+                    if (audioPlayerState.isPlaying) {
+                      audioPlayerNotifier.pause();
+                    } else {
+                      audioPlayerNotifier.play();
+                    }
+                  },
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: widget.iconColor ?? Colors.blue,
+                color: iconColor ?? Colors.blue,
                 shape: BoxShape.circle,
               ),
-              child: _isLoading
-                  ? Padding(
-                      padding: const EdgeInsets.all(12.0),
+              child: audioPlayerState.isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(12.0),
                       child: CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 2,
                       ),
                     )
                   : Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                      audioPlayerState.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
                       color: Colors.white,
                       size: 20,
                     ),
             ),
           ),
-
           const SizedBox(width: 12),
-
-          // Progress Section
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Progress Bar
                 SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: widget.progressColor ?? Colors.blue,
+                    activeTrackColor: progressColor ?? Colors.blue,
                     inactiveTrackColor: Colors.grey[300],
-                    thumbColor: widget.progressColor ?? Colors.blue,
+                    thumbColor: progressColor ?? Colors.blue,
                     thumbShape:
                         const RoundSliderThumbShape(enabledThumbRadius: 6),
                     overlayShape:
@@ -181,33 +98,35 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     trackHeight: 3,
                   ),
                   child: Slider(
-                    value: _duration.inMilliseconds > 0
-                        ? _position.inMilliseconds.toDouble()
-                        : 0.0,
-                    max: _duration.inMilliseconds.toDouble(),
-                    onChanged: _isLoading
+                    value: audioPlayerState.position.inMilliseconds
+                        .toDouble()
+                        .clamp(
+                            0.0,
+                            audioPlayerState.duration.inMilliseconds
+                                .toDouble()),
+                    max: audioPlayerState.duration.inMilliseconds.toDouble(),
+                    onChanged: audioPlayerState.isLoading
                         ? null
                         : (value) {
-                            _seek(Duration(milliseconds: value.round()));
+                            audioPlayerNotifier
+                                .seek(Duration(milliseconds: value.round()));
                           },
                   ),
                 ),
-
-                // Time Labels
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _formatDuration(_position),
+                        _formatDuration(audioPlayerState.position),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                         ),
                       ),
                       Text(
-                        _formatDuration(_duration),
+                        _formatDuration(audioPlayerState.duration),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

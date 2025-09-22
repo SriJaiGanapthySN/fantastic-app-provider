@@ -18,11 +18,11 @@ dependencies {
 
 android {
     namespace = "com.example.fantastic_app_riverpod"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = 'com.fab.app'
-        minSdk = 23
+        minSdkVersion = flutter.minSdkVersion
         targetSdk = 35
         versionCode = 17
         versionName = '1.0.1'

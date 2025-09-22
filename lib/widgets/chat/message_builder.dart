@@ -33,6 +33,10 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
     final shouldAnimate =
         !messageData.hasAnimated; // Only animate if not already animated
 
+    print('📱 Building message of type: ${messageData.type}');
+    print('📱 Audio URL: ${messageData.audioUrl}');
+    print('📱 Should animate: $shouldAnimate');
+
     Widget messageWidget;
 
     switch (messageData.type) {
@@ -53,6 +57,7 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
 
       case ChatMessageType.cardMessage:
         messageWidget = messageFactory.createCardMessage(
+          id: messageData.id,
           isQuestion: messageData.isQuestion,
           apiResponse: messageData.text,
           shouldAnimate: shouldAnimate,
@@ -62,6 +67,28 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
               ref
                   .read(chatProvider.notifier)
                   .markMessageAsAnimated(messageData.id);
+
+              // Turn off background animation when bot message animation completes
+              if (!messageData.isUser) {
+                ref.read(chatProvider.notifier).setThresholdReached(false);
+              }
+            }
+          },
+        );
+        break;
+
+      case ChatMessageType.animatedObjectCard:
+        messageWidget = messageFactory.createAnimatedObjectCardMessage(
+          id: messageData.id,
+          shouldAnimate: shouldAnimate,
+          onAnimationComplete: () {
+            if (shouldAnimate) {
+              ref
+                  .read(chatProvider.notifier)
+                  .markMessageAsAnimated(messageData.id);
+              if (!messageData.isUser) {
+                ref.read(chatProvider.notifier).setThresholdReached(false);
+              }
             }
           },
         );
@@ -69,6 +96,7 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
 
       case ChatMessageType.audioMessage:
         messageWidget = messageFactory.createAudioMessage(
+          id: messageData.id,
           messageText: messageData.text,
           audioUrl: messageData.audioUrl ?? '',
           isUser: messageData.isUser,
@@ -79,6 +107,11 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
               ref
                   .read(chatProvider.notifier)
                   .markMessageAsAnimated(messageData.id);
+
+              // Turn off background animation when bot message animation completes
+              if (!messageData.isUser) {
+                ref.read(chatProvider.notifier).setThresholdReached(false);
+              }
             }
           },
         );

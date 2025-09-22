@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/app_user.dart';
 import '../repos/auth_repo.dart';
 import '../repos/firebase_auth_repo.dart';
+import '../services/token_service.dart';
 
 // Define an Auth State
 class AuthState {
@@ -117,13 +118,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Then complete the logout process
       await authRepo.logout();
 
-      // Clear any remaining cached data
+      // Clear any remaining cached data including SharedPreferences
+      await TokenService.clearAllData();
+
       // This ensures no persistent state remains after logout
       print('User successfully logged out');
     } catch (e) {
       print('Error during logout: ${e.toString()}');
       // Still ensure state is reset even if there's an error
       state = const AuthState();
+      // Also clear SharedPreferences even if Firebase logout fails
+      try {
+        await TokenService.clearAllData();
+      } catch (clearError) {
+        print('Error clearing local data: $clearError');
+      }
     }
   }
 }

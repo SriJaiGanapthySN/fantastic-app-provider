@@ -750,8 +750,8 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
                                                                 currentTask[
                                                                     'completionLottieUrl'],
                                                                 repeat: false,
-                                                                width: 150,
-                                                                height: 150,
+                                                                width: 550,
+                                                                height: 550,
                                                               )
                                                             : Container(),
                                                       ),

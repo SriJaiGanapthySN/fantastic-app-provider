@@ -6,8 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/auth_provider.dart';
 import '../widgets/index.dart';
+import '../services/chat_api_service.dart';
+import '../services/token_service.dart';
+import 'main_screen.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key, required this.togglePages});
@@ -18,8 +20,12 @@ class CreateAccountPage extends StatefulWidget {
 }
 
 class CreateAccountPageState extends State<CreateAccountPage> {
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  String _selectedGender = 'Male';
   bool _passwordVisible = true;
   bool _isOtpVerified = false;
+  bool _isRegistering = false; // Add loading state
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -31,6 +37,8 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     _passwordController.dispose();
     _nameController.dispose();
     _otpController.dispose();
+    _ageController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -44,6 +52,9 @@ class CreateAccountPageState extends State<CreateAccountPage> {
             children: [
               _buildDisplayHeading(),
               _buildNameTextBox(),
+              _buildAgeTextBox(),
+              _buildGenderDropdown(),
+              _buildLocationTextBox(),
               _buildEmailTextBox(),
               _buildOtpTextBox(),
               _buildPasswordTextBox(),
@@ -60,6 +71,16 @@ class CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   // Widget methods
+  Widget _buildLocationTextBox() {
+    return _buildTextBox(
+      controller: _locationController,
+      labelText: "Location",
+      hintText: "Enter your location",
+      icon: Icons.location_on,
+      obscureText: false,
+    );
+  }
+
   Widget _buildDisplayHeading() {
     return const Padding(
       padding: EdgeInsets.all(18.0),
@@ -83,6 +104,48 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       hintText: "Enter name",
       icon: Icons.person_outlined,
       obscureText: false,
+    );
+  }
+
+  Widget _buildAgeTextBox() {
+    return _buildTextBox(
+      controller: _ageController,
+      labelText: "Age",
+      hintText: "Enter age",
+      icon: Icons.cake_outlined,
+      obscureText: false,
+    );
+  }
+
+  Widget _buildGenderDropdown() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SizedBox(
+        width: 350,
+        child: DropdownButtonFormField<String>(
+          value: _selectedGender,
+          decoration: InputDecoration(
+            labelText: "Gender",
+            prefixIcon: const Icon(Icons.wc),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            fillColor: Theme.of(context).colorScheme.surface,
+            filled: true,
+          ),
+          items: ["Male", "Female", "Other"].map((gender) {
+            return DropdownMenuItem<String>(
+              value: gender,
+              child: Text(gender),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedGender = value ?? 'Male';
+            });
+          },
+        ),
+      ),
     );
   }
 
@@ -160,7 +223,12 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     return Consumer(
       builder: (context, ref, child) {
         return ColoredButton(
-          onPressed: () => _register(ref),
+          onPressed: _isRegistering
+              ? null
+              : () {
+                  print('🔘 Create Account button pressed');
+                  _register(ref);
+                },
           labelText: "Create Account",
         );
       },
@@ -222,7 +290,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
         showSnackBar(
             context, "Request timed out. Please try again.", Colors.red);
       } else {
-        showSnackBar(context, "Invalid E-Mail Address ❌", Colors.red);
+        showSnackBar(context, "Invalid E-Mail Address ", Colors.red);
       }
     } catch (error) {
       if (context.mounted) {
@@ -256,11 +324,11 @@ class CreateAccountPageState extends State<CreateAccountPage> {
         setState(() {
           _isOtpVerified = true;
         });
-        showSnackBar(context, "OTP verified ✅", Colors.green);
+        showSnackBar(context, "OTP verified ", Colors.green);
       } else if (res["data"] == "Invalid OTP" && context.mounted) {
-        showSnackBar(context, "Invalid OTP ❌", Colors.red);
+        showSnackBar(context, "Invalid OTP ", Colors.red);
       } else if (res["data"] == "OTP Expired" && context.mounted) {
-        showSnackBar(context, "OTP Expired ⚠️", Colors.red);
+        showSnackBar(context, "OTP Expired ", Colors.red);
       } else {
         return;
       }
@@ -270,28 +338,137 @@ class CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   void _register(WidgetRef ref) async {
+    print('_register method called');
+
+    // Set loading state
+    setState(() {
+      _isRegistering = true;
+    });
+
     final String name = _nameController.text.trim();
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
+    final String age = _ageController.text.trim();
+    final String gender = _selectedGender;
+    final String location = _locationController.text.trim();
+
+    print(
+        '📋 Registration data: name=$name, email=$email, age=$age, gender=$gender, location=$location');
+    print('OTP verified: $_isOtpVerified');
 
     if (!_isOtpVerified) {
+      setState(() {
+        _isRegistering = false;
+      });
+      if (!mounted) return;
+      print(' OTP not verified');
       showSnackBar(context, 'Please verify the OTP first', Colors.red);
       return;
     }
 
-    if (name.isNotEmpty && email.isNotEmpty && password.isNotEmpty) {
-      try {
-        await ref.read(authProvider.notifier).signup(name, email, password);
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'weak-password') {
-          showSnackBar(
-              context, 'Weak password! Choose a stronger one.', Colors.red);
-        } else {
-          showSnackBar(context, e.message ?? 'Signup failed', Colors.red);
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        age.isEmpty ||
+        gender.isEmpty ||
+        location.isEmpty) {
+      setState(() {
+        _isRegistering = false;
+      });
+      if (!mounted) return;
+      print(' Missing fields');
+      showSnackBar(context, 'Please fill in all the fields', Colors.red);
+      return;
+    }
+
+    try {
+      print('Starting API registration');
+      final apiService = ChatApiService();
+      final registrationData = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'age': age,
+        'gender': gender,
+        'location': location,
+      };
+      final apiResult = await apiService.register(registrationData);
+      print('📡 API registration result: $apiResult');
+
+      if (apiResult == null) {
+        print(' API registration failed');
+        setState(() {
+          _isRegistering = false;
+        });
+        if (!mounted) return;
+        showSnackBar(
+            context, 'Registration failed. Please try again.', Colors.red);
+        return;
+      }
+
+      print(' API registration successful');
+
+      // Now authenticate to get token
+      print('� Getting authentication token');
+      final apiToken = await apiService.authenticate(email, password);
+
+      if (apiToken != null) {
+        // Store token and user details
+        await TokenService.storeToken(apiToken);
+        await TokenService.storeUserDetails(email: email, name: name);
+
+        print('💾 Token and user details stored');
+
+        setState(() {
+          _isRegistering = false;
+        });
+
+        if (!mounted) return;
+        showSnackBar(context, 'Account created successfully!', Colors.green);
+
+        // Navigate directly to main screen
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => MainScreen()),
+          );
+        }
+      } else {
+        print(' Failed to get authentication token');
+        setState(() {
+          _isRegistering = false;
+        });
+        if (!mounted) return;
+        showSnackBar(
+            context,
+            'Registration successful but login failed. Please try logging in.',
+            Colors.orange);
+
+        // Navigate to login page
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted && widget.togglePages != null) {
+          widget.togglePages!();
         }
       }
-    } else {
-      showSnackBar(context, 'Please fill in all the fields', Colors.red);
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _isRegistering = false;
+      });
+      if (!mounted) return;
+      print(' Firebase error: ${e.code} - ${e.message}');
+      if (e.code == 'weak-password') {
+        showSnackBar(
+            context, 'Weak password! Choose a stronger one.', Colors.red);
+      } else {
+        showSnackBar(context, e.message ?? 'Registration failed', Colors.red);
+      }
+    } catch (e) {
+      setState(() {
+        _isRegistering = false;
+      });
+      print('Unexpected error during registration: $e');
+      if (!mounted) return;
+      showSnackBar(context, 'Registration failed: $e', Colors.red);
     }
   }
 

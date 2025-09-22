@@ -12,6 +12,7 @@ class ChatState {
   final double opacity;
   final bool isLongPressing;
   final String displayText;
+  final String currentText; // Add this to track text input
   final bool showContainer;
   final bool isSendingMessage;
   final bool isUserSendingMessage;
@@ -29,6 +30,7 @@ class ChatState {
     this.opacity = 0.0,
     this.isLongPressing = false,
     this.displayText = "Hold to Speak",
+    this.currentText = "", // Add default value
     this.showContainer = false,
     this.isSendingMessage = false,
     this.isUserSendingMessage = false,
@@ -48,6 +50,7 @@ class ChatState {
     double? opacity,
     bool? isLongPressing,
     String? displayText,
+    String? currentText,
     bool? showContainer,
     bool? isSendingMessage,
     bool? isUserSendingMessage,
@@ -65,6 +68,7 @@ class ChatState {
       opacity: opacity ?? this.opacity,
       isLongPressing: isLongPressing ?? this.isLongPressing,
       displayText: displayText ?? this.displayText,
+      currentText: currentText ?? this.currentText,
       showContainer: showContainer ?? this.showContainer,
       isSendingMessage: isSendingMessage ?? this.isSendingMessage,
       isUserSendingMessage: isUserSendingMessage ?? this.isUserSendingMessage,
@@ -205,6 +209,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   void handleTextInputChange(String text) {
+    state = state.copyWith(currentText: text);
+
     if (text.isNotEmpty && state.showMindText) {
       state = state.copyWith(
         showMindText: false,

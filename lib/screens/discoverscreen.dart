@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ChallengeScreen.dart';
 import 'notification_tone_screen.dart';
+import 'auth_page.dart';
 
 class Discoverscreen extends ConsumerStatefulWidget {
   final String email;
@@ -29,6 +30,8 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
   @override
   void initState() {
     super.initState();
+
+    print('DISCOVER SCREEN INITIALIZED with email: ${widget.email}');
 
     // Initialize the animation controller with a longer duration to slow down the animation
     _dataDiscoveryController = AnimationController(
@@ -262,12 +265,13 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
                   // Force refresh app state by creating a small delay
                   await Future.delayed(Duration(milliseconds: 300));
 
-                  // Close the drawer and navigate to login screen
-                  Navigator.pop(context);
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/', // Replace with your login route
-                    (route) => false,
-                  );
+                  // Navigate to auth page and clear navigation stack
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const AuthPage()),
+                      (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
               Divider(),

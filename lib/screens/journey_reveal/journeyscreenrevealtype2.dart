@@ -230,7 +230,7 @@ class _Journeyscreenrevealtype2State extends State<Journeyscreenrevealtype2>
         }
       }
     } catch (e) {
-      print('❌ Error in _handleDailyCompletion: $e');
+      print('Error in _handleDailyCompletion: $e');
       if (mounted) {
         setState(() {
           _isLoadingCompletionAction = false;

@@ -38,11 +38,13 @@ class AnimatedMessageBubble extends StatelessWidget {
               ),
               child: Text(
                 message,
-                style: TextStyle(color: textColor, height: 1.25),
+                style: TextStyle(color: textColor, height: 1.1),
                 textHeightBehavior: const TextHeightBehavior(
                   applyHeightToFirstAscent: true,
                   applyHeightToLastDescent: true,
                 ),
+                overflow: TextOverflow.visible,
+                maxLines: null,
                 softWrap: true,
               ),
             ),

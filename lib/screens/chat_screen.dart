@@ -3,9 +3,9 @@ import 'package:fantastic_app_riverpod/providers/animation_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/message_provider.dart';
 import 'package:fantastic_app_riverpod/providers/speech_recognition_provider.dart';
-import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
 import 'package:fantastic_app_riverpod/providers/nav_provider.dart';
 import 'package:fantastic_app_riverpod/screens/main_screen.dart';
+import 'package:fantastic_app_riverpod/services/token_service.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_app_bar.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_background.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_content.dart';
@@ -28,71 +28,94 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   late final ScrollController _scrollController;
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Get controllers locally instead of from providers to avoid ref usage after dispose
-    _scrollController = ref.read(scrollControllerProvider);
-    _textController = ref.read(textEditingControllerProvider);
-    _focusNode = ref.read(focusNodeProvider);
+    print('CHAT SCREEN INITIALIZED with email: ${widget.email}');
 
-    // Initialize providers that need the ticker
-    ref.read(animationProvider(this));
-    ref.read(messageProvider(this));
-
-    // Add scroll controller listener
-    _scrollController.addListener(_scrollListener);
-
-    // Add text controller listener
-    _textController.addListener(_handleTextInputChange);
-
-    // Set up animation callback for scrolling
-    _setupAnimationCallback();
-
-    // Initialize authentication
-    _initializeAuthentication();
+    // Defer initialization to avoid accessing ref during initState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeControllers();
+    });
   }
 
-  Future<void> _initializeAuthentication() async {
-    final apiService = ref.read(chatApiServiceProvider);
-    const defaultEmail = "string";
-    const defaultPassword = "string";
+  void _initializeControllers() {
+    if (!mounted || _isInitialized) return;
 
     try {
-      final token =
-          await apiService.authenticate(defaultEmail, defaultPassword);
-      if (token != null) {
-        ref.read(authStatusProvider.notifier).state = true;
-      } else {}
-    } catch (e) {}
+      // Get controllers from providers safely after build
+      _scrollController = ref.read(scrollControllerProvider);
+      _textController = ref.read(textEditingControllerProvider);
+      _focusNode = ref.read(focusNodeProvider);
+
+      // Initialize providers that need the ticker
+      ref.read(animationProvider(this));
+      ref.read(messageProvider(this));
+
+      // Add scroll controller listener
+      _scrollController.addListener(_scrollListener);
+
+      // Add text controller listener
+      _textController.addListener(_handleTextInputChange);
+
+      // Set up animation callback for scrolling
+      _setupAnimationCallback();
+
+      _isInitialized = true;
+
+      // Trigger a rebuild to show the content
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      print('Error during chat screen initialization: $e');
+      // Retry initialization after a short delay
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted && !_isInitialized) {
+          _initializeControllers();
+        }
+      });
+    }
   }
 
   void _setupAnimationCallback() {
-    final animationManager = ref.read(animationProvider(this));
-    if (animationManager != null) {
-      // Only set callback for mind animation, not ripple
-      animationManager.onAnimationStart = () {
-        // Only scroll when there are actual messages and not during voice input
-        if (ref.read(chatProvider).messages.isNotEmpty &&
-            !ref.read(chatProvider).isLongPressing) {
-          _scrollToBottom();
-        }
-      };
+    if (!mounted || !_isInitialized) return;
+
+    try {
+      final animationManager = ref.read(animationProvider(this));
+      if (animationManager != null) {
+        // Only set callback for mind animation, not ripple
+        animationManager.onAnimationStart = () {
+          // Only scroll when there are actual messages and not during voice input
+          if (mounted &&
+              ref.read(chatProvider).messages.isNotEmpty &&
+              !ref.read(chatProvider).isLongPressing) {
+            _scrollToBottom();
+          }
+        };
+      }
+    } catch (e) {
+      print('Error setting up animation callback: $e');
     }
   }
 
   void _handleTextInputChange() {
-    if (!mounted) return;
+    if (!mounted || !_isInitialized) return;
 
-    final text = _textController.text;
-    ref.read(chatProvider.notifier).handleTextInputChange(text);
+    try {
+      final text = _textController.text;
+      ref.read(chatProvider.notifier).handleTextInputChange(text);
 
-    if (text.isNotEmpty) {
-      ref.read(animationProvider(this).notifier).stopMindAnimation();
-    } else if (text.isEmpty && ref.read(chatProvider).isMessageBoxVisible) {
-      ref.read(animationProvider(this).notifier).startMindAnimation();
+      if (text.isNotEmpty) {
+        ref.read(animationProvider(this).notifier).stopMindAnimation();
+      } else if (text.isEmpty && ref.read(chatProvider).isMessageBoxVisible) {
+        ref.read(animationProvider(this).notifier).startMindAnimation();
+      }
+    } catch (e) {
+      print('Error handling text input change: $e');
     }
   }
 
@@ -113,54 +136,82 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   void dispose() {
-    _scrollController.removeListener(_scrollListener);
-    _textController.removeListener(_handleTextInputChange);
-    // Dispose animation controllers created by providers that use this state's ticker
     try {
-      final animationNotifier = ref.read(animationProvider(this).notifier);
-      animationNotifier.dispose();
-    } catch (_) {
-      // ignore — provider might not be created or already disposed
+      if (_isInitialized) {
+        _scrollController.removeListener(_scrollListener);
+        _textController.removeListener(_handleTextInputChange);
+      }
+    } catch (e) {
+      print('Error removing listeners: $e');
     }
-    try {
-      final messageNotifier = ref.read(messageProvider(this).notifier);
-      messageNotifier.dispose();
-    } catch (_) {
-      // ignore — provider might not be created or already disposed
+
+    // Only dispose if providers were initialized
+    if (_isInitialized) {
+      try {
+        final animationNotifier = ref.read(animationProvider(this).notifier);
+        animationNotifier.dispose();
+      } catch (e) {
+        print('Error disposing animation provider: $e');
+        // ignore — provider might not be created or already disposed
+      }
+
+      try {
+        final messageNotifier = ref.read(messageProvider(this).notifier);
+        messageNotifier.dispose();
+      } catch (e) {
+        print('Error disposing message provider: $e');
+        // ignore — provider might not be created or already disposed
+      }
     }
 
     super.dispose();
   }
 
   void _onLongPressStart(LongPressStartDetails details) {
-    ref.read(chatProvider.notifier).onLongPressStart();
-    ref.read(animationProvider(this).notifier).stopMindAnimation();
-    ref.read(animationProvider(this).notifier).resetRipple();
-    ref.read(speechRecognitionProvider.notifier).startListening();
+    if (!mounted || !_isInitialized) return;
+
+    try {
+      ref.read(chatProvider.notifier).onLongPressStart();
+      ref.read(animationProvider(this).notifier).stopMindAnimation();
+      ref.read(animationProvider(this).notifier).resetRipple();
+      ref.read(speechRecognitionProvider.notifier).startListening();
+    } catch (e) {
+      print('Error in long press start: $e');
+    }
   }
 
   void _onLongPressEnd(LongPressEndDetails details) {
-    if (!mounted) return;
+    if (!mounted || !_isInitialized) return;
 
-    ref.read(speechRecognitionProvider.notifier).stopListening();
+    try {
+      ref.read(speechRecognitionProvider.notifier).stopListening();
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted || !_isInitialized) return;
 
-      final voiceText =
-          ref.read(speechRecognitionProvider).recognizedText.value;
-      if (voiceText.isNotEmpty) {
-        _sendVoiceMessage(
-            voiceText); // Use voice message method for voice input
-      }
+        try {
+          final voiceText =
+              ref.read(speechRecognitionProvider).recognizedText.value;
+          if (voiceText.isNotEmpty) {
+            _sendVoiceMessage(
+                voiceText); // Use voice message method for voice input
+          }
 
-      ref.read(chatProvider.notifier).onLongPressEnd();
-      ref.read(animationProvider(this).notifier).startMindAnimation();
-      ref.read(speechRecognitionProvider.notifier).clearText();
-    });
+          ref.read(chatProvider.notifier).onLongPressEnd();
+          ref.read(animationProvider(this).notifier).startMindAnimation();
+          ref.read(speechRecognitionProvider.notifier).clearText();
+        } catch (e) {
+          print('Error in long press end delayed action: $e');
+        }
+      });
+    } catch (e) {
+      print('Error in long press end: $e');
+    }
   }
 
   void _scrollToBottom() {
+    if (!mounted || !_isInitialized) return;
+
     if (_scrollController.hasClients) {
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted && _scrollController.hasClients) {
@@ -176,6 +227,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   // Enhanced scroll to bottom that accounts for keyboard height
   void _scrollToBottomWithKeyboard() {
+    if (!mounted || !_isInitialized) return;
+
     if (_scrollController.hasClients) {
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted && _scrollController.hasClients) {
@@ -190,175 +243,243 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   void _sendMessage(String messageText) async {
-    if (!mounted) return;
+    if (!mounted || !_isInitialized) return;
 
-    final trimmedMessageText = messageText.trim();
-    final finalMessageText = _textController.text.isNotEmpty
-        ? _textController.text.trim()
-        : trimmedMessageText;
+    try {
+      final trimmedMessageText = messageText.trim();
+      final finalMessageText = _textController.text.isNotEmpty
+          ? _textController.text.trim()
+          : trimmedMessageText;
 
-    if (finalMessageText.isEmpty) return;
+      if (finalMessageText.isEmpty) return;
 
-    _textController.clear();
+      _textController.clear();
 
-    // Use the message provider to send the message with animations (text input)
-    ref
-        .read(messageProvider(this).notifier)
-        .sendMessage(finalMessageText, inputType: 'text');
+      // Use the message provider to send the message with animations (text input)
+      ref
+          .read(messageProvider(this).notifier)
+          .sendMessage(finalMessageText, inputType: 'text');
 
-    _scrollToBottomWithKeyboard();
+      _scrollToBottomWithKeyboard();
+    } catch (e) {
+      print('Error sending message: $e');
+    }
   }
 
   void _sendVoiceMessage(String voiceText) async {
-    if (!mounted) return;
+    if (!mounted || !_isInitialized) return;
 
-    final trimmedVoiceText = voiceText.trim();
-    if (trimmedVoiceText.isEmpty) return;
+    try {
+      final trimmedVoiceText = voiceText.trim();
+      if (trimmedVoiceText.isEmpty) return;
 
-    // Use the message provider to send the voice message with animations (voice input)
-    ref
-        .read(messageProvider(this).notifier)
-        .sendMessage(trimmedVoiceText, inputType: 'voice');
+      // Use the message provider to send the voice message with animations (voice input)
+      ref
+          .read(messageProvider(this).notifier)
+          .sendMessage(trimmedVoiceText, inputType: 'voice');
 
-    _scrollToBottomWithKeyboard();
+      _scrollToBottomWithKeyboard();
+    } catch (e) {
+      print('Error sending voice message: $e');
+    }
   }
 
   void _toggleMessageBoxVisibility() {
-    if (!mounted) return;
+    if (!mounted || !_isInitialized) return;
 
-    ref.read(chatProvider.notifier).toggleMessageBoxVisibility();
+    try {
+      ref.read(chatProvider.notifier).toggleMessageBoxVisibility();
 
-    final isVisible = ref.read(chatProvider).isMessageBoxVisible;
+      final isVisible = ref.read(chatProvider).isMessageBoxVisible;
 
-    if (isVisible) {
-      Future.delayed(const Duration(milliseconds: 10), () {
-        FocusScope.of(context).requestFocus(_focusNode);
-      });
+      if (isVisible) {
+        Future.delayed(const Duration(milliseconds: 10), () {
+          if (mounted) {
+            FocusScope.of(context).requestFocus(_focusNode);
+          }
+        });
 
-      if (_textController.text.isNotEmpty) {
-        ref.read(animationProvider(this).notifier).stopMindAnimation();
+        if (_textController.text.isNotEmpty) {
+          ref.read(animationProvider(this).notifier).stopMindAnimation();
+        } else {
+          ref.read(animationProvider(this).notifier).startMindAnimation();
+        }
       } else {
+        _focusNode.unfocus();
         ref.read(animationProvider(this).notifier).startMindAnimation();
       }
-    } else {
-      _focusNode.unfocus();
-      ref.read(animationProvider(this).notifier).startMindAnimation();
+    } catch (e) {
+      print('Error toggling message box visibility: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: TokenService.isAuthenticated(),
+      builder: (context, snapshot) {
+        // Always show the main scaffold with background to prevent white flash
+        return Scaffold(
+          backgroundColor: Colors.black, // Prevent white flash
+          resizeToAvoidBottomInset: true,
+          body: _buildChatBody(context, snapshot),
+        );
+      },
+    );
+  }
+
+  Widget _buildChatBody(BuildContext context, AsyncSnapshot<bool> snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Stack(
+        children: [
+          // Show background even during loading
+          const ChatBackground(isThresholdReached: false),
+          const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final isAuthenticated = snapshot.data ?? false;
+    if (!isAuthenticated) {
+      return Stack(
+        children: [
+          const ChatBackground(isThresholdReached: false),
+          const Center(
+            child: Text(
+              'Authentication required. Please log in.',
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    }
+
     final chatState = ref.watch(chatProvider);
-    final animationManager = ref.watch(animationProvider(this));
+    final animationManager =
+        _isInitialized ? ref.watch(animationProvider(this)) : null;
     final voiceText = ref.watch(speechRecognitionProvider).recognizedText.value;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: Stack(
+    // Show loading with background if not initialized yet
+    if (!_isInitialized) {
+      return Stack(
         children: [
-          // Background stretches to full screen
-          ChatBackground(
-            isThresholdReached: chatState.isThresholdReached,
-          ),
-          // App bar positioned at the top, overlays background
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            child: ChatAppBar(
-              isThresholdReached: chatState.isThresholdReached,
-              onMenuPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.white,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(16)),
-                  ),
-                  builder: (sheetContext) {
-                    final providerContainer =
-                        ProviderScope.containerOf(sheetContext, listen: false);
-                    final pageController =
-                        providerContainer.read(pageControllerProvider);
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: SvgPicture.asset('assets/icons/heart.svg',
-                              color: Colors.black),
-                          title: const Text('Rituals'),
-                          onTap: () {
-                            Navigator.pop(sheetContext);
-                            providerContainer
-                                .read(selectedTabProvider.notifier)
-                                .state = 1;
-                            pageController.jumpToPage(1);
-                          },
-                        ),
-                        ListTile(
-                          leading: SvgPicture.asset('assets/icons/route.svg',
-                              color: Colors.black),
-                          title: const Text('Journey'),
-                          onTap: () {
-                            Navigator.pop(sheetContext);
-                            providerContainer
-                                .read(selectedTabProvider.notifier)
-                                .state = 2;
-                            pageController.jumpToPage(2);
-                          },
-                        ),
-                        ListTile(
-                          leading: SvgPicture.asset('assets/icons/search.svg',
-                              color: Colors.black),
-                          title: const Text('Discover'),
-                          onTap: () {
-                            Navigator.pop(sheetContext);
-                            providerContainer
-                                .read(selectedTabProvider.notifier)
-                                .state = 3;
-                            pageController.jumpToPage(3);
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+          const ChatBackground(isThresholdReached: false),
+          const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
-          // Main chat content, offset below app bar
-          if (animationManager != null)
-            Positioned.fill(
-              top: kToolbarHeight +
-                  MediaQuery.of(context)
-                      .padding
-                      .top, // Offset by app bar height + safe area
-              child: ChatContent(
-                messageData: chatState.messageData,
-                messages: chatState.messages,
-                scrollController: _scrollController,
-                textController: _textController,
-                focusNode: _focusNode,
-                isMessageBoxVisible: chatState.isMessageBoxVisible,
-                isSendingMessage: chatState.isSendingMessage,
-                isLongPressing: chatState.isLongPressing,
-                rippleController: animationManager.rippleController,
-                opacity: chatState.opacity,
-                displayText: chatState.displayText,
-                voiceText: voiceText,
-                shouldShowTextBox: chatState.shouldShowTextBox,
-                showMindText: chatState.showMindText,
-                showContainer: chatState.showContainer,
-                mindController: animationManager.mindController,
-                tickerProvider: this,
-                toggleMessageBoxVisibility: _toggleMessageBoxVisibility,
-                onLongPressStart: _onLongPressStart,
-                onLongPressEnd: _onLongPressEnd,
-                sendMessage: _sendMessage,
-              ),
-            ),
         ],
-      ),
+      );
+    }
+
+    return Stack(
+      children: [
+        // Background stretches to full screen
+        ChatBackground(
+          isThresholdReached: chatState.isThresholdReached,
+        ),
+        // App bar positioned at the top, overlays background
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          child: ChatAppBar(
+            isThresholdReached: chatState.isThresholdReached,
+            onMenuPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (sheetContext) {
+                  final providerContainer =
+                      ProviderScope.containerOf(sheetContext, listen: false);
+                  final pageController =
+                      providerContainer.read(pageControllerProvider);
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: SvgPicture.asset('assets/icons/heart.svg',
+                            color: Colors.black),
+                        title: const Text('Rituals'),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          providerContainer
+                              .read(selectedTabProvider.notifier)
+                              .state = 1;
+                          pageController.jumpToPage(1);
+                        },
+                      ),
+                      ListTile(
+                        leading: SvgPicture.asset('assets/icons/route.svg',
+                            color: Colors.black),
+                        title: const Text('Journey'),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          providerContainer
+                              .read(selectedTabProvider.notifier)
+                              .state = 2;
+                          pageController.jumpToPage(2);
+                        },
+                      ),
+                      ListTile(
+                        leading: SvgPicture.asset('assets/icons/search.svg',
+                            color: Colors.black),
+                        title: const Text('Discover'),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          providerContainer
+                              .read(selectedTabProvider.notifier)
+                              .state = 3;
+                          pageController.jumpToPage(3);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        // Main chat content, offset below app bar
+        if (animationManager != null)
+          Positioned.fill(
+            top: kToolbarHeight +
+                MediaQuery.of(context)
+                    .padding
+                    .top, // Offset by app bar height + safe area
+            child: ChatContent(
+              messageData: chatState.messageData,
+              messages: chatState.messages,
+              scrollController: _scrollController,
+              textController: _textController,
+              focusNode: _focusNode,
+              isMessageBoxVisible: chatState.isMessageBoxVisible,
+              isSendingMessage: chatState.isSendingMessage,
+              isLongPressing: chatState.isLongPressing,
+              rippleController: animationManager.rippleController,
+              opacity: chatState.opacity,
+              displayText: chatState.displayText,
+              voiceText: voiceText,
+              shouldShowTextBox: chatState.shouldShowTextBox,
+              showMindText: chatState.showMindText,
+              showContainer: chatState.showContainer,
+              mindController: animationManager.mindController,
+              tickerProvider: this,
+              toggleMessageBoxVisibility: _toggleMessageBoxVisibility,
+              onLongPressStart: _onLongPressStart,
+              onLongPressEnd: _onLongPressEnd,
+              sendMessage: _sendMessage,
+            ),
+          ),
+      ],
     );
   }
 }

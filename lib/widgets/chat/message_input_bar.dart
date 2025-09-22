@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:widget_and_text_animator/widget_and_text_animator.dart';
 
-class MessageInputBar extends StatelessWidget {
+class MessageInputBar extends ConsumerWidget {
   final bool isMessageBoxVisible;
   final bool isSendingMessage;
   final bool isLongPressing;
@@ -30,7 +32,9 @@ class MessageInputBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatState = ref.watch(chatProvider);
+    final hasText = chatState.currentText.trim().isNotEmpty;
     return Transform.translate(
       offset: const Offset(0, -15), // Move the input bar 20 pixels up
       child: Padding(
@@ -85,6 +89,8 @@ class MessageInputBar extends StatelessWidget {
                     focusNode: focusNode,
                     maxLines: null,
                     keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.send,
+                    enabled: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       hintText: "Message",
@@ -93,15 +99,20 @@ class MessageInputBar extends StatelessWidget {
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
+                    onSubmitted: (value) {
+                      if (value.trim().isNotEmpty) {
+                        sendMessage(value);
+                      }
+                    },
                   ),
                 ),
               ),
             const SizedBox(width: 8),
-            if (isMessageBoxVisible && controller.text.isNotEmpty)
+            if (isMessageBoxVisible && !isSendingMessage)
               IconButton(
-                onPressed: () => sendMessage(controller.text),
+                onPressed: hasText ? () => sendMessage(controller.text) : null,
                 icon: const Icon(Icons.send),
-                color: Colors.white54,
+                color: hasText ? Colors.white : Colors.white38,
               ),
             if (!isMessageBoxVisible)
               Container(

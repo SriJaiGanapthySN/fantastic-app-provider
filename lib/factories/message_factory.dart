@@ -1,5 +1,6 @@
 import 'package:fantastic_app_riverpod/widgets/chat/animated_card_message.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/animatedmessagebubble.dart';
+import 'package:fantastic_app_riverpod/widgets/chat/animated_object_card_message.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/audio_message_bubble.dart';
 import 'package:flutter/material.dart';
 
@@ -19,7 +20,7 @@ class MessageFactory {
     );
 
     Animation<Offset> slideAnimation = Tween<Offset>(
-      begin: shouldAnimate ? const Offset(-10, 80) : Offset.zero,
+      begin: shouldAnimate ? const Offset(-0.2, 0.2) : Offset.zero,
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: animationController,
@@ -50,12 +51,14 @@ class MessageFactory {
   }
 
   Widget createCardMessage({
+    required String id,
     required bool isQuestion,
     String? apiResponse,
     required dynamic Function() onAnimationComplete,
     bool shouldAnimate = true, // Add flag to control animation
   }) {
     return AnimatedCardMessage(
+      id: id,
       isQuestion: isQuestion,
       apiResponse: apiResponse ?? "Here is a reference to the card",
       onAnimationComplete: onAnimationComplete,
@@ -63,47 +66,36 @@ class MessageFactory {
     );
   }
 
+  Widget createAnimatedObjectCardMessage({
+    required String id,
+    required Function() onAnimationComplete,
+    bool shouldAnimate = true,
+  }) {
+    if (!shouldAnimate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onAnimationComplete();
+      });
+    }
+    return AnimatedObjectCardMessage(
+      onAnimationComplete: shouldAnimate ? onAnimationComplete : null,
+    );
+  }
+
   Widget createAudioMessage({
+    required String id,
     required String messageText,
     required String audioUrl,
-    required Function onAnimationComplete,
+    required VoidCallback onAnimationComplete,
     bool isUser = false,
     bool shouldAnimate = true, // Add flag to control animation
   }) {
-    AnimationController animationController = AnimationController(
-      vsync: vsync,
-      duration: const Duration(seconds: 2), // Increased from 1 to 2 seconds
-    );
-
-    Animation<Offset> slideAnimation = Tween<Offset>(
-      begin: shouldAnimate
-          ? (isUser ? const Offset(10, 80) : const Offset(-10, 80))
-          : Offset.zero,
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: animationController,
-      curve: Curves.easeOutQuint,
-    ));
-
-    if (shouldAnimate) {
-      animationController.forward();
-
-      animationController.addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          onAnimationComplete();
-        }
-      });
-    } else {
-      // For existing messages, complete immediately without animation
-      onAnimationComplete();
-    }
-
     return AudioMessageBubble(
+      id: id,
       message: messageText,
       audioUrl: audioUrl,
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      animation: slideAnimation,
-      controller: animationController,
+      shouldAnimate: shouldAnimate,
+      onAnimationComplete: onAnimationComplete,
       bubbleColor: isUser ? Colors.white : Colors.blue[50]!,
       textColor: isUser ? Colors.black : Colors.blue[900]!,
       audioIconColor: isUser ? Colors.blue : Colors.blue[700],

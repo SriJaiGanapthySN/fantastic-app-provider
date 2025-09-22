@@ -55,49 +55,46 @@ class ChatContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        // Empty chat placeholder when no messages
-        if (messageData.isEmpty)
-          EmptyChatPlaceholder(
-            shouldShowTextBox: shouldShowTextBox,
-            showContainer: showContainer,
-            showMindText: showMindText,
-            mindController: mindController,
+        Expanded(
+          child: Stack(
+            children: [
+              if (messageData.isEmpty)
+                EmptyChatPlaceholder(
+                  shouldShowTextBox: shouldShowTextBox,
+                  showContainer: showContainer,
+                  showMindText: showMindText,
+                  mindController: mindController,
+                )
+              else
+                MessageList(
+                  messageData: messageData,
+                  scrollController: scrollController,
+                  isLongPressing: isLongPressing,
+                  tickerProvider: tickerProvider,
+                ),
+              VoiceInputOverlay(
+                rippleController: rippleController,
+                voiceText: voiceText,
+                isLongPressing: isLongPressing,
+                isMessageBoxVisible: isMessageBoxVisible,
+              ),
+            ],
           ),
-
-        Column(
-          children: [
-            // Messages list using new message data approach
-            MessageList(
-              messageData: messageData,
-              scrollController: scrollController,
-              isLongPressing: isLongPressing,
-              tickerProvider: tickerProvider,
-            ),
-            // Message input bar component
-            MessageInputBar(
-              isMessageBoxVisible: isMessageBoxVisible,
-              isSendingMessage: isSendingMessage,
-              isLongPressing: isLongPressing,
-              controller: textController,
-              focusNode: focusNode,
-              opacity: opacity,
-              displayText: displayText,
-              toggleMessageBoxVisibility: toggleMessageBoxVisibility,
-              onLongPressStart: onLongPressStart,
-              onLongPressEnd: onLongPressEnd,
-              sendMessage: sendMessage,
-            ),
-          ],
         ),
-
-        // Voice input overlay component
-        VoiceInputOverlay(
-          rippleController: rippleController,
-          voiceText: voiceText,
-          isLongPressing: isLongPressing,
+        MessageInputBar(
           isMessageBoxVisible: isMessageBoxVisible,
+          isSendingMessage: isSendingMessage,
+          isLongPressing: isLongPressing,
+          controller: textController,
+          focusNode: focusNode,
+          opacity: opacity,
+          displayText: displayText,
+          toggleMessageBoxVisibility: toggleMessageBoxVisibility,
+          onLongPressStart: onLongPressStart,
+          onLongPressEnd: onLongPressEnd,
+          sendMessage: sendMessage,
         ),
       ],
     );

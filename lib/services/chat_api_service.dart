@@ -1,64 +1,183 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_message.dart';
+import 'token_service.dart';
 
 class ChatApiService {
-  static const String baseUrl = 'https://mental-health.rohanrichard.com';
-  static const String audioUrl = 'https://mental-health.rohanrichard.com/audio';
-  static const String tokenKey = 'access_token';
+  // Register a new user by sending all text fields to /register
+  Future<Map<String, dynamic>?> register(
+    Map<String, String> registrationData,
+  ) async {
+    try {
+      print('Registering user with data: $registrationData');
+      final url = '$baseUrl/auth/register';
+      final payload = jsonEncode(registrationData);
+      print('POST $url');
+      print('Payload: $payload');
 
-  // Store access token
-  Future<void> _storeToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(tokenKey, token);
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(
+          {
+            'name': registrationData['name'],
+            'email': registrationData['email'],
+            'password': registrationData['password'],
+            'age': registrationData['age'],
+            'gender_identity': registrationData['gender'],
+            'location': registrationData['location'],
+          },
+        ),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        print('Registration successful!');
+        return data;
+      } else {
+        print('Registration failed with status: ${response.statusCode}');
+        print('Error response: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Registration error: $e');
+      return null;
+    }
   }
 
-  // Get stored access token
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(tokenKey);
+  static const String baseUrl = 'https://mental-health.rohanrichard.com';
+  static const String audioUrl = 'https://mental-health.rohanrichard.com/audio';
+
+  // Alternative endpoints to try if main one fails
+  static const List<String> fallbackUrls = [
+    'https://mental-health.rohanrichard.com',
+    'http://mental-health.rohanrichard.com', // Try HTTP if HTTPS fails
+    // Add more fallback URLs if you have them
+  ];
+
+  // Timeout duration for API calls
+  static const Duration apiTimeout = Duration(seconds: 30);
+
+  // Check network connectivity by testing DNS resolution
+  Future<bool> checkNetworkConnectivity() async {
+    try {
+      print('Checking network connectivity...');
+      final response = await http.get(
+        Uri.parse('https://www.google.com'),
+        headers: {'User-Agent': 'Flutter App'},
+      ).timeout(Duration(seconds: 10));
+
+      print('Network connectivity check passed');
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Network connectivity check failed: $e');
+      return false;
+    }
+  }
+
+  // Check if the API server is reachable
+  Future<bool> checkApiServerHealth() async {
+    try {
+      print('Checking API server health...');
+      final response = await http.get(
+        Uri.parse('$baseUrl/health'),
+        headers: {'User-Agent': 'Flutter App'},
+      ).timeout(Duration(seconds: 15));
+
+      print('API server health check passed');
+      return response.statusCode == 200;
+    } catch (e) {
+      print('API server health check failed: $e');
+      return false;
+    }
   }
 
   // Authenticate and get access token
   Future<String?> authenticate(String email, String password) async {
     try {
-      print('🔐 Authenticating user: $email');
+      print('Authenticating user: $email');
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/token'),
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
+      // First check network connectivity
+      final hasNetwork = await checkNetworkConnectivity();
+      if (!hasNetwork) {
+        print(
+            'No network connectivity. Please check your internet connection.');
+        return null;
+      }
+
+      print('Attempting to connect to: $baseUrl/auth/token');
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/token'),
+            headers: {
+              'accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'email': email,
+              'password': password,
+            }),
+          )
+          .timeout(apiTimeout);
+
+      print('Authentication response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['access_token'];
-        print('✅ Authentication successful!');
-        await _storeToken(token);
+        print('Authentication successful!');
+
+        // Store token using TokenService
+        await TokenService.storeToken(token);
+
+        // Also store user email
+        await TokenService.storeUserDetails(email: email);
+
         return token;
       } else {
-        print('❌ Authentication failed with status: ${response.statusCode}');
-        print('❌ Error response: ${response.body}');
+        print('Authentication failed with status: ${response.statusCode}');
+        print('Error response: ${response.body}');
         return null;
       }
+    } on http.ClientException catch (e) {
+      print('Network error during authentication: $e');
+      print('This might indicate:');
+      print('   - DNS resolution failure for $baseUrl');
+      print('   - No internet connection');
+      print('   - Server is down');
+      print('   - Firewall blocking the request');
+
+      // Try to check if it's a general network issue
+      final hasNetwork = await checkNetworkConnectivity();
+      if (!hasNetwork) {
+        print('Confirmed: No internet connection');
+      } else {
+        print('Internet works, but API server seems unreachable');
+      }
+
+      return null;
     } catch (e) {
-      print('💥 Authentication error: $e');
+      print('Authentication error: $e');
       return null;
     }
-  }
+  } // Fetch existing messages
 
-  // Fetch existing messages
   Future<List<ChatMessage>> fetchMessages() async {
     try {
-      final token = await _getToken();
-      if (token == null) return [];
+      final token = await TokenService.getToken();
+      if (token == null) {
+        print('No token available for fetching messages');
+        return [];
+      }
+
+      print('Fetching messages from server...');
 
       final response = await http.get(
         Uri.parse('$baseUrl/chat/messages'),
@@ -66,16 +185,24 @@ class ChatApiService {
           'accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(apiTimeout);
+
+      print('Fetch messages response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final messagesJson = data['messages'] as List<dynamic>;
+        print('Successfully fetched ${messagesJson.length} messages');
         return messagesJson.map((json) => ChatMessage.fromJson(json)).toList();
+      } else {
+        print('Failed to fetch messages: ${response.statusCode}');
+        return [];
       }
+    } on http.ClientException catch (e) {
+      print('Network error fetching messages: $e');
       return [];
     } catch (e) {
-      print('Fetch messages error: $e');
+      print('Error fetching messages: $e');
       return [];
     }
   }
@@ -84,10 +211,10 @@ class ChatApiService {
   Future<Map<String, dynamic>?> sendMessage(String message,
       {String inputType = 'text'}) async {
     try {
-      final token = await _getToken();
+      final token = await TokenService.getToken();
       if (token == null) return null;
 
-      print('📤 Sending message: $message (input type: $inputType)');
+      print('Sending message: $message (input type: $inputType)');
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/'),
@@ -102,16 +229,16 @@ class ChatApiService {
         }),
       );
 
-      print('📥 Send message response status: ${response.statusCode}');
+      print('Send message response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return _parseStreamingResponse(response.body, inputType);
       }
 
-      print('❌ Send message failed with status: ${response.statusCode}');
+      print('Send message failed with status: ${response.statusCode}');
       return null;
     } catch (e) {
-      print('💥 Send message error: $e');
+      print('Send message error: $e');
       return null;
     }
   }
@@ -124,11 +251,11 @@ class ChatApiService {
     String inputType = 'text',
   }) async {
     try {
-      final token = await _getToken();
+      final token = await TokenService.getToken();
       if (token == null) return null;
 
       print(
-          '📤 Sending message with streaming: $message (input type: $inputType)');
+          'Sending message with streaming: $message (input type: $inputType)');
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/'),
@@ -143,17 +270,17 @@ class ChatApiService {
         }),
       );
 
-      print('📥 Send message response status: ${response.statusCode}');
+      print('Send message response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return _parseStreamingResponseWithCallback(
             response.body, onChunk, onComplete, inputType);
       }
 
-      print('❌ Send message failed with status: ${response.statusCode}');
+      print('Send message failed with status: ${response.statusCode}');
       return null;
     } catch (e) {
-      print('💥 Send message error: $e');
+      print('Send message error: $e');
       return null;
     }
   }
@@ -203,10 +330,10 @@ class ChatApiService {
         if (inputType == 'voice') {
           metadata['audio_url'] = getAudioUrl(fullAiMessage);
           print(
-              '✅ Successfully parsed streaming response with audio URL for voice input');
+              'Successfully parsed streaming response with audio URL for voice input');
         } else {
           print(
-              '✅ Successfully parsed streaming response for text input (no audio)');
+              'Successfully parsed streaming response for text input (no audio)');
         }
 
         return metadata;
@@ -214,7 +341,7 @@ class ChatApiService {
 
       return null;
     } catch (e) {
-      print('💥 Error parsing streaming response: $e');
+      print('Error parsing streaming response: $e');
       return null;
     }
   }
@@ -267,22 +394,20 @@ class ChatApiService {
 
       return metadata;
     } catch (e) {
-      print('💥 Error parsing streaming response with callback: $e');
+      print('Error parsing streaming response with callback: $e');
       onComplete();
       return null;
     }
   }
 
-  // Clear stored token
+  // Clear stored token (delegate to TokenService)
   Future<void> clearToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(tokenKey);
+    await TokenService.clearAllData();
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated (delegate to TokenService)
   Future<bool> isAuthenticated() async {
-    final token = await _getToken();
-    return token != null;
+    return await TokenService.isAuthenticated();
   }
 
   // Get audio URL for a specific message or general audio
@@ -291,10 +416,10 @@ class ChatApiService {
       // URL encode the message text to handle special characters
       final encodedText = Uri.encodeComponent(messageText);
       final fullUrl = '$audioUrl?text=$encodedText';
-      print('🎵 Generated audio URL: $fullUrl');
+      print('Generated audio URL: $fullUrl');
       return fullUrl;
     }
-    print('🎵 Using default audio URL: $audioUrl');
+    print('Using default audio URL: $audioUrl');
     return audioUrl;
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/nav_provider.dart';
+import '../services/token_service.dart';
 import 'chat_screen.dart';
 import 'discoverscreen.dart';
 import 'journey_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
-import 'package:fantastic_app_riverpod/providers/auth_provider.dart' as auth;
 import '../widgets/user_guide.dart';
 
 import 'ritual_screen.dart';
@@ -35,41 +35,49 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final pageController = ref.watch(pageControllerProvider);
-    // Use the utility function to get the current user email
-    final userEmail = auth.getCurrentUserEmail(ref);
+    ref.listen<int>(selectedTabProvider, (previous, next) {
+      if (pageController.hasClients && pageController.page?.round() != next) {
+        pageController.jumpToPage(next);
+      }
+    });
 
-    // Log the email being used
-    print('MainScreen: Using email: $userEmail for all screens');
-
-    final selectedTab = ref.watch(selectedTabProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: PageView(
-        controller: pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) {
-          // This ensures the tab updates if page changes by other means
-          if (ref.read(selectedTabProvider) != index) {
-            ref.read(selectedTabProvider.notifier).state = index;
+      body: FutureBuilder<String?>(
+        future: TokenService.getUserEmail(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
+
+          final userEmail = snapshot.data ?? '';
+          print('MainScreen: Using email: $userEmail for all screens');
+
+          return PageView(
+            controller: pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (index) {
+              // This is a failsafe, but the primary update mechanism is tapping the nav bar
+              if (ref.read(selectedTabProvider) != index) {
+                ref.read(selectedTabProvider.notifier).state = index;
+              }
+            },
+            children: [
+              ChatScreen(email: userEmail), // 0
+              RitualScreen(currentUserEmail: userEmail), // 1
+              JourneyScreen(userEmail: userEmail), // 2
+              Discoverscreen(email: userEmail), // 3
+            ],
+          );
         },
-        children: [
-          ChatScreen(email: userEmail), // Pass email to ChatScreen
-          RitualScreen(
-              currentUserEmail: userEmail), // Pass email to RitualScreen
-          JourneyScreen(userEmail: userEmail),
-          Discoverscreen(email: userEmail),
-          // Pass email to DiscoverScreen
-        ],
       ),
-      floatingActionButton: selectedTab == 0
-          ? null
-          : const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.0),
-              child: BottomNavBar(),
-            ),
-      floatingActionButtonLocation:
-          selectedTab == 0 ? null : FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        child: BottomNavBar(pageController: pageController),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

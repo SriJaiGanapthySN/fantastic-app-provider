@@ -28,6 +28,9 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   @override
   void initState() {
     super.initState();
+
+    print('🗺️ JOURNEY SCREEN INITIALIZED with email: ${widget.userEmail}');
+
     _videoController = VideoPlayerController.asset(
         'assets/videos/fc5890dd77de131e0e032b98260ee54cfa710eda.mp4')
       ..initialize().then((_) {

@@ -1573,7 +1573,7 @@ SPEC CHECKSUMS:
   FirebaseFirestore: 1e5fafdac2b2ef1ffc24034460b7b4821a15be96
   FirebaseFirestoreInternal: df9ab608a59a4e8eefd0796ed7652f3c1a88473a
   FirebaseSharedSwift: e17c654ef1f1a616b0b33054e663ad1035c8fd40
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_local_notifications: df98d66e515e1ca797af436137b4459b160ad8c9
   flutter_timezone: ac3da59ac941ff1c98a2e1f0293420e020120282
   fluttertoast: 21eecd6935e7064cc1fcb733a4c5a428f3f24f0f
@@ -1599,7 +1599,7 @@ SPEC CHECKSUMS:
   speech_to_text: 87bf9298952e8d9073be1b6aade6d5758db5170c
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   video_player_avfoundation: 7c6c11d8470e1675df7397027218274b6d2360b3
-  webview_flutter_wkwebview: a4af96a051138e28e29f60101d094683b9f82188
+  webview_flutter_wkwebview: 29eb20d43355b48fe7d07113835b9128f84e3af4
 
 PODFILE CHECKSUM: 251cb053df7158f337c0712f2ab29f4e0fa474ce
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/auth_provider.dart';
 import '../widgets/index.dart';
+import '../services/chat_api_service.dart';
+import '../services/token_service.dart';
 import 'forgot_password_page.dart';
+import 'main_screen.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key, required this.togglePages});
@@ -138,25 +140,60 @@ class SignInPageState extends State<SignInPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
+    print('Login attempt with email: $email');
+
     if (email.isNotEmpty && password.isNotEmpty) {
-      await ref.read(authProvider.notifier).login(email, password);
-      final authState = ref.read(authProvider);
-      if (authState.user != null) {
-        Navigator.pushReplacementNamed(context, '/habitPlay', arguments: {
-          'email': authState.user!.email,
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              authState.error ?? 'Login failed',
-              style: const TextStyle(color: Colors.red),
+      try {
+        // Do API authentication to get token
+        print('Starting API authentication');
+        final apiService = ChatApiService();
+        final apiToken = await apiService.authenticate(email, password);
+
+        if (apiToken != null) {
+          print('API authentication successful');
+
+          // Store token and user details
+          await TokenService.storeToken(apiToken);
+          await TokenService.storeUserDetails(email: email);
+
+          print('💾 Token and user details stored');
+
+          // Navigate to main screen
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => MainScreen()),
+            );
+          }
+        } else {
+          print('API authentication failed');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Invalid email or password',
+                  style: const TextStyle(color: Colors.red),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        print('Authentication error: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Login failed: Please try again',
+                style: const TextStyle(color: Colors.red),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
             ),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-          ),
-        );
+          );
+        }
       }
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

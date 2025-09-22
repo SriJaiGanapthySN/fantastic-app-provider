@@ -4,7 +4,9 @@ import 'package:fantastic_app_riverpod/factories/message_factory.dart';
 import 'package:fantastic_app_riverpod/utils/question_detector.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
+import 'package:fantastic_app_riverpod/services/token_service.dart';
 import 'package:fantastic_app_riverpod/models/chat_message_data.dart';
+import 'package:fantastic_app_riverpod/widgets/chat/animated_object_card_message.dart';
 
 class MessageNotifier extends StateNotifier<MessageFactory?> {
   final Ref ref;
@@ -15,7 +17,40 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
   }
 
   void sendMessage(String messageText, {String inputType = 'text'}) async {
+    print('sendMessage called with inputType: $inputType');
+    print('messageText: $messageText');
+
     final chatNotifier = ref.read(chatProvider.notifier);
+
+    // Check for special keywords to show animated object card
+    final lowerCaseMessage = messageText.toLowerCase().trim();
+    if (lowerCaseMessage == 'challenge' ||
+        lowerCaseMessage == 'journey' ||
+        lowerCaseMessage == 'skilltrack') {
+      // Add user message
+      final userMessageData = ChatMessageData(
+        id: DateTime.now().millisecondsSinceEpoch.toString() + '_user',
+        text: messageText,
+        type: ChatMessageType.userMessage,
+        isUser: true,
+        timestamp: DateTime.now(),
+        hasAnimated: false,
+      );
+      chatNotifier.addMessageData(userMessageData);
+
+      // Add animated object card response
+      final animatedObjectCardData = ChatMessageData(
+        id: DateTime.now().millisecondsSinceEpoch.toString() + '_object_card',
+        text: '',
+        type: ChatMessageType.animatedObjectCard,
+        isUser: false,
+        timestamp: DateTime.now(),
+        hasAnimated: false,
+      );
+      chatNotifier.addMessageData(animatedObjectCardData);
+      _scrollToBottom();
+      return;
+    }
 
     // Check for test audio command
     if (messageText.toLowerCase().contains('test audio')) {
@@ -40,7 +75,7 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
 
     // Add user message
     chatNotifier.setIsSendingMessage(true);
-    chatNotifier.setThresholdReached(isQuestion ? false : true);
+    chatNotifier.setThresholdReached(true); // Always show thinking animation
 
     // Create message data instead of widget
     final userMessageData = ChatMessageData(
@@ -76,8 +111,10 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
     );
   }
 
-  Widget createExistingCardMessage(bool isQuestion, String apiResponse) {
+  Widget createExistingCardMessage(
+      String id, bool isQuestion, String apiResponse) {
     return state!.createCardMessage(
+      id: id,
       isQuestion: isQuestion,
       apiResponse: apiResponse,
       shouldAnimate: false, // Existing messages should not animate
@@ -85,9 +122,11 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
     );
   }
 
-  Widget createExistingAudioMessage(String messageText, String audioUrl,
+  Widget createExistingAudioMessage(
+      String id, String messageText, String audioUrl,
       {bool isUser = false}) {
     return state!.createAudioMessage(
+      id: id,
       messageText: messageText,
       audioUrl: audioUrl,
       isUser: isUser,
@@ -98,109 +137,98 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
 
   void _handleUserMessageAnimationComplete(
       bool isQuestion, String userMessageText, String inputType) async {
+    print(
+        '_handleUserMessageAnimationComplete called with inputType: $inputType');
+
     final chatNotifier = ref.read(chatProvider.notifier);
+    final apiService =
+        ref.read(chatApiServiceProvider); // Move this outside try block
 
-    // Schedule to set sending message to false after delay
-    Future.delayed(Duration(milliseconds: 6300), () {
-      chatNotifier.setIsQuestion(false);
-      chatNotifier.setIsSendingMessage(false);
-    });
-
-    // Add bot response with API call
-    chatNotifier.setIsUserSendingMessage(true);
-
-    // Try to get API response with streaming
-    String apiResponse = "Here is a reference to the card"; // Default fallback
     try {
-      final apiService = ref.read(chatApiServiceProvider);
-
-      // Check if authenticated, if not authenticate first
-      final isAuthenticated = ref.read(authStatusProvider);
+      // Check if authenticated using token service
+      final isAuthenticated = await TokenService.isAuthenticated();
       if (!isAuthenticated) {
-        const defaultEmail = "string";
-        const defaultPassword = "string";
-        final token =
-            await apiService.authenticate(defaultEmail, defaultPassword);
-        if (token != null) {
-          ref.read(authStatusProvider.notifier).state = true;
-        }
+        print('User not authenticated. Chat requires authentication.');
+        // Turn off thinking animation
+        chatNotifier.setThresholdReached(false);
+        chatNotifier.setIsSendingMessage(false);
+        return;
       }
 
-      // No placeholder messages - wait for API response to create appropriate message type
+      // For voice input, we want the text response first, so we call the text endpoint.
+      final apiInputType = inputType == 'voice' ? 'text' : inputType;
+      print('Calling API with inputType: $apiInputType');
 
       // Now use streaming based on input type
       String fullResponse = "";
       final response = await apiService.sendMessageWithStreaming(
         userMessageText,
         (chunk) {
-          // Update the streaming text in the card message
           fullResponse += chunk;
-          // Note: In a real implementation, you'd need to update the card message content
-          // For now, we'll collect the full response and handle differently based on input type
         },
         () async {
-          // Streaming complete - handle based on input type
+          // Streaming complete
+          print(
+              'Streaming complete, handling original inputType: $inputType');
           if (fullResponse.isNotEmpty) {
-            apiResponse = fullResponse;
-            print('✅ Got streamed API response: $apiResponse');
-
-            // Create different message types based on input type (no placeholder removal needed)
+            // Create different message types based on input type
             if (inputType == 'voice') {
-              // For voice input - create audio-only message data
               final audioMessageData = ChatMessageData(
                 id: DateTime.now().millisecondsSinceEpoch.toString() + '_audio',
-                text: "", // Empty text for audio-only
+                text: "",
                 type: ChatMessageType.audioMessage,
                 isUser: false,
-                audioUrl: apiService.getAudioUrl(apiResponse),
+                audioUrl: apiService.getAudioUrl(fullResponse),
                 timestamp: DateTime.now(),
-                hasAnimated: false, // New message should animate
+                hasAnimated: false,
               );
               chatNotifier.addMessageData(audioMessageData);
             } else {
-              // For text input - create text-only card message data
               final cardMessageData = ChatMessageData(
                 id: DateTime.now().millisecondsSinceEpoch.toString() + '_card',
-                text: apiResponse,
+                text: fullResponse,
                 type: ChatMessageType.cardMessage,
                 isUser: false,
                 isQuestion: isQuestion,
                 timestamp: DateTime.now(),
-                hasAnimated: false, // New message should animate
+                hasAnimated: false,
               );
               chatNotifier.addMessageData(cardMessageData);
             }
-
             _scrollToBottom();
           }
+          // Turn off thinking animation
+          chatNotifier.setThresholdReached(false);
+          chatNotifier.setIsSendingMessage(false);
         },
-        inputType: inputType,
+        inputType: apiInputType,
       );
 
       // If streaming failed, fall back to regular response
       if (response == null && fullResponse.isEmpty) {
-        final regularResponse =
-            await apiService.sendMessage(userMessageText, inputType: inputType);
+        print(
+            'Streaming failed, falling back to regular API call with inputType: $apiInputType');
+        final regularResponse = await apiService.sendMessage(userMessageText,
+            inputType: apiInputType);
         if (regularResponse != null &&
             regularResponse['ai_message_content'] != null) {
-          apiResponse = regularResponse['ai_message_content'];
+          final apiResponse = regularResponse['ai_message_content'];
 
-          // Create appropriate message type based on input type (no placeholder removal needed)
           if (inputType == 'voice') {
-            // For voice input - create audio-only message data
-            final audioMessageData = ChatMessageData(
-              id: DateTime.now().millisecondsSinceEpoch.toString() +
-                  '_audio_fallback',
-              text: "", // Empty text for audio-only
-              type: ChatMessageType.audioMessage,
-              isUser: false,
-              audioUrl: apiService.getAudioUrl(apiResponse),
-              timestamp: DateTime.now(),
-              hasAnimated: false, // New message should animate
-            );
-            chatNotifier.addMessageData(audioMessageData);
+            if (apiResponse.isNotEmpty) {
+              final audioMessageData = ChatMessageData(
+                id: DateTime.now().millisecondsSinceEpoch.toString() +
+                    '_audio_fallback',
+                text: "",
+                type: ChatMessageType.audioMessage,
+                isUser: false,
+                audioUrl: apiService.getAudioUrl(apiResponse),
+                timestamp: DateTime.now(),
+                hasAnimated: false,
+              );
+              chatNotifier.addMessageData(audioMessageData);
+            }
           } else {
-            // For text input - create text-only card message data
             final cardMessageData = ChatMessageData(
               id: DateTime.now().millisecondsSinceEpoch.toString() +
                   '_card_fallback',
@@ -209,29 +237,21 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
               isUser: false,
               isQuestion: isQuestion,
               timestamp: DateTime.now(),
-              hasAnimated: false, // New message should animate
+              hasAnimated: false,
             );
             chatNotifier.addMessageData(cardMessageData);
           }
-
           _scrollToBottom();
-          return;
         }
+        // Turn off thinking animation
+        chatNotifier.setThresholdReached(false);
+        chatNotifier.setIsSendingMessage(false);
       }
     } catch (e) {
-      print('❌ API call failed, using default message: $e');
-
-      // If everything fails, just show a regular card message (no placeholder removal needed)
-      final errorMessageData = ChatMessageData(
-        id: DateTime.now().millisecondsSinceEpoch.toString() + '_error',
-        text: apiResponse, // Default fallback
-        type: ChatMessageType.cardMessage,
-        isUser: false,
-        isQuestion: isQuestion,
-        timestamp: DateTime.now(),
-        hasAnimated: false, // New message should animate
-      );
-      chatNotifier.addMessageData(errorMessageData);
+      print('API call failed, not creating a fallback message: $e');
+      // Turn off thinking animation
+      chatNotifier.setThresholdReached(false);
+      chatNotifier.setIsSendingMessage(false);
       _scrollToBottom();
     }
   }
@@ -256,6 +276,8 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
     switch (type) {
       case 'audio':
         return ChatMessageType.audioMessage;
+      case 'animatedObjectCard':
+        return ChatMessageType.animatedObjectCard;
       case 'card':
       default:
         return ChatMessageType.cardMessage;
@@ -293,11 +315,12 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
         "Here's your audio response! This audio player allows you to play, pause, and seek through the audio content.";
 
     final audioMessage = state!.createAudioMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       messageText: testText,
       audioUrl: apiService.getAudioUrl(testText),
       shouldAnimate: true, // Test messages should animate
       onAnimationComplete: () {
-        print('🎵 Test audio message animation completed');
+        print('Test audio message animation completed');
       },
       isUser: false,
     );

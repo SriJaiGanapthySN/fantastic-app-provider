@@ -10,7 +10,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'firebase_options.dart';
-import 'providers/auth_provider.dart';
+import 'services/token_service.dart';
 import 'screens/auth_page.dart';
 import 'screens/main_screen.dart';
 import 'screens/ritual/habitPlay.dart';
@@ -19,7 +19,6 @@ final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
   return FlutterLocalNotificationsPlugin();
 });
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -27,7 +26,7 @@ void main() async {
   await _initializeFirebase();
 
   try {
-    String timezoneName = await FlutterTimezone.getLocalTimezone();
+    String timezoneName = (await FlutterTimezone.getLocalTimezone()) as String;
 
     if (timezoneName == "Asia/Calcutta") {
       timezoneName = "Asia/Kolkata";
@@ -77,8 +76,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-
     return MaterialApp(
       title: 'Fantastic App',
       debugShowCheckedModeBanner: false,
@@ -87,18 +84,11 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
-      routes: {
-        '/habitPlay': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
-          final email = args != null && args['email'] != null
-              ? args['email'] as String
-              : '';
-          return habitPlay(email: email);
-        },
-      },
-      home: authState.isLoading
-          ? const Scaffold(
+      home: FutureBuilder<bool>(
+        future: TokenService.isAuthenticated(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
               body: Center(
                 child: CircularProgressIndicator(
                   backgroundColor: Colors.grey,
@@ -106,10 +96,13 @@ class MyApp extends ConsumerWidget {
                   strokeWidth: 5,
                 ),
               ),
-            )
-          : authState.user != null
-              ? MainScreen()
-              : const AuthPage(),
+            );
+          }
+
+          final isAuthenticated = snapshot.data ?? false;
+          return isAuthenticated ? MainScreen() : const AuthPage();
+        },
+      ),
     );
   }
 }

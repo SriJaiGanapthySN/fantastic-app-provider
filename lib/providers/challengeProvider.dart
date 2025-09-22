@@ -307,15 +307,15 @@ Future<SkillGoal?> getSkillGoalByTrackId(String skillTrackIdToFind,
     // Check if any documents were found
     if (querySnapshot.docs.isNotEmpty) {
       QueryDocumentSnapshot<SkillGoal> doc = querySnapshot.docs.first;
-      print('✅ Found SkillGoal: ${doc.data().title}');
+      print('Found SkillGoal: ${doc.data().title}');
       return doc.data(); // Directly returns SkillGoal
     } else {
       print(
-          '❌ No skill goal found for skillTrackId: $skillTrackIdToFind in collection: $collectionName');
+          'No skill goal found for skillTrackId: $skillTrackIdToFind in collection: $collectionName');
       return null;
     }
   } catch (e) {
-    print('💥 Error fetching skill goal by track ID $skillTrackIdToFind: $e');
+    print('Error fetching skill goal by track ID $skillTrackIdToFind: $e');
     return null;
   }
 }
@@ -359,15 +359,15 @@ Future<Skill?> getSkillByTrackId(String skillTrackIdToFind,
     // Check if any documents were found
     if (querySnapshot.docs.isNotEmpty) {
       QueryDocumentSnapshot<Skill> doc = querySnapshot.docs.first;
-      print('✅ Found Skill: ${doc.data().title}');
+      print('Found Skill: ${doc.data().title}');
       return doc.data(); // Directly returns Skill
     } else {
       print(
-          '❌ No skill found for skillTrackId: $skillTrackIdToFind in collection: $collectionName');
+          'No skill found for skillTrackId: $skillTrackIdToFind in collection: $collectionName');
       return null;
     }
   } catch (e) {
-    print('💥 Error fetching skill by track ID $skillTrackIdToFind: $e');
+    print('Error fetching skill by track ID $skillTrackIdToFind: $e');
     return null;
   }
 }
@@ -409,17 +409,17 @@ Future<SkillLevel?> getSkillLevelByTrackId(String skillTrackIdToFind,
     if (querySnapshot.docs.isNotEmpty) {
       // 5. Get the first document found
       QueryDocumentSnapshot<SkillLevel> doc = querySnapshot.docs.first;
-      print('✅ Found SkillLevel: ${doc.data().headline ?? 'No headline'}');
+      print('Found SkillLevel: ${doc.data().headline ?? 'No headline'}');
       return doc.data(); // Directly returns SkillLevel
     } else {
       // No document found with that skillTrackId
       print(
-          '❌ No skill level found for skillTrackId: $skillTrackIdToFind in collection: $collectionName');
+          'No skill level found for skillTrackId: $skillTrackIdToFind in collection: $collectionName');
       return null;
     }
   } catch (e) {
     // Handle potential errors
-    print('💥 Error fetching skill level by track ID $skillTrackIdToFind: $e');
+    print('Error fetching skill level by track ID $skillTrackIdToFind: $e');
     return null;
   }
 }
@@ -495,7 +495,7 @@ Future<void> debugCollections(String skillTrackIdToFind) async {
               '   🎯 Documents matching skillTrackId "$skillTrackIdToFind": ${targetQuery.docs.length}');
 
           if (targetQuery.docs.isNotEmpty) {
-            print('   ✅ FOUND MATCHING DOCUMENTS:');
+            print('   FOUND MATCHING DOCUMENTS:');
             for (var doc in targetQuery.docs) {
               final data = doc.data() as Map<String, dynamic>?;
               final title = data?['title'] ?? data?['headline'] ?? 'NO_TITLE';
@@ -503,16 +503,16 @@ Future<void> debugCollections(String skillTrackIdToFind) async {
             }
           }
         } else {
-          print('   ❌ Collection is empty');
+          print('   Collection is empty');
         }
       } catch (e) {
-        print('   💥 Error accessing collection $collectionName: $e');
+        print('   Error accessing collection $collectionName: $e');
       }
     }
 
     print('\n🚀 === END DEBUGGING ===\n');
   } catch (e) {
-    print('💥 Error in debug function: $e');
+    print('Error in debug function: $e');
   }
 }
 
@@ -558,7 +558,7 @@ Future<void> debugSkillTrackIds() async {
         print('   Unique skillTrackIds: ${skillTrackIds.length}');
         print('   Sample skillTrackIds: ${skillTrackIds.take(5).join(', ')}');
       } catch (e) {
-        print('💥 Error accessing $collectionName: $e');
+        print('Error accessing $collectionName: $e');
       }
     }
 
@@ -604,7 +604,7 @@ Future<void> debugSkillTrackIds() async {
 
     print('\n🚀 === END ANALYSIS ===\n');
   } catch (e) {
-    print('💥 Error in skill track ID analysis: $e');
+    print('Error in skill track ID analysis: $e');
   }
 }
 
@@ -692,9 +692,9 @@ class ChallengeDataService {
               await firestore.collection(collection).limit(10).get();
 
           if (snapshot.docs.isEmpty) {
-            print('   ❌ Collection is EMPTY - This is likely the problem!');
+            print('   Collection is EMPTY - This is likely the problem!');
           } else {
-            print('   ✅ Found ${snapshot.docs.length} documents');
+            print('   Found ${snapshot.docs.length} documents');
             print('   📋 Available skillTrackIds:');
 
             Set<String> uniqueIds = {};
@@ -707,7 +707,7 @@ class ChallengeDataService {
             }
 
             if (uniqueIds.isEmpty) {
-              print('      ❌ No documents have skillTrackId field!');
+              print('      No documents have skillTrackId field!');
             } else {
               for (String id in uniqueIds.take(5)) {
                 print('      - $id');
@@ -718,11 +718,11 @@ class ChallengeDataService {
             }
           }
         } catch (e) {
-          print('   💥 Error accessing $collection: $e');
+          print('   Error accessing $collection: $e');
         }
       }
     } catch (e) {
-      print('💥 Error in parent collection analysis: $e');
+      print('Error in parent collection analysis: $e');
     }
   }
 }

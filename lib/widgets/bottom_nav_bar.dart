@@ -6,12 +6,17 @@ import '../providers/nav_provider.dart';
 import '../screens/main_screen.dart';
 
 class BottomNavBar extends ConsumerWidget {
-  const BottomNavBar({super.key});
+  final PageController? pageController;
+
+  const BottomNavBar({super.key, this.pageController});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedTabProvider);
-
+    if (selectedIndex == 0) {
+      // Hide the bottom nav bar for chat screen
+      return const SizedBox.shrink();
+    }
     return BlurContainer(
       blur: 20,
       borderRadius: 60,
@@ -21,9 +26,9 @@ class BottomNavBar extends ConsumerWidget {
           _buildNavButton(
               context, 'assets/icons/chat.svg', 0, selectedIndex, ref),
           _buildNavButton(
-              context, 'assets/icons/route.svg', 2, selectedIndex, ref),
-          _buildNavButton(
               context, 'assets/icons/heart.svg', 1, selectedIndex, ref),
+          _buildNavButton(
+              context, 'assets/icons/route.svg', 2, selectedIndex, ref),
           _buildNavButton(
               context, 'assets/icons/search.svg', 3, selectedIndex, ref),
         ],
@@ -34,7 +39,7 @@ class BottomNavBar extends ConsumerWidget {
   Widget _buildNavButton(BuildContext context, String iconPath, int index,
       int selectedIndex, WidgetRef ref) {
     final isSelected = index == selectedIndex;
-    final pageController = ref.read(pageControllerProvider);
+    final controller = ref.read(pageControllerProvider);
 
     // Get screen dimensions for responsive sizing
     final screenWidth = MediaQuery.of(context).size.width;
@@ -51,11 +56,23 @@ class BottomNavBar extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        // Update the selectedTabProvider state
-        ref.read(selectedTabProvider.notifier).state = index;
+        print('Navigation: $iconPath → Page $index');
 
-        // Directly control the PageView
-        pageController.jumpToPage(index);
+        try {
+          // Update the selectedTabProvider state first
+          ref.read(selectedTabProvider.notifier).state = index;
+          print('Updated selectedTabProvider to: $index');
+
+          // Then control the PageView with animation
+          // controller?.animateToPage(
+          //   index,
+          //   duration: const Duration(milliseconds: 300),
+          //   curve: Curves.easeInOut,
+          // );
+          // print('Animating to page: $index');
+        } catch (e) {
+          print('Navigation error: $e');
+        }
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

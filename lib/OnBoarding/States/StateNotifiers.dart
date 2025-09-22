@@ -34,14 +34,14 @@ class SelectedSleepNotifier extends StateNotifier<List<String>> {
     return state.contains(value);
   }
 
-  // ✅ Method to add personal details
+  // Method to add personal details
   void addPersonalDetails(String value) {
     _personalDetails.add(value);
     debugPrint('Personal Detail Added: $value');
     debugPrint('Current Personal Details List: $_personalDetails');
   }
 
-  // ✅ NEW: Method to remove personal details
+  // NEW: Method to remove personal details
   void removePersonalDetails(String value) {
     _personalDetails.remove(value);
     debugPrint('Personal Detail Removed: $value');
@@ -51,7 +51,7 @@ class SelectedSleepNotifier extends StateNotifier<List<String>> {
   // Getter for personal details list
   List<String> get personalDetails => _personalDetails;
 
-  // ✅ NEW: Method to save image to a file
+  // NEW: Method to save image to a file
   Future<String> saveImageToFile(XFile image) async {
     // Get the app's document directory
     final directory = await getApplicationDocumentsDirectory();
