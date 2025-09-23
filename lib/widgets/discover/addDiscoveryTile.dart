@@ -23,6 +23,11 @@ class AddDiscoveryTile extends ConsumerWidget {
     final selectedButtonIndex =
         ref.watch(discoverUIStateProvider).selectedButtonIndex;
 
+    // Debug: Print tile data
+    print('🎯 AddDiscoveryTile: selectedButtonIndex=$selectedButtonIndex');
+    print('🎯 AddDiscoveryTile: tile keys: ${tile.keys.toList()}');
+    print('🎯 AddDiscoveryTile: tile data: $tile');
+
     // Extract data from tile
     final String url = tile['imageUrl'] ?? 'assets/images/default.jpg';
     final String title = tile['title'] ?? tile['name'] ?? 'No Title';

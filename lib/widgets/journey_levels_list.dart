@@ -1,4 +1,6 @@
 import 'package:fantastic_app_riverpod/providers/journey_provider.dart';
+import 'package:fantastic_app_riverpod/providers/discover_provider.dart'
+    as discover;
 import 'package:fantastic_app_riverpod/screens/journey_reveal/journeyscreenrevealtype4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -270,17 +272,40 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
   @override
   Widget build(BuildContext context) {
     final journeyService = ref.watch(journeyServiceProvider);
+    final isParentMode = ref.watch(discover.personaProvider).isParentMode;
+
+    print('🔍 JourneyLevelsList Debug Info:');
+    print('  - skillTrackId: ${widget.skillTrackId}');
+    print('  - email: ${widget.email}');
+    print('  - isParentMode: $isParentMode');
+
+    // Add debug check for what's in the database
+    journeyService.debugSkillCollections(widget.skillTrackId);
+
+    // Also debug collection availability
+    journeyService.debugCollectionAvailability();
 
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: journeyService.addSkills(widget.skillTrackId, widget.email).then(
-          (skills) => skills.map((skill) => skill.toMap()).toList()
-            ..sort(
-                (a, b) => (a['position'] ?? 0).compareTo(b['position'] ?? 0))),
+      future: journeyService
+          .fetchSkillsByTrackId(widget.skillTrackId, isParentMode: isParentMode)
+          .then((skills) {
+        print(
+            '🔍 Skills fetched from fetchSkillsByTrackId: ${skills.length} skills');
+        for (int i = 0; i < skills.length && i < 3; i++) {
+          print(
+              '  - Skill $i: ${skills[i]['title']} (${skills[i]['objectId']})');
+        }
+        skills
+            .sort((a, b) => (a['position'] ?? 0).compareTo(b['position'] ?? 0));
+        print('🔍 Final sorted skills: ${skills.length} items');
+        return skills;
+      }),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
+          print('❌ Error in FutureBuilder: ${snapshot.error}');
           return Center(
             child: Text(
               'Error loading skills: ${snapshot.error}',
@@ -289,18 +314,74 @@ class _JourneyLevelsListState extends ConsumerState<JourneyLevelsList>
           );
         }
         final skills = snapshot.data ?? [];
+        print('🔍 Skills in builder: ${skills.length} skills');
         if (skills.isEmpty) {
-          return const Center(
-            child: Text(
-              'No skills available',
-              style: TextStyle(color: Colors.white),
+          print('❌ No skills found - showing empty state');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.white.withOpacity(0.7),
+                  size: 48,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No skills available',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'This journey doesn\'t have any skills configured yet.',
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.7), fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Debug Info:',
+                        style: TextStyle(
+                            color: Colors.yellow,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Mode: ${isParentMode ? "Parent" : "Regular"}',
+                        style: TextStyle(color: Colors.yellow, fontSize: 11),
+                      ),
+                      Text(
+                        'Journey: ${widget.skillTrackId}',
+                        style: TextStyle(color: Colors.yellow, fontSize: 11),
+                      ),
+                      Text(
+                        'Collection: ${isParentMode ? "parent-skill" : "skill-new"}',
+                        style: TextStyle(color: Colors.yellow, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         }
 
         return FutureBuilder<Map<String, dynamic>>(
             future: journeyService.getJourneyType(
-                widget.skillTrackId, widget.email),
+                widget.skillTrackId, widget.email,
+                isParentMode: isParentMode),
             builder: (context, journeySnapshot) {
               final String overallJourneyTrackType =
                   journeySnapshot.data?['type'] ?? widget.tile?['type'] ?? '';

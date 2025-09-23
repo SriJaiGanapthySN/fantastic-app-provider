@@ -16,6 +16,14 @@ class Discoverstrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+
+    // Debug: Print current data info
+    print('🔍 Discoverstrip: Building with ${currentData.length} items');
+    if (currentData.isNotEmpty) {
+      print(
+          '🔍 Discoverstrip: Sample item keys: ${currentData[0].keys.toList()}');
+    }
+
     return Stack(
       children: [
         Positioned(
