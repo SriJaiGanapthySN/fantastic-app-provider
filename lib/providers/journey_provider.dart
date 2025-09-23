@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/journey_service.dart';
+import 'discover_provider.dart'; // Import to get persona provider
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
@@ -30,7 +31,25 @@ final allJourneysProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
         (ref, email) async {
   final journeyService = ref.watch(journeyServiceProvider);
-  return journeyService.fetchUserJourneys(email);
+  final isParentMode = ref.watch(personaProvider).isParentMode;
+
+  print('🚀 allJourneysProvider: Fetching user journeys for $email');
+  print('🚀 allJourneysProvider: Parent mode: $isParentMode');
+
+  final journeys =
+      await journeyService.fetchUserJourneys(email, isParentMode: isParentMode);
+
+  print('🚀 allJourneysProvider: Found ${journeys.length} user journeys');
+  if (journeys.isNotEmpty) {
+    for (int i = 0; i < journeys.length && i < 3; i++) {
+      final journey = journeys[i];
+      final id = journey['objectId'] ?? journey['id'] ?? 'NO_ID';
+      final title = journey['title'] ?? 'NO_TITLE';
+      print('   - $id ($title)');
+    }
+  }
+
+  return journeys;
 });
 
 class JourneyStatsRequest {
@@ -96,13 +115,14 @@ final journeyStatsProvider =
 
         // Get journey service for initialization
         final journeyService = JourneyService();
+        final isParentMode = ref.read(personaProvider).isParentMode;
 
         // Initialize the journey
         final initSuccess = await journeyService.initializeJourney(
             request.userEmail,
             request.journeyId,
-            null // Let the service determine the journey data
-            );
+            null, // Let the service determine the journey data
+            isParentMode: isParentMode);
 
         if (initSuccess) {
           // Reset the initialization flag on success
@@ -310,10 +330,12 @@ final skillsWithTypeProvider =
     FutureProvider.family<List<Map<String, dynamic>>, SkillsRequest>(
         (ref, request) async {
   final journeyService = ref.watch(journeyServiceProvider);
+  final isParentMode = ref.watch(personaProvider).isParentMode;
 
   // Get journey type from the skillTrack
-  final journeyData =
-      await journeyService.getJourneyType(request.skillTrackId, request.email);
+  final journeyData = await journeyService.getJourneyType(
+      request.skillTrackId, request.email,
+      isParentMode: isParentMode);
   final journeyType = journeyData['type'] ?? '';
 
   // Get skills

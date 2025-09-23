@@ -177,28 +177,67 @@ class DiscoverUINotifier extends StateNotifier<DiscoverUIState> {
   }
 }
 
-// Journeys provider
+// Journeys provider with persona awareness
 final journeysProvider =
     StateNotifierProvider<JourneysNotifier, JourneysState>((ref) {
   final journeyService = ref.watch(journeyServiceProvider);
-  return JourneysNotifier(journeyService);
+  return JourneysNotifier(journeyService, ref);
 });
 
 class JourneysNotifier extends StateNotifier<JourneysState> {
   final JourneyService _journeyService;
+  final Ref _ref;
 
-  JourneysNotifier(this._journeyService)
-      : super(JourneysState(journeys: [], isLoading: true));
+  JourneysNotifier(this._journeyService, this._ref)
+      : super(JourneysState(journeys: [], isLoading: true)) {
+    // Listen to persona changes and refetch automatically
+    _ref.listen<PersonaState>(personaProvider, (previous, next) {
+      if (previous?.isParentMode != next.isParentMode) {
+        print(
+            '🔄 JourneysNotifier: Persona changed, refetching journeys. Parent mode: ${next.isParentMode}');
+        fetchJourneys();
+      }
+    });
+
+    // Initial fetch
+    fetchJourneys();
+  }
 
   Future<void> fetchJourneys() async {
     try {
+      print('🚀 JourneysNotifier: Starting to fetch journeys...');
       state = state.copyWith(isLoading: true);
-      final journeys = await _journeyService.fetchJourneys();
+      final isParentMode = _ref.read(personaProvider).isParentMode;
+      print('🚀 JourneysNotifier: Parent mode: $isParentMode');
+
+      final journeys =
+          await _journeyService.fetchJourneys(isParentMode: isParentMode);
+
+      print('🚀 JourneysNotifier: Fetched ${journeys.length} journeys');
+
+      if (journeys.isNotEmpty) {
+        print('🚀 JourneysNotifier: Sample journeys:');
+        for (int i = 0; i < journeys.length && i < 3; i++) {
+          final journey = journeys[i];
+          final id = journey['objectId'] ?? journey['id'] ?? 'NO_ID';
+          final title = journey['title'] ?? 'NO_TITLE';
+          print('   - $id ($title)');
+        }
+      } else {
+        print('⚠️ JourneysNotifier: No journeys found!');
+      }
+
       state = state.copyWith(journeys: journeys, isLoading: false);
     } catch (e) {
+      print('💥 JourneysNotifier: Error fetching journeys: $e');
       state = state.copyWith(
           error: 'Error fetching journeys: $e', isLoading: false);
     }
+  }
+
+  // Manual refresh method
+  Future<void> refreshJourneys() async {
+    await fetchJourneys();
   }
 }
 
@@ -217,10 +256,25 @@ class CoachingNotifier extends StateNotifier<CoachingState> {
 
   Future<void> fetchCoaching() async {
     try {
+      print('🚀 CoachingNotifier: Starting to fetch coaching...');
       state = state.copyWith(isLoading: true);
       final coaching = await _coachingService.getMainCoachings();
+      print('🚀 CoachingNotifier: Fetched ${coaching.length} coaching items');
       state = state.copyWith(coaching: coaching, isLoading: false);
+
+      // Debug: Print first few items
+      if (coaching.isNotEmpty) {
+        print('🚀 CoachingNotifier: Sample coaching items:');
+        for (int i = 0; i < coaching.length && i < 3; i++) {
+          final item = coaching[i];
+          print(
+              '   - ${item['title'] ?? 'NO_TITLE'} (id: ${item['objectId'] ?? 'NO_ID'})');
+        }
+      } else {
+        print('🚀 CoachingNotifier: No coaching items found!');
+      }
     } catch (e) {
+      print('💥 CoachingNotifier: Error fetching coaching: $e');
       state = state.copyWith(
           error: 'Error fetching coaching: $e', isLoading: false);
     }
@@ -328,15 +382,28 @@ class ChallengesNotifier extends StateNotifier<ChallengesState> {
 // Current data provider based on selected button
 final currentDataProvider = Provider<List<Map<String, dynamic>>>((ref) {
   final selectedIndex = ref.watch(discoverUIStateProvider).selectedButtonIndex;
+  print('🔄 currentDataProvider: selectedIndex=$selectedIndex');
 
   switch (selectedIndex) {
     case 1:
-      return ref.watch(coachingProvider).coaching;
+      final coachingData = ref.watch(coachingProvider).coaching;
+      print(
+          '🔄 currentDataProvider: coaching data length=${coachingData.length}');
+      return coachingData;
     case 2:
-      return ref.watch(activitiesProvider).categories;
+      final activitiesData = ref.watch(activitiesProvider).categories;
+      print(
+          '🔄 currentDataProvider: activities data length=${activitiesData.length}');
+      return activitiesData;
     case 3:
-      return ref.watch(challengesProvider).challenges;
+      final challengesData = ref.watch(challengesProvider).challenges;
+      print(
+          '🔄 currentDataProvider: challenges data length=${challengesData.length}');
+      return challengesData;
     default:
-      return ref.watch(journeysProvider).journeys;
+      final journeysData = ref.watch(journeysProvider).journeys;
+      print(
+          '🔄 currentDataProvider: journeys data length=${journeysData.length}');
+      return journeysData;
   }
 });

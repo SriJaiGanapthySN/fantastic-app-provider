@@ -7,7 +7,7 @@ class CoachingService {
     try {
       // One-time fetch of documents where hidden == false
       QuerySnapshot snapshot = await _firestore
-          .collection('coachingSeries')
+          .collection('coachingSeries-new')
           .where('hidden', isEqualTo: false)
           .get();
 
@@ -15,12 +15,19 @@ class CoachingService {
       List<Map<String, dynamic>> mainCoachings = [];
       for (var doc in snapshot.docs) {
         mainCoachings.add(doc.data() as Map<String, dynamic>);
+        print("ganapathy: ${doc.data()}");
       }
 
       // Sort the list by the 'position' field
       mainCoachings.sort((a, b) {
-        // Assuming 'position' is a numeric field
-        return (a['position'] as int).compareTo(b['position'] as int);
+        // Handle both int and double types for position field
+        final aPosition = (a['position'] is int)
+            ? a['position'] as int
+            : (a['position'] as double).toInt();
+        final bPosition = (b['position'] is int)
+            ? b['position'] as int
+            : (b['position'] as double).toInt();
+        return aPosition.compareTo(bPosition);
       });
 
       return mainCoachings;
@@ -34,7 +41,7 @@ class CoachingService {
     try {
       // One-time fetch of documents where hidden == false
       QuerySnapshot snapshot = await _firestore
-          .collection('coachingSeriesEntry')
+          .collection('coachingSeriesEntry-new')
           .where('coachingSeriesId', isEqualTo: id)
           .get();
 
@@ -46,8 +53,14 @@ class CoachingService {
 
       // Sort the list by the 'position' field
       Coachings.sort((a, b) {
-        // Assuming 'position' is a numeric field
-        return (a['position'] as int).compareTo(b['position'] as int);
+        // Handle both int and double types for position field
+        final aPosition = (a['position'] is int)
+            ? a['position'] as int
+            : (a['position'] as double).toInt();
+        final bPosition = (b['position'] is int)
+            ? b['position'] as int
+            : (b['position'] as double).toInt();
+        return aPosition.compareTo(bPosition);
       });
 
       return Coachings;
@@ -78,9 +91,14 @@ class CoachingService {
       print(Coachings);
       // Sort the list first by 'position' field, then by 'updated' field
       Coachings.sort((a, b) {
-        // Compare by 'position' first
-        int positionComparison =
-            (a['position'] as int).compareTo(b['position'] as int);
+        // Compare by 'position' first - handle both int and double types
+        final aPosition = (a['position'] is int)
+            ? a['position'] as int
+            : (a['position'] as double).toInt();
+        final bPosition = (b['position'] is int)
+            ? b['position'] as int
+            : (b['position'] as double).toInt();
+        int positionComparison = aPosition.compareTo(bPosition);
         if (positionComparison != 0) {
           return positionComparison;
         }
@@ -102,7 +120,7 @@ class CoachingService {
 
         // Update the corresponding document in Firestore with the new 'updated' field
         await _firestore
-            .collection('coaching')
+            .collection('coaching-new')
             .doc(snapshot.docs[0]
                 .id) // Assuming the first document corresponds to the coaching entry
             .update({

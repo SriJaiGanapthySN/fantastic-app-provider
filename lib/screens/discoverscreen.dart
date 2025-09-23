@@ -39,21 +39,35 @@ class _DiscoverscreenState extends ConsumerState<Discoverscreen>
     // Start the animation and make it repeat
     _dataDiscoveryController.repeat();
 
-    // Load initial data (journeys) when the screen first loads
-    Future.microtask(() => ref.read(journeysProvider.notifier).fetchJourneys());
+    // Load initial data when the screen first loads
+    Future.microtask(() {
+      ref.read(journeysProvider.notifier).fetchJourneys();
+      ref.read(coachingProvider.notifier).fetchCoaching();
+      ref.read(activitiesProvider.notifier).fetchCategories();
+    });
   }
 
   // Handle button press using the provider
   Future<void> _handleButtonPress(int index) async {
+    print('🔥 Button pressed: index=$index');
+
     if (index == 0) {
       ref.read(discoverUIStateProvider.notifier).selectButton(index);
       if (ref.read(journeysProvider).journeys.isEmpty) {
+        print('🔥 Fetching journeys...');
         ref.read(journeysProvider.notifier).fetchJourneys();
       }
     } else if (index == 1) {
       ref.read(discoverUIStateProvider.notifier).selectButton(index);
+      print(
+          '🔥 Coaching button pressed - current coaching data length: ${ref.read(coachingProvider).coaching.length}');
       if (ref.read(coachingProvider).coaching.isEmpty) {
-        ref.read(coachingProvider.notifier).fetchCoaching();
+        print('🔥 Fetching coaching...');
+        await ref.read(coachingProvider.notifier).fetchCoaching();
+        print(
+            '🔥 After fetch - coaching data length: ${ref.read(coachingProvider).coaching.length}');
+      } else {
+        print('🔥 Coaching data already available');
       }
     } else if (index == 2) {
       ref.read(discoverUIStateProvider.notifier).selectButton(index);

@@ -288,11 +288,40 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                           // Journey Levels List Section
                           allJourneys.when(
                             data: (journeys) {
+                              print(
+                                  '🔍 JourneyScreen: allJourneys data received');
+                              print(
+                                  '🔍 JourneyScreen: journeys count: ${journeys.length}');
+
+                              if (journeys.isNotEmpty) {
+                                for (int i = 0;
+                                    i < journeys.length && i < 3;
+                                    i++) {
+                                  print(
+                                      '🔍 JourneyScreen: Journey $i: ${journeys[i]['title']} (${journeys[i]['objectId']})');
+                                }
+                              }
+
                               if (journeys.isEmpty) {
-                                return const Center(
-                                  child: Text(
-                                    'No journeys available',
-                                    style: TextStyle(color: Colors.white),
+                                return Center(
+                                  child: Column(
+                                    children: [
+                                      const Text(
+                                        'No journeys available',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Debug: User: $_userEmail',
+                                        style: const TextStyle(
+                                            color: Colors.yellow, fontSize: 12),
+                                      ),
+                                      Text(
+                                        'Debug: SkillTrackId: ${widget.tile?['objectId'] ?? 'NO_ID'}',
+                                        style: const TextStyle(
+                                            color: Colors.yellow, fontSize: 12),
+                                      ),
+                                    ],
                                   ),
                                 );
                               }
@@ -312,10 +341,30 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                             },
                             loading: () => const Center(
                                 child: CircularProgressIndicator()),
-                            error: (_, __) => const Center(
-                              child: Text('Error loading journeys',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
+                            error: (error, stackTrace) {
+                              print(
+                                  '💥 JourneyScreen: Error loading journeys: $error');
+                              print(
+                                  '💥 JourneyScreen: Stack trace: $stackTrace');
+
+                              return Center(
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Error loading journeys',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Error: $error',
+                                      style: const TextStyle(
+                                          color: Colors.yellow, fontSize: 10),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 100),
                         ],
