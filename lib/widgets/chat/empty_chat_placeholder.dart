@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-class EmptyChatPlaceholder extends StatelessWidget {
+class EmptyChatPlaceholder extends StatefulWidget {
   final bool shouldShowTextBox;
   final bool showContainer;
   final bool showMindText;
@@ -16,13 +16,26 @@ class EmptyChatPlaceholder extends StatelessWidget {
   });
 
   @override
+  State<EmptyChatPlaceholder> createState() => _EmptyChatPlaceholderState();
+}
+
+class _EmptyChatPlaceholderState extends State<EmptyChatPlaceholder> {
+  bool? _lastShowContainer;
+  bool? _lastShowMindText;
+
+  @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Debug print to check when the widget rebuilds and with what values
-    debugPrint(
-        'EmptyChatPlaceholder: shouldShow=$shouldShowTextBox, container=$showContainer, mind=$showMindText');
+    // Only print debug info when values actually change
+    if (_lastShowContainer != widget.showContainer ||
+        _lastShowMindText != widget.showMindText) {
+      print(
+          'EmptyChatPlaceholder state changed: container=${widget.showContainer}, mind=${widget.showMindText}');
+      _lastShowContainer = widget.showContainer;
+      _lastShowMindText = widget.showMindText;
+    }
 
     return Container(
       width: double.infinity,
@@ -41,13 +54,13 @@ class EmptyChatPlaceholder extends StatelessWidget {
                 width: screenWidth / 0.9,
                 height: screenHeight / 1.8,
                 fit: BoxFit.fill,
-                controller: mindController,
+                controller: widget.mindController,
               ),
             ),
           ),
           Center(
             child: AnimatedOpacity(
-              opacity: showContainer && showMindText ? 1.0 : 0.0,
+              opacity: widget.showContainer && widget.showMindText ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 2000),
               curve: Curves.easeInOut,
               child: ClipRRect(

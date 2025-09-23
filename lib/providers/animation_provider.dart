@@ -55,16 +55,16 @@ class AnimationNotifier extends StateNotifier<AnimationManager?> {
     final rippleController = AnimationController(
       vsync: tickerProvider,
       duration:
-          const Duration(seconds: 3), // Slower animation - 5 seconds duration
+          const Duration(seconds: 5), // Slower animation - 5 seconds duration
     );
 
     final mindController = AnimationController(
       vsync: tickerProvider,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 3000), // Slower mind animation
     );
 
-    // Start the mind animation by default
-    mindController.repeat(reverse: true);
+    // Don't start animations by default to prevent unnecessary rebuilds
+    // mindController.repeat(reverse: true);
 
     state = AnimationManager(
       rippleController: rippleController,

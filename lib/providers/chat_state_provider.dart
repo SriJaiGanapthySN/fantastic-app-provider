@@ -108,7 +108,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   void _startTextSwitching() {
-    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    // Only start text switching if not already running
+    if (_timer != null && _timer!.isActive) {
+      return;
+    }
+
+    _timer = Timer.periodic(const Duration(seconds: 8), (timer) {
       if (_disposed) {
         timer.cancel();
         return;
@@ -118,6 +123,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
           : "Hold to Speak";
       state = state.copyWith(displayText: newText);
     });
+  }
+
+  void stopTextSwitching() {
+    _timer?.cancel();
+    _timer = null;
   }
 
   void toggleMessageBoxVisibility() {
@@ -209,22 +219,30 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   void handleTextInputChange(String text) {
+    // Only update state if there's a meaningful change
+    final wasEmpty = state.currentText.isEmpty;
+    final isEmpty = text.isEmpty;
+
+    // Update current text
     state = state.copyWith(currentText: text);
 
-    if (text.isNotEmpty && state.showMindText) {
-      state = state.copyWith(
-        showMindText: false,
-        shouldShowTextBox: false,
-      );
-      // Animation stopping will be handled via animation provider
-    } else if (text.isEmpty &&
-        !state.showMindText &&
-        state.isMessageBoxVisible) {
-      state = state.copyWith(
-        showMindText: true,
-        shouldShowTextBox: true,
-      );
-      // Animation starting will be handled via animation provider
+    // Only update UI state when transitioning between empty and non-empty
+    if (wasEmpty != isEmpty) {
+      if (text.isNotEmpty && state.showMindText) {
+        state = state.copyWith(
+          showMindText: false,
+          shouldShowTextBox: false,
+        );
+        print('Text input: hiding mind animation');
+      } else if (text.isEmpty &&
+          !state.showMindText &&
+          state.isMessageBoxVisible) {
+        state = state.copyWith(
+          showMindText: true,
+          shouldShowTextBox: true,
+        );
+        print('Text input: showing mind animation');
+      }
     }
   }
 

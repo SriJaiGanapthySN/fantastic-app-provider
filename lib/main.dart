@@ -10,10 +10,9 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'firebase_options.dart';
-import 'services/token_service.dart';
+import 'providers/auth_provider.dart';
 import 'screens/auth_page.dart';
 import 'screens/main_screen.dart';
-import 'screens/ritual/habitPlay.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -84,10 +83,11 @@ class MyApp extends ConsumerWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'SF Pro Display',
       ),
-      home: FutureBuilder<bool>(
-        future: TokenService.isAuthenticated(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      home: Consumer(
+        builder: (context, ref, child) {
+          final authState = ref.watch(authProvider);
+
+          if (authState.isLoading) {
             return const Scaffold(
               body: Center(
                 child: CircularProgressIndicator(
@@ -99,7 +99,7 @@ class MyApp extends ConsumerWidget {
             );
           }
 
-          final isAuthenticated = snapshot.data ?? false;
+          final isAuthenticated = authState.user != null;
           return isAuthenticated ? MainScreen() : const AuthPage();
         },
       ),

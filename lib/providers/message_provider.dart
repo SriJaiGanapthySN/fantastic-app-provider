@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fantastic_app_riverpod/factories/message_factory.dart';
 import 'package:fantastic_app_riverpod/utils/question_detector.dart';
+import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
-import 'package:fantastic_app_riverpod/services/token_service.dart';
 import 'package:fantastic_app_riverpod/models/chat_message_data.dart';
-import 'package:fantastic_app_riverpod/widgets/chat/animated_object_card_message.dart';
 
 class MessageNotifier extends StateNotifier<MessageFactory?> {
   final Ref ref;
@@ -145,9 +144,9 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
         ref.read(chatApiServiceProvider); // Move this outside try block
 
     try {
-      // Check if authenticated using token service
-      final isAuthenticated = await TokenService.isAuthenticated();
-      if (!isAuthenticated) {
+      // Check authentication using the auth provider instead of repeated TokenService calls
+      final authState = ref.read(authProvider);
+      if (authState.user == null) {
         print('User not authenticated. Chat requires authentication.');
         // Turn off thinking animation
         chatNotifier.setThresholdReached(false);
@@ -168,8 +167,7 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
         },
         () async {
           // Streaming complete
-          print(
-              'Streaming complete, handling original inputType: $inputType');
+          print('Streaming complete, handling original inputType: $inputType');
           if (fullResponse.isNotEmpty) {
             // Create different message types based on input type
             if (inputType == 'voice') {

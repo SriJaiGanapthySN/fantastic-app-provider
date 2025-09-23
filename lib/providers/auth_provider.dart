@@ -48,7 +48,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await authRepo.loginWithEmailAndPassword(email, password);
       state = state.copyWith(user: user, isLoading: false);
-      // Removed the call to _addUserToTesters(user) here
+      // Store user details in TokenService for other parts of the app
+      if (user != null) {
+        await TokenService.storeUserDetails(email: user.email, name: user.name);
+      }
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
@@ -74,6 +77,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (user != null) {
         print('Google Sign-In successful');
         state = state.copyWith(user: user, isLoading: false);
+        // Store user details in TokenService for other parts of the app
+        await TokenService.storeUserDetails(email: user.email, name: user.name);
       } else {
         print('Google Sign-In returned null user');
         state = state.copyWith(

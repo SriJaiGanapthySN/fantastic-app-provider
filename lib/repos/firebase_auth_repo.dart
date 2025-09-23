@@ -7,6 +7,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/services.dart';
 
 import '../models/app_user.dart';
+import '../utils/connectivity_helper.dart';
 
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -42,6 +43,13 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<AppUser?> loginWithEmailAndPassword(
       String email, String password) async {
+    // Check connectivity before attempting login
+    final hasInternet = await ConnectivityHelper.hasInternetConnection();
+    if (!hasInternet) {
+      throw Exception(
+          'No internet connection. Please check your network and try again.');
+    }
+
     try {
       UserCredential userCredential =
           await firebaseAuth.signInWithEmailAndPassword(
@@ -57,6 +65,13 @@ class FirebaseAuthRepo implements AuthRepo {
       _handleAuthException(e);
     } catch (e) {
       _logError('Login Failed', e);
+      // Check if it's a network-related error
+      if (e.toString().toLowerCase().contains('network') ||
+          e.toString().toLowerCase().contains('internet') ||
+          e.toString().toLowerCase().contains('connection')) {
+        throw Exception(
+            'Network error. Please check your internet connection and try again.');
+      }
       throw Exception('Login Failed: ${e.toString()}');
     }
     return null;
@@ -83,6 +98,13 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<AppUser?> signupWithEmailAndPassword(
       String name, String email, String password) async {
+    // Check connectivity before attempting signup
+    final hasInternet = await ConnectivityHelper.hasInternetConnection();
+    if (!hasInternet) {
+      throw Exception(
+          'No internet connection. Please check your network and try again.');
+    }
+
     try {
       UserCredential userCredential =
           await firebaseAuth.createUserWithEmailAndPassword(
@@ -155,6 +177,13 @@ class FirebaseAuthRepo implements AuthRepo {
       case 'wrong-password':
         message = 'Wrong password provided.';
         break;
+      case 'network-request-failed':
+        message =
+            'Network error. Please check your internet connection and try again.';
+        break;
+      case 'too-many-requests':
+        message = 'Too many failed attempts. Please try again later.';
+        break;
       case 'unknown-error':
         message = 'Either email or password is incorrect.';
         break;
@@ -182,6 +211,13 @@ class FirebaseAuthRepo implements AuthRepo {
 
   @override
   Future<AppUser?> signInWithGoogle() async {
+    // Check connectivity before attempting Google sign-in
+    final hasInternet = await ConnectivityHelper.hasInternetConnection();
+    if (!hasInternet) {
+      throw Exception(
+          'No internet connection. Please check your network and try again.');
+    }
+
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       final GoogleSignInAuthentication? googleAuth =

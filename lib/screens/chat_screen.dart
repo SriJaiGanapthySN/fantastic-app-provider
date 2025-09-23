@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:fantastic_app_riverpod/providers/animation_provider.dart';
+import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/message_provider.dart';
 import 'package:fantastic_app_riverpod/providers/speech_recognition_provider.dart';
 import 'package:fantastic_app_riverpod/providers/nav_provider.dart';
 import 'package:fantastic_app_riverpod/screens/main_screen.dart';
-import 'package:fantastic_app_riverpod/services/token_service.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_app_bar.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_background.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_content.dart';
@@ -51,6 +51,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       _textController = ref.read(textEditingControllerProvider);
       _focusNode = ref.read(focusNodeProvider);
 
+      // Remove any existing listeners
+      try {
+        _scrollController.removeListener(_scrollListener);
+      } catch (e) {
+        // Listener might not exist yet
+      }
+
       // Initialize providers that need the ticker
       ref.read(animationProvider(this));
       ref.read(messageProvider(this));
@@ -58,8 +65,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       // Add scroll controller listener
       _scrollController.addListener(_scrollListener);
 
-      // Add text controller listener
-      _textController.addListener(_handleTextInputChange);
+      // Text controller listener is now handled in MessageInputBar
+      // No need to add it here to avoid double handling
 
       // Set up animation callback for scrolling
       _setupAnimationCallback();
@@ -139,7 +146,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     try {
       if (_isInitialized) {
         _scrollController.removeListener(_scrollListener);
-        _textController.removeListener(_handleTextInputChange);
+        // Text controller listener is now handled in MessageInputBar
       }
     } catch (e) {
       print('Error removing listeners: $e');
@@ -288,14 +295,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (!mounted || !_isInitialized) return;
 
     try {
+      print('Toggling message box visibility...');
       ref.read(chatProvider.notifier).toggleMessageBoxVisibility();
 
       final isVisible = ref.read(chatProvider).isMessageBoxVisible;
+      print('Message box visible: $isVisible');
 
       if (isVisible) {
-        Future.delayed(const Duration(milliseconds: 10), () {
-          if (mounted) {
-            FocusScope.of(context).requestFocus(_focusNode);
+        // Give the UI time to rebuild before requesting focus
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _focusNode.canRequestFocus) {
+            print('Requesting focus for text field');
+            _focusNode.requestFocus();
           }
         });
 
@@ -305,6 +316,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           ref.read(animationProvider(this).notifier).startMindAnimation();
         }
       } else {
+        print('Unfocusing text field');
         _focusNode.unfocus();
         ref.read(animationProvider(this).notifier).startMindAnimation();
       }
@@ -315,21 +327,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: TokenService.isAuthenticated(),
-      builder: (context, snapshot) {
-        // Always show the main scaffold with background to prevent white flash
-        return Scaffold(
-          backgroundColor: Colors.black, // Prevent white flash
-          resizeToAvoidBottomInset: true,
-          body: _buildChatBody(context, snapshot),
-        );
-      },
+    // Use the auth provider instead of FutureBuilder to avoid repeated auth checks
+    final authState = ref.watch(authProvider);
+
+    return Scaffold(
+      backgroundColor: Colors.black, // Prevent white flash
+      resizeToAvoidBottomInset: true,
+      body: _buildChatBody(context, authState),
     );
   }
 
-  Widget _buildChatBody(BuildContext context, AsyncSnapshot<bool> snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
+  Widget _buildChatBody(BuildContext context, AuthState authState) {
+    // Check authentication state from provider
+    if (authState.isLoading) {
       return Stack(
         children: [
           // Show background even during loading
@@ -343,7 +353,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       );
     }
 
-    final isAuthenticated = snapshot.data ?? false;
+    final isAuthenticated = authState.user != null;
     if (!isAuthenticated) {
       return Stack(
         children: [
@@ -359,9 +369,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
 
     final chatState = ref.watch(chatProvider);
+
+    // Only watch animation provider if initialized - don't rebuild on animation changes
     final animationManager =
-        _isInitialized ? ref.watch(animationProvider(this)) : null;
-    final voiceText = ref.watch(speechRecognitionProvider).recognizedText.value;
+        _isInitialized ? ref.read(animationProvider(this)) : null;
+
+    // Don't watch speech recognition provider constantly - read it only when needed
+    // final voiceText = ref.watch(speechRecognitionProvider).recognizedText.value;
 
     // Show loading with background if not initialized yet
     if (!_isInitialized) {
@@ -467,7 +481,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               rippleController: animationManager.rippleController,
               opacity: chatState.opacity,
               displayText: chatState.displayText,
-              voiceText: voiceText,
+              voiceText:
+                  ref.read(speechRecognitionProvider).recognizedText.value,
               shouldShowTextBox: chatState.shouldShowTextBox,
               showMindText: chatState.showMindText,
               showContainer: chatState.showContainer,
