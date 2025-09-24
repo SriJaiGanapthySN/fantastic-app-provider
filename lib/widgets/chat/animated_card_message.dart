@@ -5,6 +5,8 @@ import 'package:lottie/lottie.dart';
 import 'package:widget_and_text_animator/widget_and_text_animator.dart';
 
 import 'animated_object_card_message.dart';
+import '../../models/responsemodel.dart';
+import '../../services/bracketed_content_service.dart';
 
 class AnimatedCardMessage extends ConsumerStatefulWidget {
   final String id;
@@ -44,9 +46,45 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
   late AnimationController imageController;
   // ===============================================================
 
+  // Store the parsed response model and display text
+  late ChatResponseModel _parsedResponse;
+  late String _displayText;
+
   @override
   void initState() {
     super.initState();
+
+    // Parse the API response to extract bracketed content and get display text
+    _parsedResponse = ChatResponseModel.fromRawResponse(widget.apiResponse);
+    _displayText = _parsedResponse.displayText;
+
+    // Store the parsed response model for this message ID
+    if (_parsedResponse.hasExtractedFields) {
+      BracketedContentService.storeResponseModel(widget.id, _parsedResponse);
+    }
+
+    print('🔍 Parsed response for message ${widget.id}:');
+    print('  - Original: "${widget.apiResponse}"');
+    print('  - Original length: ${widget.apiResponse.length}');
+    print('  - Display text: "$_displayText"');
+    print('  - Display text length: ${_displayText.length}');
+    print('  - Bracketed content: ${_parsedResponse.rawBracketedContent}');
+    if (_parsedResponse.hasObjectId) {
+      print('  - Object ID: ${_parsedResponse.objectId}');
+    }
+    if (_parsedResponse.hasType) {
+      print('  - Type: ${_parsedResponse.type}');
+    }
+    print(
+        '  - Stored in BracketedContentService: ${_parsedResponse.hasExtractedFields}');
+
+    // Check for empty response issue
+    if (widget.apiResponse.isEmpty) {
+      print('⚠️ WARNING: API response is completely empty!');
+    } else if (_displayText.isEmpty) {
+      print(
+          '⚠️ WARNING: Display text is empty after parsing! Raw response: "${widget.apiResponse}"');
+    }
 
     // ============= IMAGE CONTROLLER SETUP FOR CONTENT CARDS =============
     imageController = AnimationController(vsync: this);
@@ -69,7 +107,7 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
     // Initialize animation states
     print('🚀 AnimatedCardMessage initialized');
     print('📝 Is Question: ${widget.isQuestion}');
-    print('💬 API Response length: ${widget.apiResponse.length}');
+    print('💬 Display text length: ${_displayText.length}');
 
     isQuesAnimVisible = widget.isQuestion;
     isGlowVisible = !widget.isQuestion;
@@ -92,8 +130,8 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
     // Calculate animation duration closer to TextAnimator timings
     // TextAnimator config: characterDelay: 10ms, spaceDelay: 100ms,
     // incomingEffect: 800ms, atRestEffect: 750ms (plays once)
-    final int responseLength = widget.apiResponse.length;
-    final int spacesCount = RegExp(r'\s').allMatches(widget.apiResponse).length;
+    final int responseLength = _displayText.length;
+    final int spacesCount = RegExp(r'\s').allMatches(_displayText).length;
     const int incomingMs = 800;
     const int atRestMs = 750;
     const int perCharMs = 10;
@@ -259,21 +297,23 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
 
   // Calculate dynamic height based on actual text content
   double calculateDynamicHeight(BuildContext context) {
-    // Get actual text height
-    double textHeight = calculateTextHeight(context, widget.apiResponse);
+    // Get actual text height using the display text (without brackets)
+    double textHeight = calculateTextHeight(context, _displayText);
 
-    // Add padding for top, bottom margins and some breathing space
-    double totalPadding = getResponsivePadding(context, 12) + // top padding
-        getResponsivePadding(context, 12) + // bottom padding
-        getResponsivePadding(context, 10) + // top margin
-        getResponsivePadding(context, 20); // extra breathing space
+    // Add padding for top, bottom margins and extra breathing space to fix overflow
+    double totalPadding =
+        getResponsivePadding(context, 15) + // increased top padding
+            getResponsivePadding(context, 15) + // increased bottom padding
+            getResponsivePadding(context, 12) + // top margin
+            getResponsivePadding(
+                context, 30); // increased breathing space for overflow fix
 
     double finalHeight = textHeight + totalPadding;
 
-    // Set reasonable bounds
+    // Set reasonable bounds - increased max height to prevent overflow
     double minHeight = getResponsiveHeight(context, 0.10);
     double maxHeight = getResponsiveHeight(
-        context, 0.65); // Allow taller bubbles for long text
+        context, 0.85); // Increased from 0.65 to 0.85 to fix overflow error
 
     return finalHeight.clamp(minHeight, maxHeight);
   }
@@ -296,7 +336,7 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                 duration: Duration(milliseconds: widget.isQuestion ? 170 : 300),
                 child: Lottie.asset(
                   widget.isQuestion
-                      ? "assets/animations/QnA/2. Circle/data.json"
+                      ? "assets/animations/QnA/2. circle/data.json" // Fixed case: circle not Circle
                       : 'assets/animations/All Lottie/Glowing Star/Image Preload Gradient.json',
                   width: widget.isQuestion
                       ? getResponsiveWidth(context, 0.65)
@@ -397,59 +437,79 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                     right: getResponsivePadding(context, 12),
                     bottom: getResponsivePadding(context, 12),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        margin: EdgeInsets.only(
-                          top: getResponsivePadding(context, 10),
-                          left: getResponsivePadding(context, 5),
-                          right: getResponsivePadding(context, 10),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          margin: EdgeInsets.only(
+                            top: getResponsivePadding(context, 10),
+                            left: getResponsivePadding(context, 5),
+                            right: getResponsivePadding(context, 10),
+                          ),
+                          child: _displayText.isNotEmpty
+                              ? TextAnimator(
+                                  _displayText, // Use display text without brackets
+                                  incomingEffect: WidgetTransitionEffects(
+                                      blur: const Offset(10, 10),
+                                      duration:
+                                          const Duration(milliseconds: 800)),
+                                  outgoingEffect: WidgetTransitionEffects(
+                                      blur: const Offset(10, 10)),
+                                  atRestEffect: WidgetRestingEffects.wave(
+                                      effectStrength: 0.2,
+                                      duration: Duration(milliseconds: 750),
+                                      numberOfPlays: 1),
+                                  style: GoogleFonts.lato(
+                                      textStyle: TextStyle(
+                                    fontFamily: "Original",
+                                    letterSpacing: 1,
+                                    fontSize:
+                                        getResponsiveFontSize(context, 14),
+                                    color: Colors.white,
+                                  )),
+                                  textAlign: TextAlign.left,
+                                  initialDelay: const Duration(milliseconds: 0),
+                                  spaceDelay: const Duration(milliseconds: 100),
+                                  characterDelay:
+                                      const Duration(milliseconds: 10),
+                                  maxLines: null, // Allow unlimited lines
+                                )
+                              : Text(
+                                  "Response received but content is empty. Please try again.",
+                                  style: GoogleFonts.lato(
+                                    textStyle: TextStyle(
+                                      fontFamily: "Original",
+                                      letterSpacing: 1,
+                                      fontSize:
+                                          getResponsiveFontSize(context, 14),
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
                         ),
-                        child: TextAnimator(
-                          widget.apiResponse,
-                          incomingEffect: WidgetTransitionEffects(
-                              blur: const Offset(10, 10),
-                              duration: const Duration(milliseconds: 800)),
-                          outgoingEffect: WidgetTransitionEffects(
-                              blur: const Offset(10, 10)),
-                          atRestEffect: WidgetRestingEffects.wave(
-                              effectStrength: 0.2,
-                              duration: Duration(milliseconds: 750),
-                              numberOfPlays: 1),
-                          style: GoogleFonts.lato(
-                              textStyle: TextStyle(
-                            fontFamily: "Original",
-                            letterSpacing: 1,
-                            fontSize: getResponsiveFontSize(context, 14),
-                            color: Colors.white,
-                          )),
-                          textAlign: TextAlign.left,
-                          initialDelay: const Duration(milliseconds: 0),
-                          spaceDelay: const Duration(milliseconds: 100),
-                          characterDelay: const Duration(milliseconds: 10),
-                          maxLines: null, // Allow unlimited lines
-                        ),
-                      ),
 
-                      // ============= IMAGE SECTION FOR CONTENT CARDS =============
-                      Container(
-                        margin: EdgeInsets.only(
-                          top: getResponsivePadding(context, 10),
-                          left: getResponsivePadding(context, 10),
+                        // ============= IMAGE SECTION FOR CONTENT CARDS =============
+                        Container(
+                          margin: EdgeInsets.only(
+                            top: getResponsivePadding(context, 10),
+                            left: getResponsivePadding(context, 10),
+                          ),
+                          child: CardImageSection(
+                            imageController: imageController,
+                            opacity: opacity,
+                            applyBlur: applyBlur,
+                            getResponsiveWidth: getResponsiveWidth,
+                            getResponsiveHeight: getResponsiveHeight,
+                            getResponsiveFontSize: getResponsiveFontSize,
+                          ),
                         ),
-                        child: CardImageSection(
-                          imageController: imageController,
-                          opacity: opacity,
-                          applyBlur: applyBlur,
-                          getResponsiveWidth: getResponsiveWidth,
-                          getResponsiveHeight: getResponsiveHeight,
-                          getResponsiveFontSize: getResponsiveFontSize,
-                        ),
-                      ),
-                      // ============================================================
-                    ],
+                        // ============================================================
+                      ],
+                    ),
                   ),
                 ),
               ),

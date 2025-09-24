@@ -87,50 +87,94 @@ class TokenService {
     print('💾 Token cache initialized');
   }
 
-  // Generate and store backend API token using email/password
+  // Generate and store backend API token using email/password or Firebase token
   static Future<String?> generateAndStoreBackendToken() async {
     try {
       await _initializeCache();
 
-      if (_cachedEmail == null || _cachedPassword == null) {
-        print('❌ No email or password cached for backend authentication');
-        return null;
-      }
+      // First try email/password authentication for traditional login
+      if (_cachedEmail != null &&
+          _cachedPassword != null &&
+          _cachedPassword!.isNotEmpty) {
+        print(
+            '🔄 Getting backend API token using email/password for: ${_cachedEmail}');
 
-      print('🔄 Getting backend API token for: ${_cachedEmail}');
+        const baseUrl = 'https://mental-health.rohanrichard.com';
+        final response = await http
+            .post(
+              Uri.parse('$baseUrl/auth/token'),
+              headers: {
+                'accept': 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode({
+                'email': _cachedEmail,
+                'password': _cachedPassword,
+              }),
+            )
+            .timeout(Duration(seconds: 30));
 
-      const baseUrl = 'https://mental-health.rohanrichard.com';
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/auth/token'),
-            headers: {
-              'accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'email': _cachedEmail,
-              'password': _cachedPassword,
-            }),
-          )
-          .timeout(Duration(seconds: 30));
+        print(
+            '🔐 Backend auth (email/password) response status: ${response.statusCode}');
 
-      print('🔐 Backend auth response status: ${response.statusCode}');
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final backendToken = data['access_token'];
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final backendToken = data['access_token'];
-
-        if (backendToken != null) {
-          // Store the backend token
-          await _storeBackendToken(backendToken);
-          print('✅ Backend API token generated and stored successfully');
-          return backendToken;
+          if (backendToken != null) {
+            await _storeBackendToken(backendToken);
+            print('✅ Backend API token generated using email/password');
+            return backendToken;
+          }
+        } else {
+          print('❌ Backend authentication failed: ${response.statusCode}');
+          print('Response: ${response.body}');
         }
-      } else {
-        print('❌ Backend authentication failed: ${response.statusCode}');
-        print('Response: ${response.body}');
       }
 
+      // If email/password failed or not available, try Firebase token authentication
+      print('🔄 Attempting Firebase token authentication for backend...');
+      final firebaseToken = await getValidToken();
+
+      if (firebaseToken != null && _cachedEmail != null) {
+        print(
+            '🔄 Using Firebase ID token for backend authentication: ${_cachedEmail}');
+
+        const baseUrl = 'https://mental-health.rohanrichard.com';
+        final response = await http
+            .post(
+              Uri.parse('$baseUrl/auth/firebase-auth'),
+              headers: {
+                'accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $firebaseToken',
+              },
+              body: jsonEncode({
+                'email': _cachedEmail,
+              }),
+            )
+            .timeout(Duration(seconds: 30));
+
+        print(
+            '🔐 Backend auth (Firebase) response status: ${response.statusCode}');
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final backendToken = data['access_token'];
+
+          if (backendToken != null) {
+            await _storeBackendToken(backendToken);
+            print('✅ Backend API token generated using Firebase token');
+            return backendToken;
+          }
+        } else {
+          print(
+              '❌ Backend Firebase authentication failed: ${response.statusCode}');
+          print('Response: ${response.body}');
+        }
+      }
+
+      print('❌ No valid authentication method available for backend');
       return null;
     } catch (e) {
       print('💥 Error generating backend API token: $e');

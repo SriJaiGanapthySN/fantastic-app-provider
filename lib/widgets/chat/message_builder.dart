@@ -55,11 +55,15 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
           messageText: messageData.text,
           shouldAnimate: shouldAnimate,
           onAnimationComplete: () {
-            if (shouldAnimate) {
-              // Mark as animated only if it was animating
-              ref
-                  .read(chatProvider.notifier)
-                  .markMessageAsAnimated(messageData.id);
+            if (shouldAnimate && mounted) {
+              // Mark as animated only if it was animating and widget is still mounted
+              try {
+                ref
+                    .read(chatProvider.notifier)
+                    .markMessageAsAnimated(messageData.id);
+              } catch (e) {
+                print('Error marking message as animated: $e');
+              }
             }
           },
         );
@@ -72,15 +76,19 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
           apiResponse: messageData.text,
           shouldAnimate: shouldAnimate,
           onAnimationComplete: () {
-            if (shouldAnimate) {
-              // Mark as animated only if it was animating
-              ref
-                  .read(chatProvider.notifier)
-                  .markMessageAsAnimated(messageData.id);
+            if (shouldAnimate && mounted) {
+              // Mark as animated only if it was animating and widget is still mounted
+              try {
+                ref
+                    .read(chatProvider.notifier)
+                    .markMessageAsAnimated(messageData.id);
 
-              // Turn off background animation when bot message animation completes
-              if (!messageData.isUser) {
-                ref.read(chatProvider.notifier).setThresholdReached(false);
+                // Turn off background animation when bot message animation completes
+                if (!messageData.isUser) {
+                  ref.read(chatProvider.notifier).setThresholdReached(false);
+                }
+              } catch (e) {
+                print('Error in card animation complete callback: $e');
               }
             }
           },
@@ -92,41 +100,60 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
           id: messageData.id,
           shouldAnimate: shouldAnimate,
           onAnimationComplete: () {
-            if (shouldAnimate) {
-              ref
-                  .read(chatProvider.notifier)
-                  .markMessageAsAnimated(messageData.id);
-              if (!messageData.isUser) {
-                ref.read(chatProvider.notifier).setThresholdReached(false);
+            if (shouldAnimate && mounted) {
+              try {
+                ref
+                    .read(chatProvider.notifier)
+                    .markMessageAsAnimated(messageData.id);
+                if (!messageData.isUser) {
+                  ref.read(chatProvider.notifier).setThresholdReached(false);
+                }
+              } catch (e) {
+                print('Error in object card animation callback: $e');
               }
             }
             // Reveal previews with smooth staggered fade + slide
-            setState(() {
-              _showJourneyPreview = true;
-              _journeyOpacity = 0.0;
-              _journeyOffset = const Offset(0, 0.06);
-            });
+            if (mounted) {
+              setState(() {
+                _showJourneyPreview = true;
+                _journeyOpacity = 0.0;
+                _journeyOffset = const Offset(0, 0.06);
+              });
+            }
             Future.delayed(const Duration(milliseconds: 16), () {
               if (!mounted) return;
-              setState(() {
-                _journeyOpacity = 1.0;
-                _journeyOffset = Offset.zero;
-              });
+              try {
+                setState(() {
+                  _journeyOpacity = 1.0;
+                  _journeyOffset = Offset.zero;
+                });
+              } catch (e) {
+                print('Error updating journey preview state: $e');
+              }
             });
 
             Future.delayed(const Duration(milliseconds: 120), () {
               if (!mounted) return;
-              setState(() {
-                _showHabitPreview = true;
-                _habitOpacity = 0.0;
-                _habitOffset = const Offset(0, 0.08);
-              });
+              try {
+                setState(() {
+                  _showHabitPreview = true;
+                  _habitOpacity = 0.0;
+                  _habitOffset = const Offset(0, 0.08);
+                });
+              } catch (e) {
+                print('Error showing habit preview: $e');
+              }
+
               Future.delayed(const Duration(milliseconds: 16), () {
                 if (!mounted) return;
-                setState(() {
-                  _habitOpacity = 1.0;
-                  _habitOffset = Offset.zero;
-                });
+                try {
+                  setState(() {
+                    _habitOpacity = 1.0;
+                    _habitOffset = Offset.zero;
+                  });
+                } catch (e) {
+                  print('Error updating habit preview state: $e');
+                }
               });
             });
           },
@@ -141,15 +168,19 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
           isUser: messageData.isUser,
           shouldAnimate: shouldAnimate,
           onAnimationComplete: () {
-            if (shouldAnimate) {
-              // Mark as animated only if it was animating
-              ref
-                  .read(chatProvider.notifier)
-                  .markMessageAsAnimated(messageData.id);
+            if (shouldAnimate && mounted) {
+              // Mark as animated only if it was animating and widget is still mounted
+              try {
+                ref
+                    .read(chatProvider.notifier)
+                    .markMessageAsAnimated(messageData.id);
 
-              // Turn off background animation when bot message animation completes
-              if (!messageData.isUser) {
-                ref.read(chatProvider.notifier).setThresholdReached(false);
+                // Turn off background animation when bot message animation completes
+                if (!messageData.isUser) {
+                  ref.read(chatProvider.notifier).setThresholdReached(false);
+                }
+              } catch (e) {
+                print('Error in audio animation complete callback: $e');
               }
             }
           },
@@ -161,15 +192,19 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
           objectId: messageData.objectId ?? '',
           type: messageData.contentType ?? '',
           onAnimationComplete: () {
-            if (shouldAnimate) {
-              // Mark as animated only if it was animating
-              ref
-                  .read(chatProvider.notifier)
-                  .markMessageAsAnimated(messageData.id);
+            if (shouldAnimate && mounted) {
+              // Mark as animated only if it was animating and widget is still mounted
+              try {
+                ref
+                    .read(chatProvider.notifier)
+                    .markMessageAsAnimated(messageData.id);
 
-              // Turn off background animation when bot message animation completes
-              if (!messageData.isUser) {
-                ref.read(chatProvider.notifier).setThresholdReached(false);
+                // Turn off background animation when bot message animation completes
+                if (!messageData.isUser) {
+                  ref.read(chatProvider.notifier).setThresholdReached(false);
+                }
+              } catch (e) {
+                print('Error in content card animation callback: $e');
               }
             }
           },

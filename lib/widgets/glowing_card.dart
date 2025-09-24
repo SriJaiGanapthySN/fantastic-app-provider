@@ -6,7 +6,12 @@ class GlowingCard extends StatelessWidget {
   final String progress;
   final bool isCompleted;
 
-  const GlowingCard({super.key, required this.title, required this.subtitle, required this.progress, required this.isCompleted});
+  const GlowingCard(
+      {super.key,
+      required this.title,
+      required this.subtitle,
+      required this.progress,
+      required this.isCompleted});
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -15,7 +20,10 @@ class GlowingCard extends StatelessWidget {
           // Outer glow effect using a blurred shadow
           Container(
             width: MediaQuery.of(context).size.width * 0.9,
-            height: 140,
+            constraints: BoxConstraints(
+              minHeight: 140,
+              maxHeight: 200, // Allow the card to grow if needed
+            ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
@@ -32,36 +40,38 @@ class GlowingCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 10.0),
             child: Container(
-               decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    // Gradient background
-                    gradient: LinearGradient(
-                      colors: [Colors.white.withAlpha(50), Colors.transparent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                // Gradient background
+                gradient: LinearGradient(
+                  colors: [Colors.white.withAlpha(50), Colors.transparent],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
+              ),
               child: Container(
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    // Gradient background
-                    gradient: LinearGradient(
-                      colors: [Colors.white.withAlpha(50), Colors.transparent],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
+                  borderRadius: BorderRadius.circular(16),
+                  // Gradient background
+                  gradient: LinearGradient(
+                    colors: [Colors.white.withAlpha(50), Colors.transparent],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
-                 
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.9,
-                  height: 120,
+                  constraints: BoxConstraints(
+                    minHeight: 120,
+                    maxHeight: 180, // Allow the inner container to grow
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       width: 1.5,
                       color: Colors.white.withOpacity(0.2), // Thin white border
                     ),
-                  
+
                     color: Color(0xff0E0E0E).withAlpha(200), // Dark background
                   ),
                   padding: EdgeInsets.all(12),
@@ -76,6 +86,8 @@ class GlowingCard extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                       Text(
                         subtitle,
@@ -83,49 +95,58 @@ class GlowingCard extends StatelessWidget {
                           color: Colors.white.withOpacity(0.6),
                           fontSize: 12,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 3,
                       ),
                       SizedBox(height: 12),
-                
+
                       // Buttons Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          isCompleted?
-                          // Completed button (Outlined)
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.blueAccent, width: 1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              "Completed",
-                              style: TextStyle(color: Colors.blueAccent, fontSize: 12),
-                            ),
-                          )
-                          :
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              "Not Completed",
-                              style: TextStyle(color: Colors.white, fontSize: 12),
-                            ),
-                          ),
-                
+                          isCompleted
+                              ?
+                              // Completed button (Outlined)
+                              Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: Colors.blueAccent, width: 1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    "Completed",
+                                    style: TextStyle(
+                                        color: Colors.blueAccent, fontSize: 12),
+                                  ),
+                                )
+                              : Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    "Not Completed",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 12),
+                                  ),
+                                ),
+
                           // Progress counter button (Filled)
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               progress,
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 12),
                             ),
                           ),
                         ],

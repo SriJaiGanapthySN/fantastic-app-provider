@@ -109,11 +109,6 @@ class MyApp extends ConsumerWidget {
                       color: Colors.white,
                       strokeWidth: 5,
                     ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Initializing Firebase Auth...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
                   ],
                 ),
               ),

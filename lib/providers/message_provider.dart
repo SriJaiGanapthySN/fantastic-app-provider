@@ -197,54 +197,68 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
           print('Full response so far: ${fullResponse.length} characters');
         },
         () async {
-          // Streaming complete
-          print('Streaming complete, handling original inputType: $inputType');
-          print('Full response received: ${fullResponse.length} characters');
+          // Streaming complete - check if provider is still valid
+          try {
+            print(
+                'Streaming complete, handling original inputType: $inputType');
+            print('Full response received: ${fullResponse.length} characters');
 
-          if (fullResponse.isNotEmpty) {
-            final messageId = DateTime.now().millisecondsSinceEpoch.toString();
-            print('Creating message with ID: $messageId');
+            if (fullResponse.isNotEmpty) {
+              final messageId =
+                  DateTime.now().millisecondsSinceEpoch.toString();
+              print('Creating message with ID: $messageId');
 
-            // Create different message types based on input type
-            if (inputType == 'voice') {
-              final audioMessageData = ChatMessageData(
-                id: messageId + '_audio',
-                text: "",
-                type: ChatMessageType.audioMessage,
-                isUser: false,
-                audioUrl: apiService.getAudioUrl(fullResponse),
-                timestamp: DateTime.now(),
-                hasAnimated: false,
-              );
-              print(
-                  'Adding audio message data with ID: ${audioMessageData.id}');
-              chatNotifier.addMessageData(audioMessageData);
-              print(
-                  'Audio message data added successfully. Total messages: ${ref.read(chatProvider).messageData.length}');
+              // Create different message types based on input type
+              if (inputType == 'voice') {
+                final audioMessageData = ChatMessageData(
+                  id: messageId + '_audio',
+                  text: "",
+                  type: ChatMessageType.audioMessage,
+                  isUser: false,
+                  audioUrl: apiService.getAudioUrl(fullResponse),
+                  timestamp: DateTime.now(),
+                  hasAnimated: false,
+                );
+                print(
+                    'Adding audio message data with ID: ${audioMessageData.id}');
+                chatNotifier.addMessageData(audioMessageData);
+                print(
+                    'Audio message data added successfully. Total messages: ${ref.read(chatProvider).messageData.length}');
+              } else {
+                final cardMessageData = ChatMessageData(
+                  id: messageId + '_card',
+                  text: fullResponse,
+                  type: ChatMessageType.cardMessage,
+                  isUser: false,
+                  isQuestion: isQuestion,
+                  timestamp: DateTime.now(),
+                  hasAnimated: false,
+                );
+                print(
+                    'Adding card message data with ID: ${cardMessageData.id}');
+                print(
+                    'Card message text: ${cardMessageData.text.substring(0, cardMessageData.text.length > 50 ? 50 : cardMessageData.text.length)}...');
+                chatNotifier.addMessageData(cardMessageData);
+                print(
+                    'Card message data added successfully. Total messages: ${ref.read(chatProvider).messageData.length}');
+              }
+              _scrollToBottom();
             } else {
-              final cardMessageData = ChatMessageData(
-                id: messageId + '_card',
-                text: fullResponse,
-                type: ChatMessageType.cardMessage,
-                isUser: false,
-                isQuestion: isQuestion,
-                timestamp: DateTime.now(),
-                hasAnimated: false,
-              );
-              print('Adding card message data with ID: ${cardMessageData.id}');
-              print(
-                  'Card message text: ${cardMessageData.text.substring(0, cardMessageData.text.length > 50 ? 50 : cardMessageData.text.length)}...');
-              chatNotifier.addMessageData(cardMessageData);
-              print(
-                  'Card message data added successfully. Total messages: ${ref.read(chatProvider).messageData.length}');
+              print('WARNING: Empty fullResponse received from streaming');
             }
-            _scrollToBottom();
-          } else {
-            print('WARNING: Empty fullResponse received from streaming');
+            // Turn off thinking animation
+            chatNotifier.setThresholdReached(false);
+            chatNotifier.setIsSendingMessage(false);
+          } catch (e) {
+            print('Error in streaming completion callback: $e');
+            // Ensure we always turn off loading states even on error
+            try {
+              chatNotifier.setThresholdReached(false);
+              chatNotifier.setIsSendingMessage(false);
+            } catch (e2) {
+              print('Error turning off loading states: $e2');
+            }
           }
-          // Turn off thinking animation
-          chatNotifier.setThresholdReached(false);
-          chatNotifier.setIsSendingMessage(false);
         },
         inputType: apiInputType,
       );
@@ -275,10 +289,30 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
             'Streaming failed, falling back to regular API call with inputType: $apiInputType');
         final regularResponse = await apiService.sendMessage(userMessageText,
             inputType: apiInputType);
+
+        // Debug the fallback response
+        print('🔍 Fallback API Response Debug:');
+        print('  - regularResponse is null: ${regularResponse == null}');
+        if (regularResponse != null) {
+          print('  - regularResponse keys: ${regularResponse.keys.toList()}');
+          print(
+              '  - ai_message_content exists: ${regularResponse.containsKey('ai_message_content')}');
+          if (regularResponse.containsKey('ai_message_content')) {
+            final content = regularResponse['ai_message_content'];
+            print('  - ai_message_content value: "$content"');
+            print('  - ai_message_content length: ${content?.length ?? 0}');
+            print(
+                '  - ai_message_content is empty: ${content?.isEmpty ?? true}');
+          }
+        }
+
         if (regularResponse != null &&
             regularResponse['ai_message_content'] != null) {
           final apiResponse = regularResponse['ai_message_content'];
           final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+
+          print(
+              '📝 Creating fallback message with apiResponse: "$apiResponse"');
 
           if (inputType == 'voice') {
             if (apiResponse.isNotEmpty) {

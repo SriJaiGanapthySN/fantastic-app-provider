@@ -105,7 +105,8 @@ flutter:
     - assets/animations/emptychat.json
     - assets/animations/All Lottie/Down Ripple/Ripple.json
     - assets/animations/All Lottie/BG Glow Gradient/3 in 1/BG Glow Gradient.json
-    # - assets/animations/QnA/2. Circle/data.json
+    - assets/animations/QnA/2. circle/data.json
+    - assets/animations/All Lottie/BG small Blur/BG small Blur.json
     - assets/animations/All Lottie/Glowing Star/Image Preload Gradient.json
     - assets/animations/Inner+Outerbox+Glow/Outerbox/Outerbox.json
     - assets/animations/Inner+Outerbox+Glow/Outer Glow/Outerbox.json

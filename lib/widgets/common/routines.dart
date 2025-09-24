@@ -10,7 +10,10 @@ class Routines extends StatelessWidget {
       child: Stack(
         children: [
           Container(
-            height: 50,
+            constraints: BoxConstraints(
+              minHeight: 50,
+              maxHeight: 80, // Allow the card to expand if text is longer
+            ),
             width: 290,
             decoration: BoxDecoration(
               color: Colors.white,
@@ -25,17 +28,27 @@ class Routines extends StatelessWidget {
             margin: const EdgeInsets.only(
               left: 20,
             ),
+            constraints: BoxConstraints(
+              minHeight: 50,
+              maxHeight: 80,
+            ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  routine,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    routine,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],

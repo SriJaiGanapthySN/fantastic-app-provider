@@ -14,9 +14,10 @@ class StatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
-    // Calculate dynamic dimensions
-    final cardHeight = screenHeight * 0.09; // 12% of screen height
+
+    // Calculate dynamic dimensions with increased height for better content fit
+    final cardHeight = screenHeight *
+        0.12; // Increased from 0.09 to 0.12 (12% of screen height)
     final cardWidth = screenWidth - 32; // Full width minus padding
     final borderRadius = screenWidth * 0.07; // 7% of screen width
     final padding = screenWidth * 0.015; // 2.5% of screen width
@@ -27,7 +28,11 @@ class StatsCard extends StatelessWidget {
 
     return Container(
       width: cardWidth,
-      height: cardHeight,
+      constraints: BoxConstraints(
+        minHeight: cardHeight,
+        maxHeight: cardHeight *
+            1.5, // Allow up to 1.5x the calculated height if needed
+      ),
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -65,6 +70,8 @@ class StatsCard extends StatelessWidget {
                         fontWeight: FontWeight.w400,
                         height: 1.1,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                     SizedBox(height: spacing * 0.4),
                     Text(
@@ -75,6 +82,8 @@ class StatsCard extends StatelessWidget {
                         height: 1.4,
                         fontWeight: FontWeight.w400,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ],
                 ),
@@ -96,6 +105,8 @@ class StatsCard extends StatelessWidget {
                         fontWeight: FontWeight.w400,
                         height: 1.1,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                     SizedBox(height: spacing * 0.4),
                     Text(
@@ -106,6 +117,8 @@ class StatsCard extends StatelessWidget {
                         height: 1.4,
                         fontWeight: FontWeight.w400,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ],
                 ),
@@ -116,4 +129,4 @@ class StatsCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

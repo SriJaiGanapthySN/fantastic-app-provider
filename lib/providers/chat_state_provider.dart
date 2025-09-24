@@ -190,19 +190,31 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   // New method to add message data
   void addMessageData(ChatMessageData messageData) {
-    final updatedMessageData = [...state.messageData, messageData];
-    state = state.copyWith(messageData: updatedMessageData);
+    if (!_disposed) {
+      try {
+        final updatedMessageData = [...state.messageData, messageData];
+        state = state.copyWith(messageData: updatedMessageData);
+      } catch (e) {
+        print('Error adding message data: $e');
+      }
+    }
   }
 
   // Method to mark a message as animated
   void markMessageAsAnimated(String messageId) {
-    final updatedMessageData = state.messageData.map((msg) {
-      if (msg.id == messageId) {
-        return msg.copyWith(hasAnimated: true);
+    if (!_disposed) {
+      try {
+        final updatedMessageData = state.messageData.map((msg) {
+          if (msg.id == messageId) {
+            return msg.copyWith(hasAnimated: true);
+          }
+          return msg;
+        }).toList();
+        state = state.copyWith(messageData: updatedMessageData);
+      } catch (e) {
+        print('Error marking message as animated: $e');
       }
-      return msg;
-    }).toList();
-    state = state.copyWith(messageData: updatedMessageData);
+    }
   }
 
   void removeLastMessage() {
@@ -235,7 +247,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   void setThresholdReached(bool value) {
-    state = state.copyWith(isThresholdReached: value);
+    if (!_disposed) {
+      try {
+        state = state.copyWith(isThresholdReached: value);
+      } catch (e) {
+        print('Error setting threshold reached: $e');
+      }
+    }
   }
 
   void handleTextInputChange(String text) {

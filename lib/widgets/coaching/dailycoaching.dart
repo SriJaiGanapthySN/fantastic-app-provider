@@ -17,7 +17,10 @@ class DailyCoaching extends StatelessWidget {
       child: Stack(
         children: [
           Container(
-            height: 310,
+            constraints: BoxConstraints(
+              minHeight: 310,
+              maxHeight: 400, // Allow the card to grow if content is longer
+            ),
             width: 290,
             decoration: BoxDecoration(
               color: Colors.white,
@@ -32,51 +35,60 @@ class DailyCoaching extends StatelessWidget {
             margin: EdgeInsets.only(
               left: 20,
             ),
-            height: 290,
+            constraints: BoxConstraints(
+              minHeight: 290,
+              maxHeight: 380, // Allow inner container to grow
+            ),
             width: 270,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: 20,
-                ),
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 20,
                   ),
-                ),
-                Text(
-                  '15 Dec',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
+                  Text(
+                    text,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                    overflow: TextOverflow.visible,
+                    maxLines: 3,
                   ),
-                ),
-                SizedBox(
-                  height: 70,
-                ),
-                Text(
-                  caption,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    '15 Dec',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 21,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                Container(
-                  alignment: Alignment.center,
-                  child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.headphones),
-                      label: Text("Listen")),
-                )
-              ],
+                  SizedBox(
+                    height: 70,
+                  ),
+                  Text(
+                    caption,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.visible,
+                    maxLines: 4,
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Container(
+                    alignment: Alignment.center,
+                    child: ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: Icon(Icons.headphones),
+                        label: Text("Listen")),
+                  )
+                ],
+              ),
             ),
           ),
         ],

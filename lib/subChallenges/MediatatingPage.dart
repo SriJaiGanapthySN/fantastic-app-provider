@@ -494,7 +494,11 @@ class _MeditationActionScreenState
                               const SizedBox(height: 20),
 
                               // --- WebView Section Replaces Title/Body ---
-                              _buildWebViewContent(),
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height *
+                                    0.9, // adjust as needed
+                                child: _buildWebViewContent(),
+                              ),
 
                               const SizedBox(height: 40), // Bottom padding
                             ],
@@ -557,14 +561,13 @@ class _MeditationActionScreenState
   Widget _buildWebViewContent() {
     // This helper function remains the same as the previous correct version
     return Container(
-      constraints: const BoxConstraints(minHeight: 250), // Minimum height
+      constraints: const BoxConstraints(minHeight: 450), // Minimum height
       child: Builder(builder: (context) {
         // Check for any error first
         if (_htmlContentError != null) {
           return Center(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 "Error: $_htmlContentError",
                 textAlign: TextAlign.center,

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import '../models/app_user.dart';
 import '../utils/connectivity_helper.dart';
@@ -239,6 +241,53 @@ class FirebaseAuthRepo implements AuthRepo {
     }
   }
 
+  // Helper method to register user with backend API when password is not available (Google/Apple sign-in)
+  Future<void> _registerUserWithBackend(String email, String name) async {
+    try {
+      print('Registering user with backend API: $email');
+
+      const baseUrl = 'https://mental-health.rohanrichard.com';
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/register'),
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password':
+              'oauth_user_${DateTime.now().millisecondsSinceEpoch}', // Auto-generated password for OAuth users
+          'age':
+              '25', // Default values for OAuth users - these can be updated later
+          'gender_identity': 'Not Specified',
+          'location': 'Not Specified',
+        }),
+      );
+
+      print('Backend registration response status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        print('Backend registration successful for OAuth user');
+
+        // Try to get an auth token for this user
+        // Since we used an auto-generated password, we need to handle this differently
+        // The backend should support OAuth token validation
+      } else if (response.statusCode == 400) {
+        // User might already exist, which is fine
+        print(
+            'User already exists in backend - this is expected for returning OAuth users');
+      } else {
+        print('Backend registration failed: ${response.statusCode}');
+        print('Response: ${response.body}');
+      }
+    } catch (e) {
+      print('Error registering user with backend API: $e');
+      // Don't throw error - OAuth sign-in should still work even if backend registration fails
+    }
+  }
+
   @override
   Future<void> sendPasswordResetLink(String email) async {
     try {
@@ -314,6 +363,10 @@ class FirebaseAuthRepo implements AuthRepo {
         name: appUser.name,
         userId: appUser.uid,
       );
+
+      // For Google sign-in, we need to register the user with the backend API first
+      // since we don't have their password for backend authentication
+      await _registerUserWithBackend(appUser.email, appUser.name);
 
       print('Google sign-in successful - Auth token generated and stored');
 
@@ -394,6 +447,10 @@ class FirebaseAuthRepo implements AuthRepo {
         name: appUser.name,
         userId: appUser.uid,
       );
+
+      // For Apple sign-in, we need to register the user with the backend API first
+      // since we don't have their password for backend authentication
+      await _registerUserWithBackend(appUser.email, appUser.name);
 
       print('Apple sign-in successful - Auth token generated and stored');
 
