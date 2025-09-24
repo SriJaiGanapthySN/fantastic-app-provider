@@ -95,13 +95,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
     // Show container after delay
     Future.delayed(Duration(seconds: 1), () {
       if (_disposed) return;
-      state = state.copyWith(showContainer: true);
+      try {
+        state = state.copyWith(showContainer: true);
+      } catch (e) {
+        print('Error updating showContainer: $e');
+      }
     });
 
     // Fade in opacity
     Future.delayed(Duration(seconds: 3), () {
       if (_disposed) return;
-      state = state.copyWith(opacity: 1.0);
+      try {
+        state = state.copyWith(opacity: 1.0);
+      } catch (e) {
+        print('Error updating opacity: $e');
+      }
     });
 
     _startTextSwitching();
@@ -118,10 +126,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
         timer.cancel();
         return;
       }
-      final newText = (state.displayText == "Hold to Speak")
-          ? "Tap to Chat"
-          : "Hold to Speak";
-      state = state.copyWith(displayText: newText);
+
+      try {
+        final newText = (state.displayText == "Hold to Speak")
+            ? "Tap to Chat"
+            : "Hold to Speak";
+
+        // Add additional check to prevent updating disposed state
+        if (!_disposed) {
+          state = state.copyWith(displayText: newText);
+        }
+      } catch (e) {
+        // If state update fails, cancel the timer to prevent further errors
+        print('Error updating display text: $e');
+        timer.cancel();
+        _timer = null;
+      }
     });
   }
 

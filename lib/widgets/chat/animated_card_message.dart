@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:widget_and_text_animator/widget_and_text_animator.dart';
-import 'package:fantastic_app_riverpod/providers/animated_card_provider.dart';
 
-class AnimatedCardMessage extends ConsumerWidget {
+import 'animated_object_card_message.dart';
+
+class AnimatedCardMessage extends ConsumerStatefulWidget {
   final String id;
   final String apiResponse;
   final bool isQuestion;
@@ -17,16 +18,16 @@ class AnimatedCardMessage extends ConsumerWidget {
     required this.id,
     required this.apiResponse,
     required this.isQuestion,
-    required this.shouldAnimate,
-    this.onAnimationComplete,
     this.shouldAnimate = true, // Default to true for new messages
-  }) : super(key: key);
+    this.onAnimationComplete,
+  });
 
   @override
-  State<AnimatedCardMessage> createState() => _AnimatedCardMessageState();
+  ConsumerState<AnimatedCardMessage> createState() =>
+      _AnimatedCardMessageState();
 }
 
-class _AnimatedCardMessageState extends State<AnimatedCardMessage>
+class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
     with SingleTickerProviderStateMixin {
   double iconOpacity = 0.0;
   bool repeatGlow = true;
@@ -37,20 +38,17 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
   bool showLocalSparkles =
       false; // New: Small sparkle animation at bubble location
 
-  // ============= COMMENTED IMAGE VARIABLES =============
-  // Uncomment these if you want to restore image functionality:
-  // bool applyBlur = false;
-  // double opacity = 0.0;
-  // late AnimationController imageController;
-  // ====================================================
+  // ============= IMAGE VARIABLES FOR CONTENT CARDS =============
+  bool applyBlur = false;
+  double opacity = 0.0;
+  late AnimationController imageController;
+  // ===============================================================
 
   @override
   void initState() {
     super.initState();
 
-    // ============= COMMENTED IMAGE CONTROLLER SETUP =============
-    // Uncomment these if you want to restore image functionality:
-    /*
+    // ============= IMAGE CONTROLLER SETUP FOR CONTENT CARDS =============
     imageController = AnimationController(vsync: this);
 
     imageController.addListener(() {
@@ -66,8 +64,7 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
         });
       }
     });
-    */
-    // ============================================================
+    // =====================================================================
 
     // Initialize animation states
     print('🚀 AnimatedCardMessage initialized');
@@ -205,10 +202,9 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
 
   @override
   void dispose() {
-    // ============= COMMENTED IMAGE CONTROLLER DISPOSE =============
-    // Uncomment this if you want to restore image functionality:
-    // imageController.dispose();
-    // ==============================================================
+    // ============= IMAGE CONTROLLER DISPOSE FOR CONTENT CARDS =============
+    imageController.dispose();
+    // =======================================================================
     super.dispose();
   }
 
@@ -437,9 +433,7 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                         ),
                       ),
 
-                      // ============= COMMENTED IMAGE SECTION =============
-                      // Uncomment below to add image section back to message cards
-                      /*
+                      // ============= IMAGE SECTION FOR CONTENT CARDS =============
                       Container(
                         margin: EdgeInsets.only(
                           top: getResponsivePadding(context, 10),
@@ -454,8 +448,7 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
                           getResponsiveFontSize: getResponsiveFontSize,
                         ),
                       ),
-                      */
-                      // ===================================================
+                      // ============================================================
                     ],
                   ),
                 ),
@@ -465,63 +458,5 @@ class _AnimatedCardMessageState extends State<AnimatedCardMessage>
         ),
       ),
     );
-  }
-
-  // ... (keep all helper methods like getResponsiveWidth, calculateTextHeight, etc.)
-  double getResponsiveWidth(BuildContext context, double percentage) {
-    return MediaQuery.of(context).size.width * percentage;
-  }
-
-  double getResponsiveHeight(BuildContext context, double percentage) {
-    return MediaQuery.of(context).size.height * percentage;
-  }
-
-  double getResponsiveFontSize(BuildContext context, double baseSize) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    return baseSize * screenWidth / 375;
-  }
-
-  double getResponsivePadding(BuildContext context, double value) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    return value * screenWidth / 375;
-  }
-
-  double calculateTextHeight(BuildContext context, String text) {
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: GoogleFonts.lato(
-          textStyle: TextStyle(
-            fontFamily: "Original",
-            letterSpacing: 1,
-            fontSize: getResponsiveFontSize(context, 14),
-            color: Colors.white,
-          ),
-        ),
-      ),
-      maxLines: null,
-      textDirection: TextDirection.ltr,
-    );
-
-    double availableWidth = getResponsiveWidth(context, 0.87) -
-        getResponsivePadding(context, 18) -
-        getResponsivePadding(context, 12) -
-        getResponsivePadding(context, 5) -
-        getResponsivePadding(context, 10);
-
-    textPainter.layout(maxWidth: availableWidth);
-    return textPainter.size.height;
-  }
-
-  double calculateDynamicHeight(BuildContext context) {
-    double textHeight = calculateTextHeight(context, apiResponse);
-    double totalPadding = getResponsivePadding(context, 12) +
-        getResponsivePadding(context, 12) +
-        getResponsivePadding(context, 10) +
-        getResponsivePadding(context, 20);
-    double finalHeight = textHeight + totalPadding;
-    double minHeight = getResponsiveHeight(context, 0.08);
-    double maxHeight = getResponsiveHeight(context, 0.40);
-    return finalHeight.clamp(minHeight, maxHeight);
   }
 }

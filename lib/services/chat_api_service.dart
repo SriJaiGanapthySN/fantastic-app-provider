@@ -317,9 +317,10 @@ class ChatApiService {
         }
       }
 
-      // Combine all message chunks
-      final fullAiMessage = messageChunks.join('');
-      print('🤖 Complete AI message: $fullAiMessage');
+      // Combine all message chunks and clean them
+      final rawAiMessage = messageChunks.join('');
+      final fullAiMessage = _removeSquareBrackets(rawAiMessage);
+      print('🤖 Complete AI message (cleaned): $fullAiMessage');
 
       // Return metadata with the complete AI message and audio URL based on input type
       if (metadata != null) {
@@ -379,9 +380,12 @@ class ChatApiService {
             }
           }
 
-          // Send each text chunk with a delay to simulate real-time streaming
+          // Clean the chunk by removing square brackets before sending
+          final cleanedContent = _removeSquareBrackets(content);
+
+          // Send each cleaned text chunk with a delay to simulate real-time streaming
           Future.delayed(Duration(milliseconds: i * 50), () {
-            onChunk(content);
+            onChunk(cleanedContent);
           });
         }
       }
@@ -410,11 +414,27 @@ class ChatApiService {
     return await TokenService.isAuthenticated();
   }
 
+  // Helper method to remove text within square brackets
+  String _removeSquareBrackets(String text) {
+    if (text.isEmpty) return text;
+
+    // Remove all content within square brackets including the brackets themselves
+    final cleanedText = text.replaceAll(RegExp(r'\[.*?\]'), '').trim();
+
+    print('Original text: "$text"');
+    print('Cleaned text: "$cleanedText"');
+
+    return cleanedText;
+  }
+
   // Get audio URL for a specific message or general audio
   String getAudioUrl([String? messageText]) {
     if (messageText != null && messageText.isNotEmpty) {
-      // URL encode the message text to handle special characters
-      final encodedText = Uri.encodeComponent(messageText);
+      // Clean the message text first by removing square brackets
+      final cleanedText = _removeSquareBrackets(messageText);
+
+      // URL encode the cleaned message text to handle special characters
+      final encodedText = Uri.encodeComponent(cleanedText);
       final fullUrl = '$audioUrl?text=$encodedText';
       print('Generated audio URL: $fullUrl');
       return fullUrl;

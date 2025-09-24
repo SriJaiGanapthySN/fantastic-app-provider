@@ -6,6 +6,8 @@ import 'package:fantastic_app_riverpod/providers/auth_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_state_provider.dart';
 import 'package:fantastic_app_riverpod/providers/chat_api_provider.dart';
 import 'package:fantastic_app_riverpod/models/chat_message_data.dart';
+import 'package:fantastic_app_riverpod/models/responsemodel.dart';
+import 'package:fantastic_app_riverpod/services/bracketed_content_service.dart';
 
 class MessageNotifier extends StateNotifier<MessageFactory?> {
   final Ref ref;
@@ -54,6 +56,33 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
     // Check for test audio command
     if (messageText.toLowerCase().contains('test audio')) {
       addTestAudioMessage();
+      return;
+    }
+
+    // Check for test content card command
+    if (messageText.toLowerCase().contains('test content card')) {
+      addTestContentCard();
+      return;
+    }
+
+    // Check for specific content type tests
+    if (messageText.toLowerCase().contains('test habit card')) {
+      addTestContentCardOfType('HABIT');
+      return;
+    }
+
+    if (messageText.toLowerCase().contains('test journey card')) {
+      addTestContentCardOfType('JOURNEY');
+      return;
+    }
+
+    if (messageText.toLowerCase().contains('test coaching card')) {
+      addTestContentCardOfType('COACHING');
+      return;
+    }
+
+    if (messageText.toLowerCase().contains('test challenge card')) {
+      addTestContentCardOfType('CHALLENGE');
       return;
     }
 
@@ -163,16 +192,23 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
       final response = await apiService.sendMessageWithStreaming(
         userMessageText,
         (chunk) {
+          print('Received chunk: "$chunk" (length: ${chunk.length})');
           fullResponse += chunk;
+          print('Full response so far: ${fullResponse.length} characters');
         },
         () async {
           // Streaming complete
           print('Streaming complete, handling original inputType: $inputType');
+          print('Full response received: ${fullResponse.length} characters');
+
           if (fullResponse.isNotEmpty) {
+            final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+            print('Creating message with ID: $messageId');
+
             // Create different message types based on input type
             if (inputType == 'voice') {
               final audioMessageData = ChatMessageData(
-                id: DateTime.now().millisecondsSinceEpoch.toString() + '_audio',
+                id: messageId + '_audio',
                 text: "",
                 type: ChatMessageType.audioMessage,
                 isUser: false,
@@ -180,10 +216,14 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
                 timestamp: DateTime.now(),
                 hasAnimated: false,
               );
+              print(
+                  'Adding audio message data with ID: ${audioMessageData.id}');
               chatNotifier.addMessageData(audioMessageData);
+              print(
+                  'Audio message data added successfully. Total messages: ${ref.read(chatProvider).messageData.length}');
             } else {
               final cardMessageData = ChatMessageData(
-                id: DateTime.now().millisecondsSinceEpoch.toString() + '_card',
+                id: messageId + '_card',
                 text: fullResponse,
                 type: ChatMessageType.cardMessage,
                 isUser: false,
@@ -191,9 +231,16 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
                 timestamp: DateTime.now(),
                 hasAnimated: false,
               );
+              print('Adding card message data with ID: ${cardMessageData.id}');
+              print(
+                  'Card message text: ${cardMessageData.text.substring(0, cardMessageData.text.length > 50 ? 50 : cardMessageData.text.length)}...');
               chatNotifier.addMessageData(cardMessageData);
+              print(
+                  'Card message data added successfully. Total messages: ${ref.read(chatProvider).messageData.length}');
             }
             _scrollToBottom();
+          } else {
+            print('WARNING: Empty fullResponse received from streaming');
           }
           // Turn off thinking animation
           chatNotifier.setThresholdReached(false);
@@ -201,6 +248,26 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
         },
         inputType: apiInputType,
       );
+
+      // Store bracketed content if available in the response metadata
+      if (response != null && response['has_bracketed_content'] == true) {
+        final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+        final responseModel = response['response_model'] as ChatResponseModel?;
+
+        final finalMessageId =
+            inputType == 'voice' ? messageId + '_audio' : messageId + '_card';
+
+        if (responseModel != null) {
+          BracketedContentService.storeResponseModel(
+              finalMessageId, responseModel);
+
+          // Check if this response should trigger a content card
+          if (_shouldCreateContentCard(responseModel)) {
+            _createContentCardMessage(
+                responseModel, finalMessageId + '_content_card', chatNotifier);
+          }
+        }
+      }
 
       // If streaming failed, fall back to regular response
       if (response == null && fullResponse.isEmpty) {
@@ -211,12 +278,12 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
         if (regularResponse != null &&
             regularResponse['ai_message_content'] != null) {
           final apiResponse = regularResponse['ai_message_content'];
+          final messageId = DateTime.now().millisecondsSinceEpoch.toString();
 
           if (inputType == 'voice') {
             if (apiResponse.isNotEmpty) {
               final audioMessageData = ChatMessageData(
-                id: DateTime.now().millisecondsSinceEpoch.toString() +
-                    '_audio_fallback',
+                id: messageId + '_audio_fallback',
                 text: "",
                 type: ChatMessageType.audioMessage,
                 isUser: false,
@@ -225,11 +292,28 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
                 hasAnimated: false,
               );
               chatNotifier.addMessageData(audioMessageData);
+
+              // Store bracketed content for fallback response
+              if (regularResponse['has_bracketed_content'] == true) {
+                final responseModel =
+                    regularResponse['response_model'] as ChatResponseModel?;
+                if (responseModel != null) {
+                  BracketedContentService.storeResponseModel(
+                      messageId + '_audio_fallback', responseModel);
+
+                  // Check if this response should trigger a content card
+                  if (_shouldCreateContentCard(responseModel)) {
+                    _createContentCardMessage(
+                        responseModel,
+                        messageId + '_audio_fallback_content_card',
+                        chatNotifier);
+                  }
+                }
+              }
             }
           } else {
             final cardMessageData = ChatMessageData(
-              id: DateTime.now().millisecondsSinceEpoch.toString() +
-                  '_card_fallback',
+              id: messageId + '_card_fallback',
               text: apiResponse,
               type: ChatMessageType.cardMessage,
               isUser: false,
@@ -238,6 +322,22 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
               hasAnimated: false,
             );
             chatNotifier.addMessageData(cardMessageData);
+
+            // Store bracketed content for fallback response
+            if (regularResponse['has_bracketed_content'] == true) {
+              final responseModel =
+                  regularResponse['response_model'] as ChatResponseModel?;
+              if (responseModel != null) {
+                BracketedContentService.storeResponseModel(
+                    messageId + '_card_fallback', responseModel);
+
+                // Check if this response should trigger a content card
+                if (_shouldCreateContentCard(responseModel)) {
+                  _createContentCardMessage(responseModel,
+                      messageId + '_card_fallback_content_card', chatNotifier);
+                }
+              }
+            }
           }
           _scrollToBottom();
         }
@@ -325,6 +425,127 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
 
     chatNotifier.addMessage(audioMessage);
     _scrollToBottom();
+  }
+
+  // Test method to add a content card message for demonstration
+  void addTestContentCard() {
+    final chatNotifier = ref.read(chatProvider.notifier);
+
+    // Add user message first
+    final userMessageData = ChatMessageData(
+      id: DateTime.now().millisecondsSinceEpoch.toString() + '_user_test',
+      text: 'test content card',
+      type: ChatMessageType.userMessage,
+      isUser: true,
+      timestamp: DateTime.now(),
+      hasAnimated: false,
+    );
+    chatNotifier.addMessageData(userMessageData);
+
+    // Add content card message with descriptive text
+    final contentCardData = ChatMessageData(
+      id: DateTime.now().millisecondsSinceEpoch.toString() +
+          '_content_card_test',
+      text: _buildContentCardText('HABIT', 'test-habit-id-123'),
+      type: ChatMessageType.contentCard,
+      isUser: false,
+      timestamp: DateTime.now(),
+      hasAnimated: false,
+      objectId: 'test-habit-id-123',
+      contentType: 'HABIT',
+    );
+
+    chatNotifier.addMessageData(contentCardData);
+    print(
+        '🎴 Created test content card message for HABIT with ID: test-habit-id-123');
+    _scrollToBottom();
+  }
+
+  // Test method to add content cards of specific types
+  void addTestContentCardOfType(String type) {
+    final chatNotifier = ref.read(chatProvider.notifier);
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+
+    // Add user message first
+    final userMessageData = ChatMessageData(
+      id: timestamp + '_user_test',
+      text: 'test ${type.toLowerCase()} card',
+      type: ChatMessageType.userMessage,
+      isUser: true,
+      timestamp: DateTime.now(),
+      hasAnimated: false,
+    );
+    chatNotifier.addMessageData(userMessageData);
+
+    // Add content card message with type-specific content
+    final objectId =
+        'test-${type.toLowerCase()}-id-${timestamp.substring(timestamp.length - 6)}';
+    final contentCardData = ChatMessageData(
+      id: timestamp + '_content_card_test',
+      text: _buildContentCardText(type, objectId),
+      type: ChatMessageType.contentCard,
+      isUser: false,
+      timestamp: DateTime.now(),
+      hasAnimated: false,
+      objectId: objectId,
+      contentType: type,
+    );
+
+    chatNotifier.addMessageData(contentCardData);
+    print('🎴 Created test content card message for $type with ID: $objectId');
+    _scrollToBottom();
+  }
+
+  // Helper method to check if a content card should be created
+  bool _shouldCreateContentCard(ChatResponseModel responseModel) {
+    return responseModel.hasObjectId &&
+        responseModel.hasType &&
+        _isValidContentType(responseModel.type!);
+  }
+
+  // Helper method to validate content types
+  bool _isValidContentType(String type) {
+    const validTypes = ['HABIT', 'JOURNEY', 'COACHING', 'CHALLENGE'];
+    return validTypes.contains(type.toUpperCase());
+  }
+
+  // Helper method to create content card message
+  void _createContentCardMessage(ChatResponseModel responseModel,
+      String messageId, ChatNotifier chatNotifier) {
+    // Create a descriptive message for the content card
+    String cardText =
+        _buildContentCardText(responseModel.type!, responseModel.objectId!);
+
+    final contentCardData = ChatMessageData(
+      id: messageId,
+      text: cardText,
+      type: ChatMessageType.contentCard,
+      isUser: false,
+      timestamp: DateTime.now(),
+      hasAnimated: false,
+      objectId: responseModel.objectId,
+      contentType: responseModel.type,
+    );
+
+    chatNotifier.addMessageData(contentCardData);
+    print(
+        '🎴 Created content card message for ${responseModel.type} with ID: ${responseModel.objectId}');
+  }
+
+  // Helper method to build content card text
+  String _buildContentCardText(String type, String objectId) {
+    switch (type.toUpperCase()) {
+      case 'HABIT':
+        return '🎯 Here\'s your habit!\n\nI found the habit you were looking for. This habit will help you build positive routines and achieve your goals.\n\nHabit ID: $objectId';
+      case 'JOURNEY':
+        return '🗺️ Here\'s your journey!\n\nI located the journey for you. This learning path will guide you through structured skill development.\n\nJourney ID: $objectId';
+      case 'COACHING':
+        return '🧭 Here\'s your coaching session!\n\nI found the coaching content you requested. This will provide personalized guidance and support.\n\nCoaching ID: $objectId';
+      case 'CHALLENGE':
+        return '🏆 Here\'s your challenge!\n\nI discovered the challenge you\'re looking for. Ready to test your skills and push your limits?\n\nChallenge ID: $objectId';
+      default:
+        return '📋 Here\'s the ${type.toLowerCase()} you requested!\n\nContent ID: $objectId';
+    }
   }
 }
 

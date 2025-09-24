@@ -102,4 +102,22 @@ class MessageFactory {
       audioProgressColor: isUser ? Colors.blue : Colors.blue[700],
     );
   }
+
+  Widget createContentCardMessage({
+    required String objectId,
+    required String type,
+    required VoidCallback onAnimationComplete,
+    bool shouldAnimate = true,
+  }) {
+    // Create a descriptive message for the content card
+    String cardText = 'Here\'s the ${type.toLowerCase()} you requested:';
+
+    return AnimatedCardMessage(
+      id: objectId,
+      isQuestion: false,
+      apiResponse: cardText,
+      onAnimationComplete: onAnimationComplete,
+      shouldAnimate: shouldAnimate,
+    );
+  }
 }

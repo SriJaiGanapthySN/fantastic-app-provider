@@ -19,24 +19,22 @@ class MessageList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Expanded(
-      child: ListView.builder(
-        controller: scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: messageData.length,
-        itemBuilder: (context, index) {
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets
-                .zero, // Remove padding during voice input to prevent bubble movement
-            child: MessageBuilder(
-              messageData: messageData[index],
-              tickerProvider: tickerProvider,
-            ),
-          );
-        },
-      ),
+    return ListView.builder(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: messageData.length,
+      itemBuilder: (context, index) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets
+              .zero, // Remove padding during voice input to prevent bubble movement
+          child: MessageBuilder(
+            messageData: messageData[index],
+            tickerProvider: tickerProvider,
+          ),
+        );
+      },
     );
   }
 }

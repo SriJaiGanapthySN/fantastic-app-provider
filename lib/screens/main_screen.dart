@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/nav_provider.dart';
+import '../providers/token_provider.dart';
 import '../services/token_service.dart';
 import 'chat_screen.dart';
 import 'discoverscreen.dart';
@@ -43,33 +44,92 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: FutureBuilder<String?>(
-        future: TokenService.getUserEmail(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+      body: Consumer(
+        builder: (context, ref, child) {
+          // Watch the token validation status
+          final tokenValidationAsync = ref.watch(tokenValidationProvider);
 
-          final userEmail = snapshot.data ?? '';
-          print('MainScreen: Using email: $userEmail for all screens');
-
-          return PageView(
-            controller: pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            onPageChanged: (index) {
-              // This is a failsafe, but the primary update mechanism is tapping the nav bar
-              if (ref.read(selectedTabProvider) != index) {
-                ref.read(selectedTabProvider.notifier).state = index;
+          return tokenValidationAsync.when(
+            data: (isTokenValid) {
+              if (!isTokenValid) {
+                return const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.security, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Authentication required',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Please log in to access the app',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
               }
+
+              // Token is valid, get user data and show main content
+              return FutureBuilder<String?>(
+                future: TokenService.getUserEmail(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  final userEmail = snapshot.data ?? '';
+                  print('MainScreen: Using email: $userEmail for all screens');
+
+                  return PageView(
+                    controller: pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) {
+                      // This is a failsafe, but the primary update mechanism is tapping the nav bar
+                      if (ref.read(selectedTabProvider) != index) {
+                        ref.read(selectedTabProvider.notifier).state = index;
+                      }
+                    },
+                    children: [
+                      ChatScreen(email: userEmail), // 0
+                      RitualScreen(currentUserEmail: userEmail), // 1
+                      JourneyScreen(userEmail: userEmail), // 2
+                      Discoverscreen(email: userEmail), // 3
+                    ],
+                  );
+                },
+              );
             },
-            children: [
-              ChatScreen(email: userEmail), // 0
-              RitualScreen(currentUserEmail: userEmail), // 1
-              JourneyScreen(userEmail: userEmail), // 2
-              Discoverscreen(email: userEmail), // 3
-            ],
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (error, stackTrace) {
+              print('Token validation error: $error');
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error, size: 64, color: Colors.red),
+                    SizedBox(height: 16),
+                    Text(
+                      'Authentication Error',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Please restart the app and try again',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),

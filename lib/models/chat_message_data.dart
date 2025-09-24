@@ -7,6 +7,8 @@ class ChatMessageData {
   final String? audioUrl;
   final DateTime timestamp;
   final bool hasAnimated; // Track if this message has already been animated
+  final String? objectId; // For content cards
+  final String? contentType; // For content cards (HABIT, JOURNEY, etc.)
 
   ChatMessageData({
     required this.id,
@@ -17,6 +19,8 @@ class ChatMessageData {
     this.audioUrl,
     required this.timestamp,
     this.hasAnimated = false,
+    this.objectId,
+    this.contentType,
   });
 
   ChatMessageData copyWith({
@@ -28,6 +32,8 @@ class ChatMessageData {
     String? audioUrl,
     DateTime? timestamp,
     bool? hasAnimated,
+    String? objectId,
+    String? contentType,
   }) {
     return ChatMessageData(
       id: id ?? this.id,
@@ -38,6 +44,8 @@ class ChatMessageData {
       audioUrl: audioUrl ?? this.audioUrl,
       timestamp: timestamp ?? this.timestamp,
       hasAnimated: hasAnimated ?? this.hasAnimated,
+      objectId: objectId ?? this.objectId,
+      contentType: contentType ?? this.contentType,
     );
   }
 }
@@ -47,4 +55,5 @@ enum ChatMessageType {
   cardMessage,
   audioMessage,
   animatedObjectCard,
+  contentCard,
 }

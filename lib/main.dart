@@ -13,6 +13,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth_page.dart';
 import 'screens/main_screen.dart';
+import 'services/token_service.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -21,8 +22,15 @@ final notificationPluginProvider =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize timezone data
   tz.initializeTimeZones();
+
+  // Initialize Firebase first
   await _initializeFirebase();
+
+  // Initialize Firebase Auth monitoring in TokenService
+  print('🔥 Initializing Firebase Auth monitoring...');
+  TokenService.initializeFirebaseAuthListener();
 
   try {
     String timezoneName = (await FlutterTimezone.getLocalTimezone()) as String;
@@ -32,17 +40,17 @@ void main() async {
     }
 
     tz.setLocalLocation(tz.getLocation(timezoneName));
-    log('Timezone set to: $timezoneName');
+    log('⏰ Timezone set to: $timezoneName');
   } catch (e) {
-    log('Error setting timezone: $e');
+    log('❌ Error setting timezone: $e');
 
     try {
       final String deviceTimeZone = DateTime.now().timeZoneName;
       tz.setLocalLocation(tz.getLocation(deviceTimeZone));
-      log('Fallback timezone set to device timezone: $deviceTimeZone');
+      log('🔄 Fallback timezone set to device timezone: $deviceTimeZone');
     } catch (_) {
       tz.setLocalLocation(tz.getLocation('UTC'));
-      log('Fallback to UTC timezone');
+      log('🌍 Fallback to UTC timezone');
     }
   }
 
@@ -62,6 +70,8 @@ void main() async {
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
+
+  print('🚀 App initialization complete - Firebase Auth monitoring active');
 
   runApp(
     ProviderScope(
@@ -89,17 +99,31 @@ class MyApp extends ConsumerWidget {
 
           if (authState.isLoading) {
             return const Scaffold(
+              backgroundColor: Colors.black,
               body: Center(
-                child: CircularProgressIndicator(
-                  backgroundColor: Colors.grey,
-                  color: Colors.white,
-                  strokeWidth: 5,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      backgroundColor: Colors.grey,
+                      color: Colors.white,
+                      strokeWidth: 5,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Initializing Firebase Auth...',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
                 ),
               ),
             );
           }
 
           final isAuthenticated = authState.user != null;
+          print(
+              '🔐 Authentication state: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}');
+
           return isAuthenticated ? MainScreen() : const AuthPage();
         },
       ),
@@ -111,9 +135,10 @@ Future<void> _initializeFirebase() async {
   try {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
+    print('🔥 Firebase initialized successfully');
   } catch (e) {
     if (kDebugMode) {
-      print("Firebase initialization error: $e");
+      print("💥 Firebase initialization error: $e");
     }
   }
 }

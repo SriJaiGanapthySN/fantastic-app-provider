@@ -9,6 +9,7 @@ import 'package:fantastic_app_riverpod/screens/main_screen.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_app_bar.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_background.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/chat_content.dart';
+import 'package:fantastic_app_riverpod/services/token_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,6 +30,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
   bool _isInitialized = false;
+  bool _isTokenValid = false;
+  bool _isValidatingToken = true;
 
   @override
   void initState() {
@@ -38,8 +41,48 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     // Defer initialization to avoid accessing ref during initState
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeControllers();
+      _validateTokenAndInitialize();
     });
+  }
+
+  // Validate auth token before allowing chat access
+  Future<void> _validateTokenAndInitialize() async {
+    try {
+      print('Validating auth token for chat access...');
+
+      // Check if user has a valid token
+      final isTokenValid = await TokenService.validateToken();
+
+      if (mounted) {
+        setState(() {
+          _isTokenValid = isTokenValid;
+          _isValidatingToken = false;
+        });
+
+        if (isTokenValid) {
+          print('Token validation successful - initializing chat');
+          _initializeControllers();
+        } else {
+          print('Token validation failed - chat access denied');
+          // Optionally trigger re-authentication
+          _handleInvalidToken();
+        }
+      }
+    } catch (e) {
+      print('Error during token validation: $e');
+      if (mounted) {
+        setState(() {
+          _isTokenValid = false;
+          _isValidatingToken = false;
+        });
+      }
+    }
+  }
+
+  // Handle invalid token by redirecting to auth or refreshing token
+  void _handleInvalidToken() {
+    // Try to refresh the auth state
+    ref.read(authProvider.notifier).checkAuth();
   }
 
   void _initializeControllers() {
@@ -327,6 +370,68 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Check token validation state first
+    if (_isValidatingToken) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            const ChatBackground(isThresholdReached: false),
+            const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Validating access...',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!_isTokenValid) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            const ChatBackground(isThresholdReached: false),
+            const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.security,
+                    size: 64,
+                    color: Colors.white54,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Chat access requires valid authentication',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Please log in again to continue',
+                    style: TextStyle(fontSize: 14, color: Colors.white70),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // Use the auth provider instead of FutureBuilder to avoid repeated auth checks
     final authState = ref.watch(authProvider);
 

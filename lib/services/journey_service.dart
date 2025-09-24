@@ -1651,4 +1651,52 @@ class JourneyService {
         .get();
     return doc.exists && (doc.data()?['isCompleted'] == true);
   }
+
+  /// Get journey by objectId from skillTrack-new collection
+  Future<Map<String, dynamic>?> getJourneyById(String objectId) async {
+    try {
+      print('🔍 JourneyService: Searching for journey with ID: $objectId');
+
+      // First try skillTrack-new collection
+      final docSnapshot =
+          await _firestore.collection('skillTrack-new').doc(objectId).get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        // Filter out challenges from journeys
+        final type = data['type'] as String? ?? '';
+        if (!type.toLowerCase().contains('challenge')) {
+          print(
+              '✅ JourneyService: Found journey: ${data['title'] ?? 'Unnamed'}');
+          return {
+            ...data,
+            'objectId': docSnapshot.id,
+          };
+        }
+      }
+
+      // If not found, try parent-skillTrack collection
+      final parentDocSnapshot =
+          await _firestore.collection('parent-skillTrack').doc(objectId).get();
+
+      if (parentDocSnapshot.exists) {
+        final data = parentDocSnapshot.data() as Map<String, dynamic>;
+        final type = data['type'] as String? ?? '';
+        if (!type.toLowerCase().contains('challenge')) {
+          print(
+              '✅ JourneyService: Found journey in parent collection: ${data['title'] ?? 'Unnamed'}');
+          return {
+            ...data,
+            'objectId': parentDocSnapshot.id,
+          };
+        }
+      }
+
+      print('❌ JourneyService: Journey not found with ID: $objectId');
+      return null;
+    } catch (e) {
+      print('❌ JourneyService: Error getting journey by ID: $e');
+      return null;
+    }
+  }
 }

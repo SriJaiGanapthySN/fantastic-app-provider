@@ -520,4 +520,52 @@ class ChallengesService {
       return false;
     }
   }
+
+  /// Get challenge by objectId from skillTrack-new collection
+  Future<Map<String, dynamic>?> getChallengeById(String objectId) async {
+    try {
+      print('🔍 ChallengesService: Searching for challenge with ID: $objectId');
+
+      // First try skillTrack-new collection
+      final docSnapshot =
+          await _firestore.collection('skillTrack-new').doc(objectId).get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        // Only return if it's a challenge type
+        final type = data['type'] as String? ?? '';
+        if (type.toLowerCase().contains('challenge')) {
+          print(
+              '✅ ChallengesService: Found challenge: ${data['title'] ?? 'Unnamed'}');
+          return {
+            ...data,
+            'objectId': docSnapshot.id,
+          };
+        }
+      }
+
+      // If not found, try parent-skillTrack collection
+      final parentDocSnapshot =
+          await _firestore.collection('parent-skillTrack').doc(objectId).get();
+
+      if (parentDocSnapshot.exists) {
+        final data = parentDocSnapshot.data() as Map<String, dynamic>;
+        final type = data['type'] as String? ?? '';
+        if (type.toLowerCase().contains('challenge')) {
+          print(
+              '✅ ChallengesService: Found challenge in parent collection: ${data['title'] ?? 'Unnamed'}');
+          return {
+            ...data,
+            'objectId': parentDocSnapshot.id,
+          };
+        }
+      }
+
+      print('❌ ChallengesService: Challenge not found with ID: $objectId');
+      return null;
+    } catch (e) {
+      print('❌ ChallengesService: Error getting challenge by ID: $e');
+      return null;
+    }
+  }
 }

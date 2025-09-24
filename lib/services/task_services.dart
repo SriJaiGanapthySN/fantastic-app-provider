@@ -492,4 +492,29 @@ class TaskServices {
         .get();
     return querysnapshot.docs.length;
   }
+
+  /// Get habit by objectId from habits-new collection
+  Future<Map<String, dynamic>?> getHabitById(String objectId) async {
+    try {
+      print('🔍 TaskServices: Searching for habit with ID: $objectId');
+
+      final docSnapshot =
+          await _firestore.collection('habits-new').doc(objectId).get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        print('✅ TaskServices: Found habit: ${data['name'] ?? 'Unnamed'}');
+        return {
+          ...data,
+          'objectId': docSnapshot.id,
+        };
+      } else {
+        print('❌ TaskServices: Habit not found with ID: $objectId');
+        return null;
+      }
+    } catch (e) {
+      print('❌ TaskServices: Error getting habit by ID: $e');
+      return null;
+    }
+  }
 }

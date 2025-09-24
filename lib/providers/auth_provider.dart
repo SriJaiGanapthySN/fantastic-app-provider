@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import '../models/app_user.dart';
 import '../repos/auth_repo.dart';
 import '../repos/firebase_auth_repo.dart';
@@ -28,15 +30,115 @@ class AuthState {
 // AuthNotifier extends StateNotifier to manage authentication
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepo authRepo;
+  StreamSubscription<User?>? _authStateSubscription;
 
   AuthNotifier({required this.authRepo}) : super(const AuthState()) {
-    checkAuth();
+    _initializeAuth();
+    _setupFirebaseAuthListener();
+  }
+
+  // Setup Firebase Auth state listener for real-time updates
+  void _setupFirebaseAuthListener() {
+    _authStateSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+      print(
+          '🔥 Firebase Auth State Changed in Provider: ${user?.uid ?? 'null'}');
+
+      try {
+        if (user != null) {
+          // User is signed in, sync with token service
+          await TokenService.syncWithFirebaseAuth();
+
+          // Create AppUser from Firebase user
+          final appUser = AppUser(
+            uid: user.uid,
+            email: user.email ?? '',
+            name: user.displayName ?? 'User',
+          );
+
+          // Update state only if different from current user
+          if (state.user?.uid != user.uid) {
+            state =
+                state.copyWith(user: appUser, isLoading: false, error: null);
+            print('🔄 Auth state updated from Firebase listener');
+          }
+        } else {
+          // User is signed out, clear state
+          await TokenService.syncWithFirebaseAuth();
+          if (state.user != null) {
+            state = const AuthState();
+            print('🚪 Auth state cleared from Firebase listener');
+          }
+        }
+      } catch (e) {
+        print('💥 Error in Firebase auth state listener: $e');
+        state = state.copyWith(error: e.toString(), isLoading: false);
+      }
+    });
+
+    print('🎧 Firebase Auth state listener setup in AuthProvider');
+  }
+
+  // Initialize authentication by checking stored tokens first
+  Future<void> _initializeAuth() async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      // Initialize Firebase auth listener in TokenService
+      TokenService.initializeFirebaseAuthListener();
+
+      // First check if we have a valid stored token
+      final hasValidToken = await TokenService.validateToken();
+
+      if (hasValidToken) {
+        print('✅ Valid Firebase token found, checking user data...');
+
+        // Try to get user from stored data
+        final storedEmail = await TokenService.getUserEmail();
+        final storedName = await TokenService.getUserName();
+        final storedUserId = await TokenService.getUserId();
+
+        if (storedEmail != null && storedUserId != null) {
+          // Create user from stored data
+          final user = AppUser(
+            uid: storedUserId,
+            email: storedEmail,
+            name: storedName ?? 'User',
+          );
+
+          print('✅ User authenticated from stored Firebase token');
+          state = state.copyWith(user: user, isLoading: false);
+          return;
+        }
+      }
+
+      // If no valid token or stored data, check Firebase auth
+      print('🔍 No valid token found, checking Firebase auth...');
+      await checkAuth();
+    } catch (e) {
+      print('💥 Error during auth initialization: $e');
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
   }
 
   Future<void> checkAuth() async {
     state = state.copyWith(isLoading: true);
     try {
       final user = await authRepo.getCurrentUser();
+
+      if (user != null) {
+        // User is authenticated in Firebase, generate and store token
+        final token = await TokenService.generateAndStoreToken();
+        if (token != null) {
+          await TokenService.storeUserDetails(
+            email: user.email,
+            name: user.name,
+            userId: user.uid,
+          );
+          print('User authenticated and token stored');
+        }
+      }
+
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
@@ -48,10 +150,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await authRepo.loginWithEmailAndPassword(email, password);
       state = state.copyWith(user: user, isLoading: false);
-      // Store user details in TokenService for other parts of the app
-      if (user != null) {
-        await TokenService.storeUserDetails(email: user.email, name: user.name);
-      }
+      // Token generation and storage is now handled in the repository
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
@@ -77,8 +176,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (user != null) {
         print('Google Sign-In successful');
         state = state.copyWith(user: user, isLoading: false);
-        // Store user details in TokenService for other parts of the app
-        await TokenService.storeUserDetails(email: user.email, name: user.name);
+        // Token generation and storage is now handled in the repository
       } else {
         print('Google Sign-In returned null user');
         state = state.copyWith(
@@ -120,25 +218,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // First clear the state so UI updates immediately
       state = const AuthState();
 
-      // Then complete the logout process
+      // Then complete the logout process (includes token clearing)
       await authRepo.logout();
 
-      // Clear any remaining cached data including SharedPreferences
-      await TokenService.clearAllData();
-
       // This ensures no persistent state remains after logout
-      print('User successfully logged out');
+      print('🚪 User successfully logged out');
     } catch (e) {
-      print('Error during logout: ${e.toString()}');
+      print('💥 Error during logout: ${e.toString()}');
       // Still ensure state is reset even if there's an error
       state = const AuthState();
       // Also clear SharedPreferences even if Firebase logout fails
       try {
         await TokenService.clearAllData();
       } catch (clearError) {
-        print('Error clearing local data: $clearError');
+        print('💥 Error clearing local data: $clearError');
       }
     }
+  }
+
+  // Dispose method to clean up resources
+  @override
+  void dispose() {
+    _authStateSubscription?.cancel();
+    TokenService.disposeFirebaseAuthListener();
+    super.dispose();
   }
 }
 

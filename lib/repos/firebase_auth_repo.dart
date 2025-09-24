@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../models/app_user.dart';
 import '../utils/connectivity_helper.dart';
+import '../services/token_service.dart';
 
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -56,11 +57,35 @@ class FirebaseAuthRepo implements AuthRepo {
         email: email,
         password: password,
       );
-      return AppUser(
-        uid: userCredential.user!.uid,
-        email: userCredential.user!.email ?? 'No email',
-        name: userCredential.user!.displayName ?? 'User',
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception('Login failed: No user data returned');
+      }
+
+      // Create AppUser instance
+      final appUser = AppUser(
+        uid: user.uid,
+        email: user.email ?? 'No email',
+        name: user.displayName ?? 'User',
       );
+
+      // Generate and store auth token
+      await TokenService.generateAndStoreToken();
+
+      // Store user details in TokenService
+      await TokenService.storeUserDetails(
+        email: appUser.email,
+        name: appUser.name,
+        userId: appUser.uid,
+        password: password, // Store password for backend API authentication
+      );
+
+      // Generate backend API token for chat functionality
+      await TokenService.generateAndStoreBackendToken();
+
+      print('Login successful - Auth token generated and stored');
+      return appUser;
     } on FirebaseAuthException catch (e) {
       _handleAuthException(e);
     } catch (e) {
@@ -80,7 +105,10 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<void> logout() async {
     try {
-      // First sign out from Firebase Auth
+      // Clear stored tokens and user data first
+      await TokenService.clearAllData();
+
+      // Then sign out from Firebase Auth
       await firebaseAuth.signOut();
 
       // Also sign out from Google to allow account switching
@@ -89,6 +117,8 @@ class FirebaseAuthRepo implements AuthRepo {
         await googleSignIn.signOut();
         await googleSignIn.disconnect();
       }
+
+      print('Logout successful - All tokens and data cleared');
     } catch (e) {
       _logError('Error during logout', e);
       throw Exception('Logout Failed: ${e.toString()}');
@@ -125,14 +155,24 @@ class FirebaseAuthRepo implements AuthRepo {
           .doc(userCredential.user!.uid)
           .set(user.toJson());
 
+      // Generate and store auth token
+      await TokenService.generateAndStoreToken();
+
+      // Store user details in TokenService
+      await TokenService.storeUserDetails(
+        email: user.email,
+        name: user.name,
+        userId: user.uid,
+        password: password, // Store password for backend API authentication
+      );
+
+      // Generate backend API token for chat functionality
+      await TokenService.generateAndStoreBackendToken();
+
+      print('Signup successful - Auth token generated and stored');
+
       //Return user
       return user;
-
-      // return AppUser(
-      //   uid: userCredential.user!.uid,
-      //   email: userCredential.user!.email ?? 'No email',
-      //   name: userCredential.user!.displayName ?? 'User',
-      // );
     } on FirebaseAuthException catch (e) {
       _handleAuthException(e);
     } catch (e) {
@@ -258,12 +298,27 @@ class FirebaseAuthRepo implements AuthRepo {
             .set(user.toJson());
       }
 
-      // Return the user
-      return AppUser(
+      // Create AppUser instance
+      final appUser = AppUser(
         uid: firebaseUser.uid,
         email: firebaseUser.email!,
         name: firebaseUser.displayName ?? 'User',
       );
+
+      // Generate and store auth token
+      await TokenService.generateAndStoreToken();
+
+      // Store user details in TokenService
+      await TokenService.storeUserDetails(
+        email: appUser.email,
+        name: appUser.name,
+        userId: appUser.uid,
+      );
+
+      print('Google sign-in successful - Auth token generated and stored');
+
+      // Return the user
+      return appUser;
     } catch (e) {
       _logError('Error signing in with Google: ', e);
       throw Exception(
@@ -323,12 +378,27 @@ class FirebaseAuthRepo implements AuthRepo {
             .set(user.toJson());
       }
 
-      // Return the user
-      return AppUser(
+      // Create AppUser instance
+      final appUser = AppUser(
         uid: firebaseUser.uid,
         email: firebaseUser.email ?? 'No email',
         name: firebaseUser.displayName ?? 'User',
       );
+
+      // Generate and store auth token
+      await TokenService.generateAndStoreToken();
+
+      // Store user details in TokenService
+      await TokenService.storeUserDetails(
+        email: appUser.email,
+        name: appUser.name,
+        userId: appUser.uid,
+      );
+
+      print('Apple sign-in successful - Auth token generated and stored');
+
+      // Return the user
+      return appUser;
     } on PlatformException catch (e) {
       _logError('Error signing in with Apple (PlatformException): ', e);
       throw Exception(

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/index.dart';
-import '../services/chat_api_service.dart';
-import '../services/token_service.dart';
+import '../providers/auth_provider.dart';
 import 'forgot_password_page.dart';
 import 'main_screen.dart';
 
@@ -144,28 +143,25 @@ class SignInPageState extends State<SignInPage> {
 
     if (email.isNotEmpty && password.isNotEmpty) {
       try {
-        // Do API authentication to get token
-        print('Starting API authentication');
-        final apiService = ChatApiService();
-        final apiToken = await apiService.authenticate(email, password);
+        // Use Firebase authentication through AuthProvider instead of direct API auth
+        print('Starting Firebase authentication');
+        await ref.read(authProvider.notifier).login(email, password);
 
-        if (apiToken != null) {
-          print('API authentication successful');
+        // Check if authentication was successful
+        final authState = ref.read(authProvider);
 
-          // Store token and user details
-          await TokenService.storeToken(apiToken);
-          await TokenService.storeUserDetails(email: email);
+        if (authState.user != null && authState.error == null) {
+          print('Firebase authentication successful');
+          print('User: ${authState.user!.email}');
 
-          print('💾 Token and user details stored');
-
-          // Navigate to main screen
+          // Navigate to main screen - Firebase auth will handle token generation
           if (mounted) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => MainScreen()),
             );
           }
         } else {
-          print('API authentication failed');
+          print('Firebase authentication failed: ${authState.error}');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

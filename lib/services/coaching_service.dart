@@ -139,4 +139,30 @@ class CoachingService {
       return {}; // Returning an empty map in case of an error
     }
   }
+
+  /// Get coaching by objectId from coachingSeries-new collection
+  Future<Map<String, dynamic>?> getCoachingById(String objectId) async {
+    try {
+      print('🔍 CoachingService: Searching for coaching with ID: $objectId');
+
+      final docSnapshot =
+          await _firestore.collection('coachingSeries-new').doc(objectId).get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        print(
+            '✅ CoachingService: Found coaching: ${data['title'] ?? 'Unnamed'}');
+        return {
+          ...data,
+          'objectId': docSnapshot.id,
+        };
+      } else {
+        print('❌ CoachingService: Coaching not found with ID: $objectId');
+        return null;
+      }
+    } catch (e) {
+      print('❌ CoachingService: Error getting coaching by ID: $e');
+      return null;
+    }
+  }
 }

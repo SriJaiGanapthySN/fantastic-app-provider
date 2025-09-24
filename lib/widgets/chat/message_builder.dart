@@ -155,13 +155,34 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
           },
         );
         break;
+
+      case ChatMessageType.contentCard:
+        messageWidget = messageFactory.createContentCardMessage(
+          objectId: messageData.objectId ?? '',
+          type: messageData.contentType ?? '',
+          onAnimationComplete: () {
+            if (shouldAnimate) {
+              // Mark as animated only if it was animating
+              ref
+                  .read(chatProvider.notifier)
+                  .markMessageAsAnimated(messageData.id);
+
+              // Turn off background animation when bot message animation completes
+              if (!messageData.isUser) {
+                ref.read(chatProvider.notifier).setThresholdReached(false);
+              }
+            }
+          },
+        );
+        break;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         messageWidget,
-        if (messageData.type == ChatMessageType.cardMessage && _showJourneyPreview) ...[
+        if (messageData.type == ChatMessageType.cardMessage &&
+            _showJourneyPreview) ...[
           const SizedBox(height: 8),
           AnimatedSlide(
             duration: const Duration(milliseconds: 300),
@@ -178,7 +199,8 @@ class _MessageBuilderState extends ConsumerState<MessageBuilder> {
             ),
           ),
         ],
-        if (messageData.type == ChatMessageType.cardMessage && _showHabitPreview) ...[
+        if (messageData.type == ChatMessageType.cardMessage &&
+            _showHabitPreview) ...[
           const SizedBox(height: 8),
           AnimatedSlide(
             duration: const Duration(milliseconds: 320),
