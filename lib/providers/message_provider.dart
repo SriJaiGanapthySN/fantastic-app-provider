@@ -263,6 +263,41 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
         inputType: apiInputType,
       );
 
+      // If the streaming response included card ids, create content card messages
+      if (response != null && response['card_ids'] is List) {
+        try {
+          final List<dynamic> cardIds = response['card_ids'] as List<dynamic>;
+          for (final item in cardIds) {
+            try {
+              final Map<String, dynamic> m =
+                  Map<String, dynamic>.from(item as Map);
+              final String? objectId =
+                  (m['objectId'] ?? m['object_id'])?.toString();
+              final String? type = m['type']?.toString();
+              if (objectId != null && objectId.isNotEmpty &&
+                  type != null && type.isNotEmpty) {
+                final contentCardData = ChatMessageData(
+                  id: '${DateTime.now().millisecondsSinceEpoch}_content_card',
+                  text: '',
+                  type: ChatMessageType.contentCard,
+                  isUser: false,
+                  timestamp: DateTime.now(),
+                  hasAnimated: false,
+                  objectId: objectId,
+                  contentType: type,
+                );
+                chatNotifier.addMessageData(contentCardData);
+              }
+            } catch (e) {
+              print('Error processing card_ids entry: $e');
+            }
+          }
+          _scrollToBottom();
+        } catch (e) {
+          print('Error handling card_ids from streaming response: $e');
+        }
+      }
+
       // Store bracketed content if available in the response metadata
       if (response != null && response['has_bracketed_content'] == true) {
         final messageId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -344,6 +379,42 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
                   }
                 }
               }
+
+              // Handle card ids if present in fallback response
+              if (regularResponse['card_ids'] is List) {
+                try {
+                  final List<dynamic> cardIds =
+                      regularResponse['card_ids'] as List<dynamic>;
+                  for (final item in cardIds) {
+                    try {
+                      final Map<String, dynamic> m =
+                          Map<String, dynamic>.from(item as Map);
+                      final String? objectId =
+                          (m['objectId'] ?? m['object_id'])?.toString();
+                      final String? type = m['type']?.toString();
+                      if (objectId != null && objectId.isNotEmpty &&
+                          type != null && type.isNotEmpty) {
+                        final contentCardData = ChatMessageData(
+                          id:
+                              '${DateTime.now().millisecondsSinceEpoch}_content_card_fallback',
+                          text: '',
+                          type: ChatMessageType.contentCard,
+                          isUser: false,
+                          timestamp: DateTime.now(),
+                          hasAnimated: false,
+                          objectId: objectId,
+                          contentType: type,
+                        );
+                        chatNotifier.addMessageData(contentCardData);
+                      }
+                    } catch (e) {
+                      print('Error processing fallback card_ids entry: $e');
+                    }
+                  }
+                } catch (e) {
+                  print('Error handling fallback card_ids: $e');
+                }
+              }
             }
           } else {
             final cardMessageData = ChatMessageData(
@@ -370,6 +441,42 @@ class MessageNotifier extends StateNotifier<MessageFactory?> {
                   _createContentCardMessage(responseModel,
                       messageId + '_card_fallback_content_card', chatNotifier);
                 }
+              }
+            }
+
+            // Handle card ids if present in fallback response
+            if (regularResponse['card_ids'] is List) {
+              try {
+                final List<dynamic> cardIds =
+                    regularResponse['card_ids'] as List<dynamic>;
+                for (final item in cardIds) {
+                  try {
+                    final Map<String, dynamic> m =
+                        Map<String, dynamic>.from(item as Map);
+                    final String? objectId =
+                        (m['objectId'] ?? m['object_id'])?.toString();
+                    final String? type = m['type']?.toString();
+                    if (objectId != null && objectId.isNotEmpty &&
+                        type != null && type.isNotEmpty) {
+                      final contentCardData = ChatMessageData(
+                        id:
+                            '${DateTime.now().millisecondsSinceEpoch}_content_card_fallback',
+                        text: '',
+                        type: ChatMessageType.contentCard,
+                        isUser: false,
+                        timestamp: DateTime.now(),
+                        hasAnimated: false,
+                        objectId: objectId,
+                        contentType: type,
+                      );
+                      chatNotifier.addMessageData(contentCardData);
+                    }
+                  } catch (e) {
+                    print('Error processing fallback card_ids entry: $e');
+                  }
+                }
+              } catch (e) {
+                print('Error handling fallback card_ids: $e');
               }
             }
           }

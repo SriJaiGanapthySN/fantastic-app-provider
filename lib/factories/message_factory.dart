@@ -1,4 +1,5 @@
 import 'package:fantastic_app_riverpod/widgets/chat/animated_card_message.dart';
+import 'package:fantastic_app_riverpod/widgets/chat/chat_content_card.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/animatedmessagebubble.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/animated_object_card_message.dart';
 import 'package:fantastic_app_riverpod/widgets/chat/audio_message_bubble.dart';
@@ -109,15 +110,19 @@ class MessageFactory {
     required VoidCallback onAnimationComplete,
     bool shouldAnimate = true,
   }) {
-    // Create a descriptive message for the content card
-    String cardText = 'Here\'s the ${type.toLowerCase()} you requested:';
+    // Render the actual content card for the provided id/type
+    // The loader will fetch from ContentCardService under the hood
+    // We still call onAnimationComplete immediately if not animating
+    if (!shouldAnimate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onAnimationComplete();
+      });
+    }
 
-    return AnimatedCardMessage(
-      id: objectId,
-      isQuestion: false,
-      apiResponse: cardText,
-      onAnimationComplete: onAnimationComplete,
-      shouldAnimate: shouldAnimate,
+    return ChatContentCardLoader(
+      objectId: objectId,
+      type: type,
+      onTap: onAnimationComplete,
     );
   }
 }

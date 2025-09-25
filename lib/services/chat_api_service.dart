@@ -380,6 +380,7 @@ class ChatApiService {
       final lines = responseBody.trim().split('\n');
       Map<String, dynamic>? metadata;
       final messageChunks = <String>[];
+      final List<dynamic> cardIds = [];
 
       print('🔍 Processing ${lines.length} lines for SSE format');
       for (int i = 0; i < lines.length; i++) {
@@ -393,6 +394,17 @@ class ChatApiService {
           if (content.trim().isEmpty) {
             continue; // Skip empty lines
           }
+
+          // Try to capture a JSON array payload for card ids (e.g., data: [ ... ])
+          try {
+            final decoded = jsonDecode(content);
+            if (decoded is List) {
+              cardIds.addAll(decoded);
+              print('📦 Captured card_ids array with ${cardIds.length} items');
+              // Do not treat this as text content
+              continue;
+            }
+          } catch (_) {}
 
           // Try to parse as JSON (first line contains metadata)
           if (metadata == null) {
@@ -430,6 +442,12 @@ class ChatApiService {
         metadata['ai_message_content'] = fullAiMessage;
         metadata['input_type'] = inputType;
 
+        // Attach captured card ids if present
+        if (cardIds.isNotEmpty) {
+          metadata['card_ids'] = cardIds;
+          metadata['has_card_ids'] = true;
+        }
+
         // Only generate audio URL for voice input
         if (inputType == 'voice') {
           metadata['audio_url'] = getAudioUrl(fullAiMessage);
@@ -448,6 +466,8 @@ class ChatApiService {
         final basicResponse = {
           'ai_message_content': fullAiMessage,
           'input_type': inputType,
+          if (cardIds.isNotEmpty) 'card_ids': cardIds,
+          if (cardIds.isNotEmpty) 'has_card_ids': true,
           'user_message_id':
               'fallback_${DateTime.now().millisecondsSinceEpoch}',
           'ai_message_id':
@@ -514,6 +534,7 @@ class ChatApiService {
       final lines = responseBody.trim().split('\n');
       Map<String, dynamic>? metadata;
       bool hasContent = false;
+      final List<dynamic> cardIds = [];
 
       for (int i = 0; i < lines.length; i++) {
         final line = lines[i];
@@ -524,6 +545,17 @@ class ChatApiService {
           if (content.trim().isEmpty) {
             continue; // Skip empty lines
           }
+
+          // Try to capture a JSON array payload for card ids (e.g., data: [ ... ])
+          try {
+            final decoded = jsonDecode(content);
+            if (decoded is List) {
+              cardIds.addAll(decoded);
+              print('📦 Captured card_ids array with ${cardIds.length} items');
+              // Not a textual chunk; skip streaming
+              continue;
+            }
+          } catch (_) {}
 
           // Try to parse as JSON (first line contains metadata)
           if (metadata == null) {
@@ -554,8 +586,23 @@ class ChatApiService {
         Future.delayed(Duration(milliseconds: totalDelay), () {
           onComplete();
         });
-
+        // Attach card ids if present
+        if (metadata != null && cardIds.isNotEmpty) {
+          metadata['card_ids'] = cardIds;
+          metadata['has_card_ids'] = true;
+        }
         return metadata;
+      }
+
+      // If there was no textual content but we captured card ids, still complete and return them
+      if (cardIds.isNotEmpty) {
+        Future.microtask(() => onComplete());
+        final result = <String, dynamic>{
+          'input_type': inputType,
+          'card_ids': cardIds,
+          'has_card_ids': true,
+        };
+        return result;
       }
 
       return null;
