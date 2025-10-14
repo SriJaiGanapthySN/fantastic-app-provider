@@ -1,0 +1,327 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:fantastic_app_riverpod/features/onboarding/presentation/Screens/onBoard1.dart';
+import 'package:fantastic_app_riverpod/features/extras/presentation/screens/profile/profile.dart';
+import 'package:fantastic_app_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:fantastic_app_riverpod/features/discover/presentation/providers/discover_provider.dart';
+import 'package:fantastic_app_riverpod/features/settings/settingPage.dart';
+import 'package:fantastic_app_riverpod/features/discover/presentation/widgets/buttonimage.dart';
+import 'package:fantastic_app_riverpod/features/discover/presentation/widgets/discoverbuttons.dart';
+import 'package:fantastic_app_riverpod/features/discover/presentation/widgets/discoverstrip.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../challenges/presentation/screens/challenges/ChallengeScreen.dart';
+import '../../../extras/presentation/screens/notification_tone_screen.dart';
+import '../../../auth/presentation/screens/auth_page.dart';
+
+class Discoverscreen extends ConsumerStatefulWidget {
+  final String email;
+  const Discoverscreen({super.key, required this.email});
+
+  @override
+  ConsumerState<Discoverscreen> createState() => _DiscoverscreenState();
+}
+
+class _DiscoverscreenState extends ConsumerState<Discoverscreen>
+    with SingleTickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  late AnimationController _dataDiscoveryController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    print('DISCOVER SCREEN INITIALIZED with email: ${widget.email}');
+
+    // Initialize the animation controller with a longer duration to slow down the animation
+    _dataDiscoveryController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    );
+
+    // Start the animation and make it repeat
+    _dataDiscoveryController.repeat();
+
+    // Load initial data when the screen first loads
+    Future.microtask(() {
+      ref.read(journeysProvider.notifier).fetchJourneys();
+      ref.read(coachingProvider.notifier).fetchCoaching();
+      ref.read(activitiesProvider.notifier).fetchCategories();
+    });
+  }
+
+  // Handle button press using the provider
+  Future<void> _handleButtonPress(int index) async {
+    print('🔥 Button pressed: index=$index');
+
+    if (index == 0) {
+      ref.read(discoverUIStateProvider.notifier).selectButton(index);
+      if (ref.read(journeysProvider).journeys.isEmpty) {
+        print('🔥 Fetching journeys...');
+        ref.read(journeysProvider.notifier).fetchJourneys();
+      }
+    } else if (index == 1) {
+      ref.read(discoverUIStateProvider.notifier).selectButton(index);
+      print(
+          '🔥 Coaching button pressed - current coaching data length: ${ref.read(coachingProvider).coaching.length}');
+      if (ref.read(coachingProvider).coaching.isEmpty) {
+        print('🔥 Fetching coaching...');
+        await ref.read(coachingProvider.notifier).fetchCoaching();
+        print(
+            '🔥 After fetch - coaching data length: ${ref.read(coachingProvider).coaching.length}');
+      } else {
+        print('🔥 Coaching data already available');
+      }
+    } else if (index == 2) {
+      ref.read(discoverUIStateProvider.notifier).selectButton(index);
+      if (ref.read(activitiesProvider).categories.isEmpty) {
+        ref.read(activitiesProvider.notifier).fetchCategories();
+      }
+    } else if (index == 3) {
+      final challenges = ref.read(challengesProvider).challenges;
+
+      if (challenges.isEmpty) {
+        await ref.read(challengesProvider.notifier).fetchChallenges();
+        final updatedChallenges = ref.read(challengesProvider).challenges;
+        ref.read(journeysProvider.notifier).fetchJourneys();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChallengeScreen(
+                cardData:
+                    updatedChallenges), //ChallengeScreen(cardData: updatedChallenges)
+          ),
+        );
+        ref.read(discoverUIStateProvider.notifier).selectButton(0);
+        if (ref.read(journeysProvider).journeys.isEmpty) {
+          ref.read(journeysProvider.notifier).fetchJourneys();
+        }
+      } else {
+        ref.read(journeysProvider.notifier).fetchJourneys();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChallengeScreen(cardData: challenges),
+          ),
+        );
+        ref.read(discoverUIStateProvider.notifier).selectButton(0);
+      }
+      if (ref.read(journeysProvider).journeys.isEmpty) {
+        ref.read(journeysProvider.notifier).fetchJourneys();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _dataDiscoveryController.dispose(); // Dispose the controller
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Watch the UI state and current data from providers
+    final uiState = ref.watch(discoverUIStateProvider);
+    final currentData = ref.watch(currentDataProvider);
+
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Extra screen in drawer',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 21, 21, 21),
+            ),
+          ),
+          centerTitle: true,
+          actions: [
+            // Persona toggle button
+            Consumer(
+              builder: (context, ref, child) {
+                final personaState = ref.watch(personaProvider);
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      personaState.isParentMode ? 'Parent' : 'Regular',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color.fromARGB(255, 21, 21, 21),
+                      ),
+                    ),
+                    Switch(
+                      value: personaState.isParentMode,
+                      onChanged: (value) {
+                        ref.read(personaProvider.notifier).togglePersona();
+                        // Challenges will automatically refetch via provider listener
+                      },
+                      activeColor: Colors.indigo,
+                      inactiveThumbColor: Colors.grey,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.indigo,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      widget.email,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      'Welcome!',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.dashboard_customize, color: Colors.indigo),
+                title: Text('Onboarding'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Onboard1()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.person, color: Colors.indigo),
+                title: Text('Profile'),
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => ProfileScreen()));
+                  // Navigate to profile screen
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.settings, color: Colors.indigo),
+                title: Text('Settings'),
+                onTap: () {
+                  // Navigate to settings screen
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()));
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.notifications, color: Colors.indigo),
+                title: Text('Notifications'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationToneScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.exit_to_app, color: Colors.indigo),
+                title: Text('Logout'),
+                onTap: () async {
+                  // Set loading state and disable the button during logout
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logging out...')),
+                  );
+
+                  // Clear all user-specific data first
+                  ref.invalidate(userEmailProvider);
+                  ref.invalidate(currentEmailProvider);
+                  ref.invalidate(emailStorageProvider);
+                  ref.invalidate(currentUserProvider);
+
+                  // Reset any other user-specific providers
+                  ref.invalidate(journeysProvider);
+                  ref.invalidate(coachingProvider);
+                  ref.invalidate(activitiesProvider);
+                  ref.invalidate(challengesProvider);
+
+                  // Perform the actual logout
+                  await ref.read(authProvider.notifier).logout();
+
+                  // Force refresh app state by creating a small delay
+                  await Future.delayed(Duration(milliseconds: 300));
+
+                  // Navigate to auth page and clear navigation stack
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const AuthPage()),
+                      (Route<dynamic> route) => false,
+                    );
+                  }
+                },
+              ),
+              Divider(),
+            ],
+          ),
+        ),
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bgdiscover.jpeg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.transparent,
+                    BlendMode.dst,
+                  ),
+                ),
+              ),
+            ),
+            Buttonimage(currentImage: uiState.currentImage),
+            // Temporarily removed Lottie animation to debug red screen issue
+            Column(
+              children: [
+                Discoverbuttons(
+                    handleButtonPress: _handleButtonPress,
+                    selectedButtonIndex: uiState.selectedButtonIndex == 3
+                        ? 0
+                        : uiState.selectedButtonIndex),
+                SizedBox(height: screenHeight * 0.02),
+                Discoverstrip(currentData: currentData, email: widget.email)
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
