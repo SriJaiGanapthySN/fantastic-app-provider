@@ -1,5 +1,5 @@
+import 'package:fantastic_app_riverpod/features/chat/data/services/audio/speech_recognition_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fantastic_app_riverpod/services/speech_recognition_service.dart';
 
 class SpeechRecognitionNotifier
     extends StateNotifier<SpeechRecognitionService> {
