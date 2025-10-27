@@ -40,10 +40,10 @@ class AudioMessageBubble extends ConsumerWidget {
       onAnimationComplete: onAnimationComplete,
     );
     final animationState = ref.watch(animatedCardProvider(providerArgs));
-    final maxWidth = MediaQuery.of(context).size.width * 0.75;
+    final maxWidth = MediaQuery.of(context).size.width * 0.8;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Align(
         alignment: alignment,
         child: ConstrainedBox(
@@ -61,8 +61,8 @@ class AudioMessageBubble extends ConsumerWidget {
               if (animationState.showSparkle)
                 Lottie.asset(
                   'assets/animations/All Lottie/Glowing Star/Image Preload Gradient.json',
-                  width: maxWidth * 0.8,
-                  height: 150, // Fixed height for sparkle on audio
+                  width: maxWidth * 0.85,
+                  height: 160,
                   fit: BoxFit.contain,
                   repeat: true,
                 ),
@@ -75,10 +75,10 @@ class AudioMessageBubble extends ConsumerWidget {
 
   Widget _buildMessageContent(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bubbleColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -97,7 +97,7 @@ class AudioMessageBubble extends ConsumerWidget {
               message,
               style: TextStyle(
                 color: textColor,
-                height: 1.25,
+                height: 1.4,
                 fontSize: 16,
               ),
               textHeightBehavior: const TextHeightBehavior(
@@ -106,7 +106,7 @@ class AudioMessageBubble extends ConsumerWidget {
               ),
               softWrap: true,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
           ],
 
           // Audio Player
@@ -116,24 +116,24 @@ class AudioMessageBubble extends ConsumerWidget {
                 audioBackgroundColor ?? Colors.white.withOpacity(0.9),
             iconColor: audioIconColor ?? Colors.blue,
             progressColor: audioProgressColor ?? Colors.blue,
-            height: 70,
+            height: 75,
           ),
 
           // Audio indicator row (always show)
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Icon(
                 Icons.audiotrack,
-                size: 14,
+                size: 16,
                 color: textColor.withOpacity(0.7),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
                 message.isEmpty ? 'Voice Response' : 'Audio Response',
                 style: TextStyle(
                   color: textColor.withOpacity(0.7),
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),

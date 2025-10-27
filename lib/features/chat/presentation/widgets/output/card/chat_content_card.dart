@@ -23,16 +23,16 @@ class ChatContentCard extends StatelessWidget {
     final backgroundColor = Color(int.parse(colorScheme['background']));
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      margin: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
       child: BlurContainer(
         blur: 35.87,
-        borderRadius: 16.0,
+        borderRadius: 20.0,
         color: backgroundColor.withOpacity(0.15),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(20.0),
           onTap: onTap ?? () => _handleNavigation(context),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -41,8 +41,8 @@ class ChatContentCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0,
-                        vertical: 4.0,
+                        horizontal: 12.0,
+                        vertical: 6.0,
                       ),
                       decoration: BoxDecoration(
                         color: primaryColor.withOpacity(0.2),
@@ -56,7 +56,7 @@ class ChatContentCard extends StatelessWidget {
                         contentData.type.toUpperCase(),
                         style: TextStyle(
                           color: primaryColor,
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -66,11 +66,11 @@ class ChatContentCard extends StatelessWidget {
                     Icon(
                       _getTypeIcon(),
                       color: primaryColor.withOpacity(0.7),
-                      size: 20,
+                      size: 24,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Content section
                 Row(
@@ -78,7 +78,7 @@ class ChatContentCard extends StatelessWidget {
                   children: [
                     // Image section
                     _buildImage(),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
 
                     // Text content
                     Expanded(
@@ -89,22 +89,23 @@ class ChatContentCard extends StatelessWidget {
                             contentData.title,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.w700,
+                              height: 1.3,
                             ),
-                            maxLines: 2,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (contentData.description.isNotEmpty) ...[
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             Text(
                               contentData.description,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 14,
-                                height: 1.4,
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 16,
+                                height: 1.5,
                               ),
-                              maxLines: 3,
+                              maxLines: 4,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -114,7 +115,7 @@ class ChatContentCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // Action button
                 SizedBox(
@@ -126,9 +127,9 @@ class ChatContentCard extends StatelessWidget {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -136,14 +137,14 @@ class ChatContentCard extends StatelessWidget {
                         Text(
                           contentData.actionText,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 8),
                         const Icon(
                           Icons.arrow_forward_rounded,
-                          size: 18,
+                          size: 20,
                         ),
                       ],
                     ),
@@ -158,7 +159,7 @@ class ChatContentCard extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    const double imageSize = 80;
+    const double imageSize = 100;
 
     if (contentData.imageUrl.isEmpty) {
       return Container(
@@ -166,12 +167,12 @@ class ChatContentCard extends StatelessWidget {
         height: imageSize,
         decoration: BoxDecoration(
           color: Colors.grey.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(
           _getTypeIcon(),
           color: Colors.white.withOpacity(0.6),
-          size: 40,
+          size: 48,
         ),
       );
     }
@@ -183,14 +184,14 @@ class ChatContentCard extends StatelessWidget {
         height: imageSize,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(18.0),
           child: SvgPicture.network(
             contentData.imageUrl,
-            width: imageSize - 32,
-            height: imageSize - 32,
+            width: imageSize - 36,
+            height: imageSize - 36,
             colorFilter: const ColorFilter.mode(
               Colors.white,
               BlendMode.srcIn,
@@ -198,7 +199,7 @@ class ChatContentCard extends StatelessWidget {
             placeholderBuilder: (context) => Icon(
               _getTypeIcon(),
               color: Colors.white.withOpacity(0.6),
-              size: 32,
+              size: 36,
             ),
           ),
         ),
@@ -207,7 +208,7 @@ class ChatContentCard extends StatelessWidget {
 
     // Regular image
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: CachedNetworkImage(
         imageUrl: contentData.imageUrl,
         width: imageSize,
@@ -218,7 +219,7 @@ class ChatContentCard extends StatelessWidget {
           height: imageSize,
           decoration: BoxDecoration(
             color: Colors.grey.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: const Center(
             child: CircularProgressIndicator(
@@ -232,12 +233,12 @@ class ChatContentCard extends StatelessWidget {
           height: imageSize,
           decoration: BoxDecoration(
             color: Colors.grey.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
             _getTypeIcon(),
             color: Colors.white.withOpacity(0.6),
-            size: 40,
+            size: 48,
           ),
         ),
       ),

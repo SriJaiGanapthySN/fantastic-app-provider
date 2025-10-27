@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../../model/chat_message.dart';
 import '../token/token_service.dart';
+import '../../../../../core/log/app_logger.dart';
 
 class ChatApiService {
   // Register a new user by sending all text fields to /register
@@ -10,11 +11,11 @@ class ChatApiService {
     Map<String, String> registrationData,
   ) async {
     try {
-      print('Registering user with data: $registrationData');
+      AppLogger.i('Registering user with data: $registrationData');
       final url = '$baseUrl/auth/register';
       final payload = jsonEncode(registrationData);
-      print('POST $url');
-      print('Payload: $payload');
+      AppLogger.d('POST $url');
+      AppLogger.d('Payload: $payload');
 
       final response = await http.post(
         Uri.parse(url),
@@ -30,24 +31,25 @@ class ChatApiService {
             'age': registrationData['age'],
             'gender_identity': registrationData['gender'],
             'location': registrationData['location'],
+            'stress_level': registrationData['stressLevel'],
           },
         ),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      AppLogger.d('Response status: ${response.statusCode}');
+      AppLogger.d('Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        print('Registration successful!');
+        AppLogger.i('Registration successful!');
         return data;
       } else {
-        print('Registration failed with status: ${response.statusCode}');
-        print('Error response: ${response.body}');
+        AppLogger.e('Registration failed with status: ${response.statusCode}');
+        AppLogger.e('Error response: ${response.body}');
         return null;
       }
     } catch (e) {
-      print('Registration error: $e');
+      AppLogger.e('Registration error: $e', data: e);
       return null;
     }
   }
@@ -68,16 +70,16 @@ class ChatApiService {
   // Check network connectivity by testing DNS resolution
   Future<bool> checkNetworkConnectivity() async {
     try {
-      print('Checking network connectivity...');
+      AppLogger.d('Checking network connectivity...');
       final response = await http.get(
         Uri.parse('https://www.google.com'),
         headers: {'User-Agent': 'Flutter App'},
       ).timeout(Duration(seconds: 10));
 
-      print('Network connectivity check passed');
+      AppLogger.d('Network connectivity check passed');
       return response.statusCode == 200;
     } catch (e) {
-      print('Network connectivity check failed: $e');
+      AppLogger.w('Network connectivity check failed: $e', data: e);
       return false;
     }
   }
@@ -85,16 +87,16 @@ class ChatApiService {
   // Check if the API server is reachable
   Future<bool> checkApiServerHealth() async {
     try {
-      print('Checking API server health...');
+      AppLogger.d('Checking API server health...');
       final response = await http.get(
         Uri.parse('$baseUrl/health'),
         headers: {'User-Agent': 'Flutter App'},
       ).timeout(Duration(seconds: 15));
 
-      print('API server health check passed');
+      AppLogger.d('API server health check passed');
       return response.statusCode == 200;
     } catch (e) {
-      print('API server health check failed: $e');
+      AppLogger.w('API server health check failed: $e', data: e);
       return false;
     }
   }
@@ -102,17 +104,17 @@ class ChatApiService {
   // Authenticate and get access token
   Future<String?> authenticate(String email, String password) async {
     try {
-      print('Authenticating user: $email');
+      AppLogger.i('Authenticating user: $email');
 
       // First check network connectivity
       final hasNetwork = await checkNetworkConnectivity();
       if (!hasNetwork) {
-        print(
+        AppLogger.w(
             'No network connectivity. Please check your internet connection.');
         return null;
       }
 
-      print('Attempting to connect to: $baseUrl/auth/token');
+      AppLogger.d('Attempting to connect to: $baseUrl/auth/token');
 
       final response = await http
           .post(
@@ -128,12 +130,12 @@ class ChatApiService {
           )
           .timeout(apiTimeout);
 
-      print('Authentication response status: ${response.statusCode}');
+      AppLogger.d('Authentication response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['access_token'];
-        print('Authentication successful!');
+        AppLogger.i('Authentication successful!');
 
         // Store token using TokenService
         await TokenService.storeToken(token);
@@ -143,29 +145,30 @@ class ChatApiService {
 
         return token;
       } else {
-        print('Authentication failed with status: ${response.statusCode}');
-        print('Error response: ${response.body}');
+        AppLogger.e(
+            'Authentication failed with status: ${response.statusCode}');
+        AppLogger.e('Error response: ${response.body}');
         return null;
       }
     } on http.ClientException catch (e) {
-      print('Network error during authentication: $e');
-      print('This might indicate:');
-      print('   - DNS resolution failure for $baseUrl');
-      print('   - No internet connection');
-      print('   - Server is down');
-      print('   - Firewall blocking the request');
+      AppLogger.e('Network error during authentication: $e', data: e);
+      AppLogger.w('This might indicate:');
+      AppLogger.w('   - DNS resolution failure for $baseUrl');
+      AppLogger.w('   - No internet connection');
+      AppLogger.w('   - Server is down');
+      AppLogger.w('   - Firewall blocking the request');
 
       // Try to check if it's a general network issue
       final hasNetwork = await checkNetworkConnectivity();
       if (!hasNetwork) {
-        print('Confirmed: No internet connection');
+        AppLogger.w('Confirmed: No internet connection');
       } else {
-        print('Internet works, but API server seems unreachable');
+        AppLogger.w('Internet works, but API server seems unreachable');
       }
 
       return null;
     } catch (e) {
-      print('Authentication error: $e');
+      AppLogger.e('Authentication error: $e', data: e);
       return null;
     }
   } // Fetch existing messages
@@ -573,6 +576,46 @@ class ChatApiService {
   // Check if user is authenticated (delegate to TokenService)
   Future<bool> isAuthenticated() async {
     return await TokenService.isAuthenticated();
+  }
+
+  // Validate backend token by making a test request
+  Future<bool> validateBackendToken() async {
+    try {
+      final token = await TokenService.getBackendToken();
+      if (token == null) {
+        print('❌ No backend token to validate');
+        return false;
+      }
+
+      print('🔍 Validating backend token...');
+
+      // Try to fetch messages as a validation check
+      final response = await http.get(
+        Uri.parse('$baseUrl/chat/messages'),
+        headers: {
+          'accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(Duration(seconds: 10));
+
+      print('🔐 Token validation response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        print('✅ Backend token is valid');
+        return true;
+      } else if (response.statusCode == 401) {
+        print('❌ Backend token is invalid or expired');
+        // Clear invalid token
+        await TokenService.clearAllData();
+        return false;
+      } else {
+        print('⚠️ Unexpected response: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('💥 Error validating backend token: $e');
+      return false;
+    }
   }
 
   // Helper method to remove text within square brackets

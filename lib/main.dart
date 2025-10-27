@@ -14,8 +14,11 @@ import 'package:timezone/timezone.dart' as tz;
 import 'firebase_options.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/auth_page.dart';
+import 'features/auth/presentation/screens/profile_completion_screen.dart';
+import 'features/onboarding/presentation/Screens/onBoard1.dart';
 import 'main_screen.dart';
 import 'features/chat/data/services/token/token_service.dart';
+import 'core/services/onboarding_service.dart';
 
 final notificationPluginProvider =
     Provider<FlutterLocalNotificationsPlugin>((ref) {
@@ -125,7 +128,46 @@ class MyApp extends ConsumerWidget {
           AppLogger.i(
               'Authentication state: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}');
 
-          return isAuthenticated ? MainScreen() : const AuthPage();
+          // If not authenticated, show auth page
+          if (!isAuthenticated) {
+            return const AuthPage();
+          }
+
+          // Check if profile is complete
+          final user = authState.user!;
+          if (!user.profileComplete) {
+            AppLogger.i(
+                '⚠️ User profile incomplete - showing profile completion screen');
+            return ProfileCompletionScreen(user: user);
+          }
+
+          // If authenticated with complete profile, check onboarding status
+          return FutureBuilder<bool>(
+            future: OnboardingService.hasCompletedOnboarding(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  backgroundColor: Colors.black,
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: Colors.grey,
+                      color: Colors.white,
+                      strokeWidth: 5,
+                    ),
+                  ),
+                );
+              }
+
+              final hasCompletedOnboarding = snapshot.data ?? false;
+              AppLogger.i(
+                  'Onboarding status: ${hasCompletedOnboarding ? 'Completed' : 'Not completed'}');
+
+              // Show onboarding if not completed, otherwise show main screen
+              return hasCompletedOnboarding
+                  ? const MainScreen()
+                  : const Onboard1();
+            },
+          );
         },
       ),
     );

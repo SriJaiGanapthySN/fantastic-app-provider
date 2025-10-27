@@ -1,0 +1,452 @@
+{
+  "onboarding_flow": {
+    "app_name": "Fantastic App",
+    "description": "A habit-building and wellness app that creates personalized routines using psychology and behavioral science",
+    "screens": [
+      {
+        "screen_number": 1,
+        "screen_name": "onBoard1",
+        "type": "intro_animation",
+        "content": {
+          "message": "Enter the Fantastic world, where you will turn your intentions into into reality"
+        }
+      },
+      {
+        "screen_number": 2,
+        "screen_name": "OnBoard2",
+        "type": "intro_message",
+        "content": {
+          "title": "Create the perfect routine for you",
+          "subtitle": "Using psychology and behavioural science you will create healthy habits that stick",
+          "action": "Let's Get Started"
+        }
+      },
+      {
+        "screen_number": 3,
+        "screen_name": "OnBoard3",
+        "type": "single_choice",
+        "question": "How much time do you usually get at night?",
+        "options": [
+          "7 hours or less",
+          "7-9 hours",
+          "9-12 hours",
+          "12 hours or more"
+        ]
+      },
+      {
+        "screen_number": 4,
+        "screen_name": "OnBoard4",
+        "type": "single_choice",
+        "question": "Got it! Do you wake up feeling well-rested?",
+        "options": [
+          "Always",
+          "Usually",
+          "Sometimes",
+          "Rarely"
+        ]
+      },
+      {
+        "screen_number": 5,
+        "screen_name": "OnBoard5",
+        "type": "single_choice",
+        "question": "How much time do you have at the start of the day?",
+        "options": [
+          "0-10 Minutes",
+          "10-20 Minutes",
+          "20-30 Minutes",
+          "30+ Minutes"
+        ]
+      },
+      {
+        "screen_number": 6,
+        "screen_name": "OnBoard6",
+        "type": "single_choice",
+        "question": "Understood! Throughout your day, how are your energy levels?",
+        "options": [
+          "High-energised throughout the day",
+          "Medium-I have bursts of energy",
+          "Low- My energy fades throughout the day"
+        ]
+      },
+      {
+        "screen_number": 7,
+        "screen_name": "OnBoard7",
+        "type": "single_choice",
+        "question": "How satisfied are you with your current fitness level?",
+        "options": [
+          "Completely- I feel fit and healthy",
+          "Somewhat- I would like to see some improvement",
+          "Not at all- I'd like to see a major change"
+        ]
+      },
+      {
+        "screen_number": 8,
+        "screen_name": "OnBoard8",
+        "type": "single_choice",
+        "question": "Which of the habits below most troubles you?",
+        "options": [
+          "Completely- Social Media",
+          "Negative Self-Talk",
+          "Disorganization",
+          "Procrastination"
+        ]
+      },
+      {
+        "screen_number": 9,
+        "screen_name": "OnBoard9",
+        "type": "single_choice",
+        "question": "We hear you. What single change would improve your life right now?",
+        "options": [
+          "More energy",
+          "More productivity",
+          "More mindfulness",
+          "More sleep"
+        ]
+      },
+      {
+        "screen_number": 10,
+        "screen_name": "OnBoard10",
+        "type": "single_choice",
+        "question": "How often do you focus on the past or future?",
+        "options": [
+          "Never- I live in the present",
+          "Some of the time",
+          "Most of the time",
+          "All of the time"
+        ]
+      },
+      {
+        "screen_number": 11,
+        "screen_name": "OnBoard11",
+        "type": "single_choice",
+        "question": "How strong is your support system",
+        "options": [
+          "Very strong- I count on the people in my life",
+          "Medium- I worry people wont be there",
+          "Weak- I feel isolated"
+        ]
+      },
+      {
+        "screen_number": 12,
+        "screen_name": "OnBoard12",
+        "type": "single_choice",
+        "question": "How distractable are you?",
+        "options": [
+          "Easily distracted",
+          "Sometimes lose focus",
+          "Rarely lose focus",
+          "Laser focus"
+        ]
+      },
+      {
+        "screen_number": 13,
+        "screen_name": "OnBoard13",
+        "type": "single_choice",
+        "question": "Why are you embarking on this journey to build healthy habits?",
+        "options": [
+          "To feel better about myself",
+          "To improve my health",
+          "To set and achieve goals",
+          "To be more like someone I admire"
+        ]
+      },
+      {
+        "screen_number": 14,
+        "screen_name": "OnBoard14",
+        "type": "multiple_choice",
+        "question": "Almost there! Tell us what you're interested in",
+        "subtitle": "Pick as many as you like.",
+        "options": [
+          "The Environment",
+          "Detox Bad Habits",
+          "Better Relationships",
+          "Behaviour Change",
+          "Aging",
+          "Stoicism",
+          "Anxiety & Stress",
+          "Financial Habits",
+          "Creativity",
+          "Self Discipline",
+          "Purpose & Motivation",
+          "Productivity",
+          "Self-Love",
+          "Mindfulness",
+          "Structure & Organisation",
+          "Reading & Studying",
+          "Gratitude",
+          "Balanced Life",
+          "Pet Lovers",
+          "Better Sleep",
+          "Physical Wellness",
+          "Emotional Wellness",
+          "Mindful Eating",
+          "Parenthood"
+        ]
+      },
+      {
+        "screen_number": 15,
+        "screen_name": "OnBoard15",
+        "type": "single_choice",
+        "question": "Did you meditate this morning?",
+        "options": [
+          "Yes",
+          "No"
+        ]
+      },
+      {
+        "screen_number": 16,
+        "screen_name": "OnBoard16",
+        "type": "single_choice",
+        "question": "Did you have time for breakfast this morning?",
+        "options": [
+          "Yes",
+          "No"
+        ]
+      },
+      {
+        "screen_number": 17,
+        "screen_name": "OnBoard17",
+        "type": "single_choice",
+        "question": "Did you take vitamins or supplements today?",
+        "options": [
+          "Yes",
+          "No"
+        ]
+      },
+      {
+        "screen_number": 18,
+        "screen_name": "OnBoard18",
+        "type": "single_choice",
+        "question": "How many glasses of water did you drink today?",
+        "options": [
+          "0",
+          "1",
+          "2",
+          "3 or more"
+        ]
+      },
+      {
+        "screen_number": 19,
+        "screen_name": "OnBoard19",
+        "type": "single_choice",
+        "question": "What are you grateful for at this moment?",
+        "options": [
+          "My family",
+          "My friends",
+          "My health"
+        ]
+      },
+      {
+        "screen_number": 20,
+        "screen_name": "OnBoard20",
+        "type": "single_choice",
+        "question": "How many hours of sleep did you get yesterday?",
+        "options": [
+          "0-3 Hours",
+          "4-6 Hours",
+          "7-9 Hours",
+          "10-12 Hours"
+        ]
+      },
+      {
+        "screen_number": 21,
+        "screen_name": "OnBoard21",
+        "type": "single_choice",
+        "question": "How would you rate your mood?",
+        "options": [
+          "Bad",
+          "Not Great",
+          "Ok",
+          "Good",
+          "Great"
+        ]
+      },
+      {
+        "screen_number": 22,
+        "screen_name": "OnBoard22",
+        "type": "single_choice",
+        "question": "How productive have you been so far today?",
+        "options": [
+          "Not at all",
+          "Slightly",
+          "Moderately",
+          "Very",
+          "Extremely"
+        ]
+      },
+      {
+        "screen_number": 23,
+        "screen_name": "OnBoard23",
+        "type": "single_choice",
+        "question": "What habit would you like to add to your routine?",
+        "options": [
+          "Stretch",
+          "Breath work",
+          "Values alignment"
+        ]
+      },
+      {
+        "screen_number": 24,
+        "screen_name": "OnBoard24",
+        "type": "congratulations",
+        "content": {
+          "title": "Congratulations!",
+          "message": "Track many more habits, and create healthy routines from within your Fantastic account."
+        }
+      },
+      {
+        "screen_number": 25,
+        "screen_name": "Onboard25",
+        "type": "text_input",
+        "question": "Save Your Progress",
+        "field_label": "My first name is...",
+        "placeholder": "Enter your name",
+        "validation": "required"
+      },
+      {
+        "screen_number": 26,
+        "screen_name": "Onboard26",
+        "type": "text_input",
+        "question": "What is your age?",
+        "placeholder": "Enter your age",
+        "validation": "number between 0 and 120"
+      },
+      {
+        "screen_number": 27,
+        "screen_name": "OnBoard27",
+        "type": "single_choice",
+        "question": "How do you identify?",
+        "subtitle": "At times, we'll provide gender-specific recommendations",
+        "options": [
+          "Woman",
+          "Man",
+          "Non-Binary"
+        ]
+      },
+      {
+        "screen_number": 28,
+        "screen_name": "OnBoard28",
+        "type": "single_choice",
+        "question": "When do you wake up generally?",
+        "options": [
+          "7:00AM",
+          "8:00AM",
+          "9:00AM",
+          "Other time"
+        ]
+      },
+      {
+        "screen_number": 29,
+        "screen_name": "OnBoard29",
+        "type": "contract_agreement",
+        "content": {
+          "title": "{Name}'s contract",
+          "contract_text": "I, {Name}, will make the most of tomorrow. I will always remember that I will not live forever. Every fear and irritation that threatens to distract me will become fuel for building my best life one day at a time.",
+          "action": "Hold button to continue"
+        }
+      },
+      {
+        "screen_number": 30,
+        "screen_name": "OnBoard30",
+        "type": "thank_you",
+        "content": {
+          "title": "Thank you, {Name}!",
+          "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+          "footer": "Always your friend Future {Name}"
+        }
+      },
+      {
+        "screen_number": 31,
+        "screen_name": "OnBoard31",
+        "type": "multiple_choice",
+        "question": "Almost there! Tell us what you're interested in",
+        "subtitle": "Pick as many as you like.",
+        "category": "How did you hear about us?",
+        "options": [
+          "Social Media/Online ads",
+          "Friend or Family",
+          "Youtube Ad",
+          "Podcast Ad",
+          "Online Publication",
+          "Other"
+        ]
+      },
+      {
+        "screen_number": 32,
+        "screen_name": "OnBoard32",
+        "type": "multiple_choice",
+        "question": "Do you already do any of these habits?",
+        "subtitle": "Pick as many as you like.",
+        "options": [
+          "Breathe",
+          "Disconnect & Unplug",
+          "Exercise",
+          "Meditate",
+          "Practice Gratitude",
+          "Self-Affirmation",
+          "Write your Todo list",
+          "Prepare to be productive"
+        ]
+      },
+      {
+        "screen_number": 33,
+        "screen_name": "OnBoard33",
+        "type": "motivational_message",
+        "content": {
+          "title": "{Name}'s First Step",
+          "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus laoreet tellus vitae malesuada aliquet. Pellentesque dolor ipsum, blandit nec euismod ut, volutpat eu arcu. Lorem ipsum dolor sit amet, consectetur."
+        }
+      },
+      {
+        "screen_number": 34,
+        "screen_name": "Onboard35",
+        "type": "text_input",
+        "question": "What should we call you?",
+        "field_label": "MY FULL NAME IS",
+        "placeholder": "FULL NAME",
+        "validation": "required",
+        "additional_info": "By using your full name, you help our fun and supportive community thrive. Our Fantastic community embraces positivity based on trust and encouragement. We're in this together.",
+        "skip_option": true
+      },
+      {
+        "screen_number": 35,
+        "screen_name": "OnBoard36",
+        "type": "image_upload",
+        "question": "Show us your best pic!",
+        "options": [
+          "Choose Photo",
+          "Take Photo"
+        ],
+        "validation": "required"
+      }
+    ]
+  },
+  "metadata": {
+    "total_screens": 35,
+    "question_screens": 28,
+    "text_input_screens": 3,
+    "multiple_choice_screens": 3,
+    "single_choice_screens": 22,
+    "informational_screens": 7,
+    "categories": [
+      "Sleep & Rest",
+      "Daily Routine",
+      "Energy & Fitness",
+      "Habits & Behavior",
+      "Mental Wellness",
+      "Support System",
+      "Focus & Productivity",
+      "Motivation & Goals",
+      "Interests & Topics",
+      "Daily Check-ins",
+      "Gratitude",
+      "Mood Tracking",
+      "Personal Information",
+      "Demographics",
+      "Preferences",
+      "Acquisition Source",
+      "Current Habits",
+      "Profile Setup"
+    ]
+  }
+}

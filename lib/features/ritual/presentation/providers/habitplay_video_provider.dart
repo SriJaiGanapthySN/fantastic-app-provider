@@ -9,6 +9,7 @@ class HabitPlayVideoState {
   final String? currentVideoUrl;
   final bool hasError;
   final String? errorMessage;
+  final int retryCount;
 
   HabitPlayVideoState({
     this.controller,
@@ -17,6 +18,7 @@ class HabitPlayVideoState {
     this.currentVideoUrl,
     this.hasError = false,
     this.errorMessage,
+    this.retryCount = 0,
   });
 
   HabitPlayVideoState copyWith({
@@ -26,6 +28,7 @@ class HabitPlayVideoState {
     String? currentVideoUrl,
     bool? hasError,
     String? errorMessage,
+    int? retryCount,
   }) {
     return HabitPlayVideoState(
       controller: controller ?? this.controller,
@@ -34,6 +37,7 @@ class HabitPlayVideoState {
       currentVideoUrl: currentVideoUrl ?? this.currentVideoUrl,
       hasError: hasError ?? this.hasError,
       errorMessage: errorMessage ?? this.errorMessage,
+      retryCount: retryCount ?? this.retryCount,
     );
   }
 }
@@ -41,16 +45,23 @@ class HabitPlayVideoState {
 // Video State Notifier for HabitPlay
 class HabitPlayVideoNotifier extends StateNotifier<HabitPlayVideoState> {
   bool _isDisposed = false;
+  static const int maxRetries = 2;
 
   HabitPlayVideoNotifier() : super(HabitPlayVideoState(isLoading: false));
 
   // Initialize video controller
-  Future<void> initializeVideo(String videoUrl) async {
+  Future<void> initializeVideo(String videoUrl, {bool isRetry = false}) async {
     if (_isDisposed) return;
 
-    print('HabitPlay: Initializing video: $videoUrl');
+    // Reset retry count for new videos
+    if (!isRetry && state.currentVideoUrl != videoUrl) {
+      state = state.copyWith(retryCount: 0);
+    }
 
-    if (state.currentVideoUrl == videoUrl && state.isInitialized) {
+    print(
+        'HabitPlay: Initializing video: $videoUrl (retry: $isRetry, count: ${state.retryCount})');
+
+    if (state.currentVideoUrl == videoUrl && state.isInitialized && !isRetry) {
       print('HabitPlay: Video already initialized for this URL');
       return; // Already initialized with the same URL
     }
@@ -79,7 +90,13 @@ class HabitPlayVideoNotifier extends StateNotifier<HabitPlayVideoState> {
 
     try {
       print('HabitPlay: Creating video controller');
-      final controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+      final controller = VideoPlayerController.networkUrl(
+        Uri.parse(videoUrl),
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: true,
+          allowBackgroundPlayback: false,
+        ),
+      );
 
       if (_isDisposed) {
         controller.dispose();
@@ -100,23 +117,55 @@ class HabitPlayVideoNotifier extends StateNotifier<HabitPlayVideoState> {
         return;
       }
 
-      print('HabitPlay: Setting looping and playing');
+      print('HabitPlay: Setting looping and volume');
       await controller.setLooping(true);
+      // Set volume to avoid audio issues that can cause ExoPlayer errors
+      await controller.setVolume(1.0);
 
-      // Add error listener before playing
+      // Add error listener with retry mechanism
       controller.addListener(() {
         if (!_isDisposed && controller.value.hasError && mounted) {
-          print('HabitPlay: Video error: ${controller.value.errorDescription}');
-          if (!_isDisposed) {
-            state = state.copyWith(
-              hasError: true,
-              errorMessage: controller.value.errorDescription,
-              isLoading: false,
-              isInitialized: false,
-            );
+          final errorDescription =
+              controller.value.errorDescription ?? 'Unknown video error';
+          print('HabitPlay: Video error: $errorDescription');
+
+          // Attempt retry if under max retries
+          if (state.retryCount < maxRetries) {
+            print(
+                'HabitPlay: Attempting retry ${state.retryCount + 1}/$maxRetries');
+            if (!_isDisposed) {
+              state = state.copyWith(
+                retryCount: state.retryCount + 1,
+              );
+              // Retry after a short delay
+              Future.delayed(const Duration(seconds: 2), () {
+                if (!_isDisposed) {
+                  initializeVideo(videoUrl, isRetry: true);
+                }
+              });
+            }
+          } else {
+            // Max retries exceeded, show error
+            print('HabitPlay: Max retries exceeded, showing error');
+            if (!_isDisposed) {
+              state = state.copyWith(
+                hasError: true,
+                errorMessage: errorDescription,
+                isLoading: false,
+                isInitialized: false,
+              );
+            }
           }
         }
       });
+
+      // Small delay before playing to ensure initialization is complete
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      if (_isDisposed) {
+        controller.dispose();
+        return;
+      }
 
       await controller.play();
 
@@ -134,13 +183,29 @@ class HabitPlayVideoNotifier extends StateNotifier<HabitPlayVideoState> {
       );
     } catch (e) {
       print('HabitPlay: Error initializing video: $e');
-      if (!_isDisposed) {
+
+      // Attempt retry if under max retries
+      if (state.retryCount < maxRetries && !_isDisposed) {
+        print(
+            'HabitPlay: Attempting retry ${state.retryCount + 1}/$maxRetries after exception');
         state = state.copyWith(
-          isLoading: false,
-          isInitialized: false,
-          hasError: true,
-          errorMessage: e.toString(),
+          retryCount: state.retryCount + 1,
         );
+        // Retry after a short delay
+        await Future.delayed(const Duration(seconds: 2));
+        if (!_isDisposed) {
+          await initializeVideo(videoUrl, isRetry: true);
+        }
+      } else {
+        // Max retries exceeded or disposed, show error
+        if (!_isDisposed) {
+          state = state.copyWith(
+            isLoading: false,
+            isInitialized: false,
+            hasError: true,
+            errorMessage: e.toString(),
+          );
+        }
       }
     }
   }

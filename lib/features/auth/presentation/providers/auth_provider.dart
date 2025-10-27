@@ -6,6 +6,7 @@ import '../../data/models/app_user.dart';
 import '../../domain/repos/auth_repo.dart';
 import '../../data/repo/firebase_auth_repo.dart';
 import '../../../chat/data/services/token/token_service.dart';
+import '../../../../core/services/onboarding_service.dart';
 
 // Define an Auth State
 class AuthState {
@@ -50,17 +51,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
           // User is signed in, sync with token service
           await TokenService.syncWithFirebaseAuth();
 
-          // Create AppUser from Firebase user
-          final appUser = AppUser(
-            uid: user.uid,
-            email: user.email ?? '',
-            name: user.displayName ?? 'User',
-          );
+          // Fetch full user data from Firestore to get profile completion status
+          final fullUser = await authRepo.getCurrentUser();
 
           // Update state only if different from current user
-          if (state.user?.uid != user.uid) {
+          if (fullUser != null && state.user?.uid != user.uid) {
             state =
-                state.copyWith(user: appUser, isLoading: false, error: null);
+                state.copyWith(user: fullUser, isLoading: false, error: null);
             AppLogger.i('Auth state updated from Firebase listener');
           }
         } else {
@@ -221,6 +218,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // Then complete the logout process (includes token clearing)
       await authRepo.logout();
+
+      // Clear onboarding status so next user has to complete onboarding
+      try {
+        await OnboardingService.clearOnboardingOnLogout();
+        AppLogger.i('Onboarding status cleared');
+      } catch (e) {
+        AppLogger.w('Error clearing onboarding status: $e');
+      }
 
       // This ensures no persistent state remains after logout
       AppLogger.i('User logged out successfully');

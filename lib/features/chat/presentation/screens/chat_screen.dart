@@ -48,33 +48,80 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   // Validate auth token before allowing chat access
   Future<void> _validateTokenAndInitialize() async {
     try {
-      print('Validating auth token for chat access...');
+      print('🔐 Validating auth tokens for chat access...');
 
-      // Check if user has a valid token
-      final isTokenValid = await TokenService.validateToken();
+      // First check Firebase token
+      final isFirebaseTokenValid = await TokenService.validateToken();
+      print('Firebase token valid: $isFirebaseTokenValid');
+
+      if (!isFirebaseTokenValid) {
+        print('❌ Firebase token invalid - chat access denied');
+        if (mounted) {
+          setState(() {
+            _isTokenValid = false;
+            _isValidatingToken = false;
+          });
+          _handleInvalidToken();
+        }
+        return;
+      }
+
+      // Then check/generate backend token for chat API
+      print('🔄 Checking backend token...');
+      final backendToken = await TokenService.getBackendToken();
+
+      if (backendToken == null) {
+        print('⚠️ No backend token found, attempting to generate...');
+        final newToken = await TokenService.generateAndStoreBackendToken();
+
+        if (newToken == null) {
+          print('❌ Failed to generate backend token');
+          print('💡 User may need to re-login or register in backend');
+
+          // Firebase token is valid but backend token generation failed
+          // Allow chat access but some features may be limited
+          if (mounted) {
+            setState(() {
+              _isTokenValid = true; // Allow basic access
+              _isValidatingToken = false;
+            });
+            _initializeControllers();
+
+            // Show warning to user
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Chat features limited. Please re-login if issues persist.',
+                  style: TextStyle(color: Colors.orange),
+                ),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        } else {
+          print('✅ Backend token generated successfully');
+        }
+      } else {
+        print('✅ Backend token found');
+      }
 
       if (mounted) {
         setState(() {
-          _isTokenValid = isTokenValid;
+          _isTokenValid = true;
           _isValidatingToken = false;
         });
-
-        if (isTokenValid) {
-          print('Token validation successful - initializing chat');
-          _initializeControllers();
-        } else {
-          print('Token validation failed - chat access denied');
-          // Optionally trigger re-authentication
-          _handleInvalidToken();
-        }
+        print('✅ Token validation successful - initializing chat');
+        _initializeControllers();
       }
     } catch (e) {
-      print('Error during token validation: $e');
+      print('💥 Error during token validation: $e');
       if (mounted) {
         setState(() {
           _isTokenValid = false;
           _isValidatingToken = false;
         });
+        _handleInvalidToken();
       }
     }
   }

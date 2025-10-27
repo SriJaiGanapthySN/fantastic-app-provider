@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import '../../../../../core/log/app_logger.dart';
 
 class TokenService {
   static const String _tokenKey = 'access_token';
@@ -16,7 +17,6 @@ class TokenService {
 
   // Cache variables to avoid repeated SharedPreferences calls
   static String? _cachedToken;
-  static String? _cachedFirebaseToken;
   static String? _cachedBackendToken;
   static String? _cachedEmail;
   static String? _cachedName;
@@ -37,11 +37,11 @@ class TokenService {
 
     _authStateSubscription =
         _firebaseAuth.authStateChanges().listen((User? user) async {
-      print('🔥 Firebase Auth State Changed: ${user?.uid ?? 'null'}');
+      AppLogger.i('🔥 Firebase Auth State Changed: ${user?.uid ?? 'null'}');
 
       if (user != null) {
         // User is signed in, refresh token
-        print('🔄 User signed in, refreshing token...');
+        AppLogger.i('🔄 User signed in, refreshing token...');
         await generateAndStoreToken();
         await storeUserDetails(
           email: user.email ?? '',
@@ -50,19 +50,19 @@ class TokenService {
         );
       } else {
         // User is signed out, clear tokens
-        print('🚪 User signed out, clearing tokens...');
+        AppLogger.i('🚪 User signed out, clearing tokens...');
         await clearAllData();
       }
     });
 
-    print('🎧 Firebase Auth state listener initialized');
+    AppLogger.i('🎧 Firebase Auth state listener initialized');
   }
 
   // Dispose Firebase Auth listener
   static void disposeFirebaseAuthListener() {
     _authStateSubscription?.cancel();
     _authStateSubscription = null;
-    print('🔇 Firebase Auth state listener disposed');
+    AppLogger.i('🔇 Firebase Auth state listener disposed');
   }
 
   // Initialize cache from SharedPreferences
@@ -71,7 +71,6 @@ class TokenService {
 
     final prefs = await SharedPreferences.getInstance();
     _cachedToken = prefs.getString(_tokenKey);
-    _cachedFirebaseToken = prefs.getString(_firebaseTokenKey);
     _cachedBackendToken = prefs.getString(_backendTokenKey);
     _cachedEmail = prefs.getString(_userEmailKey);
     _cachedName = prefs.getString(_userNameKey);
@@ -84,100 +83,79 @@ class TokenService {
     }
 
     _cacheInitialized = true;
-    print('💾 Token cache initialized');
-  }
+    AppLogger.d('💾 Token cache initialized');
+  } // Generate and store backend API token using email/password
 
-  // Generate and store backend API token using email/password or Firebase token
   static Future<String?> generateAndStoreBackendToken() async {
     try {
       await _initializeCache();
 
-      // First try email/password authentication for traditional login
-      if (_cachedEmail != null &&
-          _cachedPassword != null &&
-          _cachedPassword!.isNotEmpty) {
-        print(
-            '🔄 Getting backend API token using email/password for: ${_cachedEmail}');
-
-        const baseUrl = 'https://mental-health.rohanrichard.com';
-        final response = await http
-            .post(
-              Uri.parse('$baseUrl/auth/token'),
-              headers: {
-                'accept': 'application/json',
-                'Content-Type': 'application/json',
-              },
-              body: jsonEncode({
-                'email': _cachedEmail,
-                'password': _cachedPassword,
-              }),
-            )
-            .timeout(Duration(seconds: 30));
-
-        print(
-            '🔐 Backend auth (email/password) response status: ${response.statusCode}');
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final backendToken = data['access_token'];
-
-          if (backendToken != null) {
-            await _storeBackendToken(backendToken);
-            print('✅ Backend API token generated using email/password');
-            return backendToken;
-          }
-        } else {
-          print('❌ Backend authentication failed: ${response.statusCode}');
-          print('Response: ${response.body}');
-        }
+      // Backend API only supports email/password authentication
+      // Firebase OAuth users need to be registered in the backend first
+      if (_cachedEmail == null) {
+        AppLogger.w(
+            '❌ No email found in cache. User must login with email/password first.');
+        return null;
       }
 
-      // If email/password failed or not available, try Firebase token authentication
-      print('🔄 Attempting Firebase token authentication for backend...');
-      final firebaseToken = await getValidToken();
-
-      if (firebaseToken != null && _cachedEmail != null) {
-        print(
-            '🔄 Using Firebase ID token for backend authentication: ${_cachedEmail}');
-
-        const baseUrl = 'https://mental-health.rohanrichard.com';
-        final response = await http
-            .post(
-              Uri.parse('$baseUrl/auth/firebase-auth'),
-              headers: {
-                'accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $firebaseToken',
-              },
-              body: jsonEncode({
-                'email': _cachedEmail,
-              }),
-            )
-            .timeout(Duration(seconds: 30));
-
-        print(
-            '🔐 Backend auth (Firebase) response status: ${response.statusCode}');
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final backendToken = data['access_token'];
-
-          if (backendToken != null) {
-            await _storeBackendToken(backendToken);
-            print('✅ Backend API token generated using Firebase token');
-            return backendToken;
-          }
-        } else {
-          print(
-              '❌ Backend Firebase authentication failed: ${response.statusCode}');
-          print('Response: ${response.body}');
-        }
+      if (_cachedPassword == null || _cachedPassword!.isEmpty) {
+        AppLogger.w(
+            '⚠️ No password found for backend authentication. This might be an OAuth user.');
+        AppLogger.i(
+            '💡 OAuth users (Google/Apple sign-in) need to be registered in the backend.');
+        AppLogger.i(
+            '💡 The backend only supports email/password authentication at /auth/token endpoint.');
+        return null;
       }
 
-      print('❌ No valid authentication method available for backend');
-      return null;
+      AppLogger.i(
+          '🔄 Getting backend API token using email/password for: ${_cachedEmail}');
+
+      const baseUrl = 'https://mental-health.rohanrichard.com';
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/token'),
+            headers: {
+              'accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'email': _cachedEmail,
+              'password': _cachedPassword,
+            }),
+          )
+          .timeout(Duration(seconds: 30));
+
+      AppLogger.i(
+          '🔐 Backend auth (email/password) response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final backendToken = data['access_token'];
+
+        if (backendToken != null) {
+          await _storeBackendToken(backendToken);
+          AppLogger.i('✅ Backend API token generated successfully');
+          return backendToken;
+        } else {
+          AppLogger.e('❌ No access_token in response');
+          return null;
+        }
+      } else {
+        AppLogger.e('❌ Backend authentication failed: ${response.statusCode}');
+        AppLogger.e('Response: ${response.body}');
+
+        if (response.statusCode == 401) {
+          AppLogger.w(
+              '🔑 Invalid credentials. Please check email and password are correct.');
+          AppLogger.i(
+              '💡 Note: If you signed in with Google/Apple, you need to register the user in the backend first.');
+        }
+
+        return null;
+      }
     } catch (e) {
-      print('💥 Error generating backend API token: $e');
+      AppLogger.e('💥 Error generating backend API token: $e', data: e);
       return null;
     }
   }
@@ -195,12 +173,12 @@ class TokenService {
 
     // Return cached token if available
     if (_cachedBackendToken != null && _cachedBackendToken!.isNotEmpty) {
-      print('✅ Using cached backend API token');
+      AppLogger.d('✅ Using cached backend API token');
       return _cachedBackendToken;
     }
 
     // Generate new token if none cached
-    print('🔄 No cached backend token, generating new one...');
+    AppLogger.i('🔄 No cached backend token, generating new one...');
     return await generateAndStoreBackendToken();
   }
 
@@ -215,7 +193,7 @@ class TokenService {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null) {
-        print('❌ No authenticated Firebase user found');
+        AppLogger.w('❌ No authenticated Firebase user found');
         return null;
       }
 
@@ -229,16 +207,16 @@ class TokenService {
         await storeToken(token);
         await _storeTokenExpiry(expirationTime);
 
-        print('✅ Firebase ID token generated and stored successfully');
-        print('⏰ Token expires at: $expirationTime');
+        AppLogger.i('✅ Firebase ID token generated and stored successfully');
+        AppLogger.d('⏰ Token expires at: $expirationTime');
 
         return token;
       } else {
-        print('❌ Failed to generate Firebase ID token');
+        AppLogger.e('❌ Failed to generate Firebase ID token');
         return null;
       }
     } catch (e) {
-      print('💥 Error generating Firebase auth token: $e');
+      AppLogger.e('💥 Error generating Firebase auth token: $e', data: e);
       return null;
     }
   }
@@ -258,11 +236,11 @@ class TokenService {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null) {
-        print('❌ No Firebase user to refresh token for');
+        AppLogger.w('❌ No Firebase user to refresh token for');
         return null;
       }
 
-      print('🔄 Force refreshing Firebase ID token...');
+      AppLogger.i('🔄 Force refreshing Firebase ID token...');
       final idTokenResult = await user.getIdTokenResult(true); // Force refresh
       final token = idTokenResult.token;
       final expirationTime = idTokenResult.expirationTime;
@@ -271,13 +249,13 @@ class TokenService {
         await storeToken(token);
         await _storeTokenExpiry(expirationTime);
 
-        print('✅ Firebase token refreshed successfully');
+        AppLogger.i('✅ Firebase token refreshed successfully');
         return token;
       }
 
       return null;
     } catch (e) {
-      print('💥 Error refreshing Firebase token: $e');
+      AppLogger.e('💥 Error refreshing Firebase token: $e', data: e);
       return null;
     }
   }
@@ -308,7 +286,7 @@ class TokenService {
 
     // First check if Firebase user is authenticated
     if (!isFirebaseUserAuthenticated()) {
-      print('❌ No Firebase user authenticated');
+      AppLogger.w('❌ No Firebase user authenticated');
       await clearAllData();
       return null;
     }
@@ -319,15 +297,15 @@ class TokenService {
 
       // If token expires within next 5 minutes, refresh it
       if (_cachedTokenExpiry!.isAfter(now.add(Duration(minutes: 5)))) {
-        print('✅ Using cached valid Firebase token');
+        AppLogger.d('✅ Using cached valid Firebase token');
         return _cachedToken;
       } else {
-        print('⏰ Firebase token expired or expiring soon, refreshing...');
+        AppLogger.i('⏰ Firebase token expired or expiring soon, refreshing...');
         // Token is expired or expiring soon, refresh it
         return await refreshFirebaseToken();
       }
     } else {
-      print('🔄 No cached token found, generating new Firebase token...');
+      AppLogger.i('🔄 No cached token found, generating new Firebase token...');
       // No token or expiry found, generate new one
       return await generateAndStoreToken();
     }
@@ -384,12 +362,12 @@ class TokenService {
 
     // First check Firebase auth state
     if (!isFirebaseUserAuthenticated()) {
-      print('❌ Firebase user not authenticated');
+      AppLogger.w('❌ Firebase user not authenticated');
       return false;
     }
 
     if (_cachedToken == null || _cachedToken!.isEmpty) {
-      print('❌ No cached token found');
+      AppLogger.w('❌ No cached token found');
       return false;
     }
 
@@ -397,12 +375,12 @@ class TokenService {
     if (_cachedTokenExpiry != null) {
       final now = DateTime.now();
       if (_cachedTokenExpiry!.isBefore(now)) {
-        print('⏰ Token has expired');
+        AppLogger.w('⏰ Token has expired');
         return false;
       }
     }
 
-    print('✅ User is authenticated with valid Firebase token');
+    AppLogger.d('✅ User is authenticated with valid Firebase token');
     return true;
   }
 
@@ -419,7 +397,7 @@ class TokenService {
       // Check if Firebase user is still authenticated
       final user = _firebaseAuth.currentUser;
       if (user == null) {
-        print('❌ No Firebase user found, token invalid');
+        AppLogger.w('❌ No Firebase user found, token invalid');
         await clearAllData();
         return false;
       }
@@ -429,7 +407,7 @@ class TokenService {
       final refreshedUser = _firebaseAuth.currentUser;
 
       if (refreshedUser == null) {
-        print('❌ Firebase user session expired, token invalid');
+        AppLogger.w('❌ Firebase user session expired, token invalid');
         await clearAllData();
         return false;
       }
@@ -438,20 +416,20 @@ class TokenService {
       try {
         final idTokenResult = await refreshedUser.getIdTokenResult();
         if (idTokenResult.token == null) {
-          print('❌ Firebase ID token is null, session invalid');
+          AppLogger.e('❌ Firebase ID token is null, session invalid');
           await clearAllData();
           return false;
         }
       } catch (e) {
-        print('💥 Error getting Firebase ID token: $e');
+        AppLogger.e('💥 Error getting Firebase ID token: $e', data: e);
         await clearAllData();
         return false;
       }
 
-      print('✅ Firebase token validation successful');
+      AppLogger.i('✅ Firebase token validation successful');
       return true;
     } catch (e) {
-      print('💥 Error validating Firebase token: $e');
+      AppLogger.e('💥 Error validating Firebase token: $e', data: e);
       await clearAllData();
       return false;
     }
@@ -491,7 +469,6 @@ class TokenService {
 
     // Clear cache
     _cachedToken = null;
-    _cachedFirebaseToken = null;
     _cachedBackendToken = null;
     _cachedEmail = null;
     _cachedName = null;
@@ -500,14 +477,14 @@ class TokenService {
     _cachedTokenExpiry = null;
     _cacheInitialized = false;
 
-    print('🧹 All token data cleared');
+    AppLogger.i('🧹 All token data cleared');
   }
 
   // Force refresh cache (useful after external changes)
   static Future<void> refreshCache() async {
     _cacheInitialized = false;
     await _initializeCache();
-    print('🔄 Token cache refreshed');
+    AppLogger.d('🔄 Token cache refreshed');
   }
 
   // Get all user data as a map (includes Firebase state)
@@ -548,12 +525,12 @@ class TokenService {
           name: user.displayName ?? 'User',
           userId: user.uid,
         );
-        print('🔄 Synced with Firebase auth - token updated');
+        AppLogger.i('🔄 Synced with Firebase auth - token updated');
       }
     } else {
       // User is not authenticated, clear all data
       await clearAllData();
-      print('🔄 Synced with Firebase auth - data cleared');
+      AppLogger.i('🔄 Synced with Firebase auth - data cleared');
     }
   }
 }

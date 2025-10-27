@@ -258,7 +258,10 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
   double getResponsiveFontSize(BuildContext context, double baseSize) {
     // Base the font size on the width for consistency
     double screenWidth = MediaQuery.of(context).size.width;
-    return baseSize * screenWidth / 375; // 375 is baseline for iPhone X
+    // Increased multiplier for larger font size
+    return baseSize *
+        screenWidth /
+        350; // Changed from 375 to 350 for ~7% larger text
   }
 
   double getResponsivePadding(BuildContext context, double value) {
@@ -275,7 +278,8 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
           textStyle: TextStyle(
             fontFamily: "Original",
             letterSpacing: 1,
-            fontSize: getResponsiveFontSize(context, 14),
+            fontSize:
+                getResponsiveFontSize(context, 16), // Increased from 14 to 16
             color: Colors.white,
           ),
         ),
@@ -285,7 +289,8 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
     );
 
     // Calculate available width for text (accounting for padding and margins)
-    double availableWidth = getResponsiveWidth(context, 0.87) -
+    // Increased width from 0.87 to 0.92 for wider bubbles
+    double availableWidth = getResponsiveWidth(context, 0.92) -
         getResponsivePadding(context, 18) -
         getResponsivePadding(context, 12) -
         getResponsivePadding(context, 5) -
@@ -301,19 +306,23 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
     double textHeight = calculateTextHeight(context, _displayText);
 
     // Add padding for top, bottom margins and extra breathing space to fix overflow
-    double totalPadding =
-        getResponsivePadding(context, 15) + // increased top padding
-            getResponsivePadding(context, 15) + // increased bottom padding
-            getResponsivePadding(context, 12) + // top margin
-            getResponsivePadding(
-                context, 30); // increased breathing space for overflow fix
+    // Increased all padding values for more spacious layout
+    double totalPadding = getResponsivePadding(
+            context, 20) + // increased top padding from 15 to 20
+        getResponsivePadding(
+            context, 20) + // increased bottom padding from 15 to 20
+        getResponsivePadding(
+            context, 15) + // increased top margin from 12 to 15
+        getResponsivePadding(
+            context, 35); // increased breathing space from 30 to 35
 
     double finalHeight = textHeight + totalPadding;
 
     // Set reasonable bounds - increased max height to prevent overflow
-    double minHeight = getResponsiveHeight(context, 0.10);
+    double minHeight =
+        getResponsiveHeight(context, 0.12); // Increased from 0.10 to 0.12
     double maxHeight = getResponsiveHeight(
-        context, 0.85); // Increased from 0.65 to 0.85 to fix overflow error
+        context, 0.88); // Increased from 0.85 to 0.88 for even more space
 
     return finalHeight.clamp(minHeight, maxHeight);
   }
@@ -322,8 +331,9 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        vertical: getResponsivePadding(context, 3),
-        horizontal: getResponsivePadding(context, 10),
+        vertical: getResponsivePadding(context, 5), // Increased from 3 to 5
+        horizontal: getResponsivePadding(
+            context, 8), // Decreased from 10 to 8 for more width
       ),
       child: Align(
         alignment: Alignment.centerLeft,
@@ -396,7 +406,8 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
-                    width: getResponsiveWidth(context, 0.87),
+                    width: getResponsiveWidth(
+                        context, 0.92), // Increased from 0.87 to 0.92
                     height: dynamicHeight,
                     child: Align(
                       alignment: Alignment.topLeft,
@@ -416,7 +427,8 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
-                    width: getResponsiveWidth(context, 0.87),
+                    width: getResponsiveWidth(
+                        context, 0.92), // Increased from 0.87 to 0.92
                     height: dynamicHeight,
                     child: Align(
                       alignment: Alignment.topLeft,
@@ -432,10 +444,14 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
               Positioned.fill(
                 child: Padding(
                   padding: EdgeInsets.only(
-                    top: getResponsivePadding(context, 12),
-                    left: getResponsivePadding(context, 18),
-                    right: getResponsivePadding(context, 12),
-                    bottom: getResponsivePadding(context, 12),
+                    top: getResponsivePadding(
+                        context, 16), // Increased from 12 to 16
+                    left: getResponsivePadding(
+                        context, 20), // Increased from 18 to 20
+                    right: getResponsivePadding(
+                        context, 16), // Increased from 12 to 16
+                    bottom: getResponsivePadding(
+                        context, 16), // Increased from 12 to 16
                   ),
                   child: SingleChildScrollView(
                     child: Column(
@@ -444,9 +460,12 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                       children: [
                         Container(
                           margin: EdgeInsets.only(
-                            top: getResponsivePadding(context, 10),
-                            left: getResponsivePadding(context, 5),
-                            right: getResponsivePadding(context, 10),
+                            top: getResponsivePadding(
+                                context, 12), // Increased from 10 to 12
+                            left: getResponsivePadding(
+                                context, 6), // Increased from 5 to 6
+                            right: getResponsivePadding(
+                                context, 12), // Increased from 10 to 12
                           ),
                           child: _displayText.isNotEmpty
                               ? TextAnimator(
@@ -464,9 +483,10 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                                   style: GoogleFonts.lato(
                                       textStyle: TextStyle(
                                     fontFamily: "Original",
-                                    letterSpacing: 1,
-                                    fontSize:
-                                        getResponsiveFontSize(context, 14),
+                                    letterSpacing:
+                                        1.2, // Increased from 1 to 1.2
+                                    fontSize: getResponsiveFontSize(
+                                        context, 16), // Increased from 14 to 16
                                     color: Colors.white,
                                   )),
                                   textAlign: TextAlign.left,
@@ -481,9 +501,10 @@ class _AnimatedCardMessageState extends ConsumerState<AnimatedCardMessage>
                                   style: GoogleFonts.lato(
                                     textStyle: TextStyle(
                                       fontFamily: "Original",
-                                      letterSpacing: 1,
-                                      fontSize:
-                                          getResponsiveFontSize(context, 14),
+                                      letterSpacing:
+                                          1.2, // Increased from 1 to 1.2
+                                      fontSize: getResponsiveFontSize(context,
+                                          16), // Increased from 14 to 16
                                       color: Colors.white.withOpacity(0.7),
                                       fontStyle: FontStyle.italic,
                                     ),

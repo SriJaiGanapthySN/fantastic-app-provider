@@ -34,6 +34,13 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   late ScrollController _scrollController;
   Map<String, dynamic>? habitCoachingData;
 
+  // Cache for tasks to avoid repeated FutureBuilder calls
+  List<Map<String, dynamic>>? _cachedTasks;
+  bool _isLoadingTasks = true;
+
+  // Cache for coaching data to avoid repeated API calls
+  final Map<String, String> _coachingCache = {};
+
   String items = '';
   var timestamp = "";
   double NotepadContentHeight = 0;
@@ -41,24 +48,64 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
   @override
   void initState() {
     super.initState();
-    _playBgm();
+    _initializeScreen();
+  }
+
+  Future<void> _initializeScreen() async {
+    // Initialize scroll controller
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
+    // Start BGM with looping
+    await _playBgm();
+
+    // Load tasks once
+    await _loadTasks();
+
     // Set the starting index when the widget initializes
-    if (widget.startIndex > 0) {
+    if (widget.startIndex > 0 && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(currentTaskIndexProvider.notifier).state = widget.startIndex;
+        if (mounted) {
+          ref.read(currentTaskIndexProvider.notifier).state = widget.startIndex;
+        }
       });
     }
   }
 
-  void _playBgm() async {
-    await _audioPlayerBgm.play(AssetSource("audio/bgm_task_reveal.m4a"));
+  Future<void> _loadTasks() async {
+    try {
+      final tasks = await TaskServices().getUserHabits(widget.email);
+      if (mounted) {
+        setState(() {
+          _cachedTasks = tasks;
+          _isLoadingTasks = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading tasks: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingTasks = false;
+        });
+      }
+    }
   }
 
-  void _stopBgm() async {
-    await _audioPlayerBgm.stop();
+  Future<void> _playBgm() async {
+    try {
+      await _audioPlayerBgm.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayerBgm.play(AssetSource("audio/bgm_task_reveal.m4a"));
+    } catch (e) {
+      print('Error playing BGM: $e');
+    }
+  }
+
+  Future<void> _stopBgm() async {
+    try {
+      await _audioPlayerBgm.stop();
+    } catch (e) {
+      print('Error stopping BGM: $e');
+    }
   }
 
   void noteData(QueryDocumentSnapshot currentTask) {
@@ -76,14 +123,26 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
   @override
   void dispose() {
+    // Stop and dispose audio player
     _stopBgm();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     _audioPlayerBgm.dispose();
 
-    // Ensure video is properly disposed when screen is disposed
+    // Remove scroll listener and dispose controller
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+
+    // Clear caches to free memory
+    _cachedTasks?.clear();
+    _cachedTasks = null;
+    _coachingCache.clear();
+
+    // Dispose video provider safely
+    // Note: The provider itself will be disposed by Riverpod when no longer used
     try {
-      ref.read(habitPlayVideoProvider.notifier).dispose();
+      if (mounted) {
+        final videoNotifier = ref.read(habitPlayVideoProvider.notifier);
+        videoNotifier.dispose();
+      }
     } catch (e) {
       print('HabitPlay: Error disposing video provider: $e');
     }
@@ -97,20 +156,21 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
   // Handle task completion (check button press)
   void _onCheckPressed(String animationLink, String taskID) {
+    if (!mounted) return;
+
     ref.read(audioStateProvider.notifier).state = {
       ...ref.read(audioStateProvider),
       'isAnimationVisible': true,
     };
 
-    // Update task status
-    TaskServices().updateHabitStatus(true, taskID, widget.email);
+    // Update task status asynchronously
+    TaskServices()
+        .updateHabitStatus(true, taskID, widget.email)
+        .catchError((e) {
+      print('Error updating habit status: $e');
+    });
 
-    // Play the animation
-    if (animationLink != "") {
-      Lottie.network(animationLink, repeat: false);
-    }
-
-    // Move to the next task after the animation
+    // Guard asynchronous operation with mounted check
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         ref.read(currentTaskIndexProvider.notifier).state++;
@@ -131,10 +191,12 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
   // Handle skip button press
   void _onSkipPressed() {
+    if (!mounted) return;
+
     ref.read(isTaskSkippedProvider.notifier).state =
         !ref.read(isTaskSkippedProvider);
 
-    // Move to the next task after a short delay
+    // Guard asynchronous operation with mounted check
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         ref.read(currentTaskIndexProvider.notifier).state++;
@@ -153,14 +215,20 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
 
   // Handle snooze button press
   void _onSnoozePressed() {
+    if (!mounted) return;
+
     final isSnoozed = !ref.read(isTaskSnoozedProvider);
     ref.read(isTaskSnoozedProvider.notifier).state = isSnoozed;
 
     // Pause/resume video based on snooze state
-    if (isSnoozed) {
-      ref.read(habitPlayVideoProvider.notifier).pauseVideo();
-    } else {
-      ref.read(habitPlayVideoProvider.notifier).resumeVideo();
+    try {
+      if (isSnoozed) {
+        ref.read(habitPlayVideoProvider.notifier).pauseVideo();
+      } else {
+        ref.read(habitPlayVideoProvider.notifier).resumeVideo();
+      }
+    } catch (e) {
+      print('Error toggling video playback: $e');
     }
   }
 
@@ -237,23 +305,76 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
     return Colors.orange; // Default to orange on error
   }
 
+  // Build fallback background when video fails or is not available
+  Widget _buildFallbackBackground(
+    Map<String, dynamic> currentTask,
+    String? fallbackImageUrl,
+    BuildContext context,
+  ) {
+    if (fallbackImageUrl != null && fallbackImageUrl.isNotEmpty) {
+      return Image.network(
+        fallbackImageUrl,
+        fit: BoxFit.cover,
+        cacheWidth: MediaQuery.of(context).size.width.toInt(),
+        errorBuilder: (context, error, stackTrace) {
+          return _buildColorBackground(currentTask);
+        },
+      );
+    }
+    return _buildColorBackground(currentTask);
+  }
+
+  // Build solid color background with icon
+  Widget _buildColorBackground(Map<String, dynamic> currentTask) {
+    return Container(
+      color: colorFromString(currentTask['color'] ?? '#FF9800'),
+      child: Center(
+        child: SvgPicture.network(
+          currentTask["iconUrl"] ?? "",
+          width: 100,
+          height: 100,
+          placeholderBuilder: (context) => const Icon(
+            Icons.fitness_center,
+            color: Colors.white,
+            size: 100,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<String> _dailyCoaching(String habitName) async {
+    // Check cache first to avoid repeated API calls
+    if (_coachingCache.containsKey(habitName)) {
+      return _coachingCache[habitName]!;
+    }
+
     int day = dayOfWeek();
+    String coachingType = '';
+
     if (habitName.contains("Focus")) {
-      habitCoachingData = await _coachingService.getHabitCoaching("FOCUS", day);
-      return habitCoachingData!["subtitle"];
+      coachingType = "FOCUS";
+    } else if (habitName.contains("Daily")) {
+      coachingType = "MORNING";
+    } else if (habitName.contains("Nightly")) {
+      coachingType = "NIGHTLY";
+    } else {
+      return " ";
     }
-    if (habitName.contains("Daily")) {
+
+    try {
       habitCoachingData =
-          await _coachingService.getHabitCoaching("MORNING", day);
-      return habitCoachingData!["subtitle"];
+          await _coachingService.getHabitCoaching(coachingType, day);
+      final subtitle = habitCoachingData?["subtitle"] ?? " ";
+
+      // Cache the result
+      _coachingCache[habitName] = subtitle;
+
+      return subtitle;
+    } catch (e) {
+      print('Error fetching coaching data: $e');
+      return " ";
     }
-    if (habitName.contains("Nightly")) {
-      habitCoachingData =
-          await _coachingService.getHabitCoaching("NIGHTLY", day);
-      return habitCoachingData!["subtitle"];
-    }
-    return " ";
   }
 
   @override
@@ -273,646 +394,591 @@ class _TaskrevealState extends ConsumerState<habitPlay> {
         onPanUpdate: (details) {
           // Handle pan update if needed
         },
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: TaskServices().getUserHabits(widget.email),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return Center(child: CircularProgressIndicator());
-            }
+        child: _buildTaskView(
+          context,
+          currentTaskIndex,
+          isTaskSnoozed,
+          isTaskSkipped,
+          taskData,
+          notesData,
+          habitCoachingData,
+          audioState,
+          videoState,
+        ),
+      ),
+    );
+  }
 
-            var tasks = snapshot.data!;
+  Widget _buildTaskView(
+    BuildContext context,
+    int currentTaskIndex,
+    bool isTaskSnoozed,
+    bool isTaskSkipped,
+    Map<String, dynamic>? taskData,
+    Map<String, dynamic> notesData,
+    Map<String, dynamic>? habitCoachingData,
+    Map<String, bool> audioState,
+    HabitPlayVideoState videoState,
+  ) {
+    // Show loading indicator while tasks are being loaded
+    if (_isLoadingTasks || _cachedTasks == null) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(height: 20),
+            Text(
+              'Loading your habits...',
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
 
-            // Navigate back when all tasks are completed
-            if (currentTaskIndex >= tasks.length) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                // Pop back to the first route (assumed to be the original MainScreen)
-                Navigator.popUntil(context, (route) => route.isFirst);
+    var tasks = _cachedTasks!;
 
-                // Ensure the main screen tab is set to Ritual (index 1) so the
-                // BottomNavBar and PageView remain in a consistent state.
-                try {
-                  ref.read(selectedTabProvider.notifier).state = 1;
-                } catch (e) {
-                  // If we can't update the provider for any reason, just ignore
-                  // — popping back should restore the UI state in most cases.
-                  print('Error resetting selectedTabProvider: $e');
-                }
-              });
-              return SizedBox.shrink();
-            }
+    // Navigate back when all tasks are completed
+    if (currentTaskIndex >= tasks.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
 
-            var currentTask = tasks[currentTaskIndex];
+        // Pop back to the first route (assumed to be the original MainScreen)
+        Navigator.popUntil(context, (route) => route.isFirst);
 
-            // Initialize video controller when the task changes
-            String? videoUrl = currentTask['videoUrl'];
-            String? fallbackImageUrl = currentTask['backgroundLink'];
+        // Ensure the main screen tab is set to Ritual (index 1) so the
+        // BottomNavBar and PageView remain in a consistent state.
+        try {
+          ref.read(selectedTabProvider.notifier).state = 1;
+        } catch (e) {
+          // If we can't update the provider for any reason, just ignore
+          // — popping back should restore the UI state in most cases.
+          print('Error resetting selectedTabProvider: $e');
+        }
+      });
+      return const SizedBox.shrink();
+    }
 
-            // Only initialize video if URL exists and is different from current
-            if (videoUrl != null &&
-                videoUrl.isNotEmpty &&
-                videoState.currentVideoUrl != videoUrl &&
-                mounted) {
-              Future.microtask(() {
-                if (mounted) {
-                  try {
-                    ref
-                        .read(habitPlayVideoProvider.notifier)
-                        .initializeVideo(videoUrl);
-                  } catch (e) {
-                    print('HabitPlay: Error initializing video: $e');
-                  }
-                }
-              });
-            }
+    var currentTask = tasks[currentTaskIndex];
 
-            // Show loading screen while video is loading (but only for a reasonable time)
-            if (videoState.isLoading &&
-                videoUrl != null &&
-                videoUrl.isNotEmpty &&
-                !videoState.hasError) {
-              return const Scaffold(
-                backgroundColor: Colors.black,
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Colors.white),
-                      SizedBox(height: 20),
-                      Text(
-                        'Loading your habit...',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
+    // Initialize video controller when the task changes
+    String? videoUrl = currentTask['videoUrl'];
+    String? fallbackImageUrl = currentTask['backgroundLink'];
+
+    // Only initialize video if URL exists and is different from current
+    if (videoUrl != null &&
+        videoUrl.isNotEmpty &&
+        videoState.currentVideoUrl != videoUrl &&
+        mounted) {
+      Future.microtask(() {
+        if (mounted) {
+          try {
+            ref.read(habitPlayVideoProvider.notifier).initializeVideo(videoUrl);
+          } catch (e) {
+            print('HabitPlay: Error initializing video: $e');
+          }
+        }
+      });
+    }
+
+    // Show loading screen while video is loading (but only for a reasonable time)
+    if (videoState.isLoading &&
+        videoUrl != null &&
+        videoUrl.isNotEmpty &&
+        !videoState.hasError) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.white),
+              SizedBox(height: 20),
+              Text(
+                'Loading your habit...',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Stop audio when the last task's animation finishes
+    if (currentTaskIndex == tasks.length - 1 &&
+        (audioState['isAnimationVisible'] ?? false)) {
+      // Animation completion handled in _onCheckPressed
+    }
+
+    return Stack(
+      children: [
+        // Background Video or Fallback Image/Color
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: videoState.isInitialized &&
+                    videoState.controller != null &&
+                    !videoState.hasError
+                ? Builder(
+                    builder: (context) {
+                      try {
+                        final controller = videoState.controller!;
+                        // Check if controller value is valid
+                        if (!controller.value.isInitialized ||
+                            controller.value.hasError) {
+                          return _buildFallbackBackground(
+                              currentTask, fallbackImageUrl, context);
+                        }
+
+                        // Ensure video size is valid
+                        if (controller.value.size.width == 0 ||
+                            controller.value.size.height == 0) {
+                          return _buildFallbackBackground(
+                              currentTask, fallbackImageUrl, context);
+                        }
+
+                        return FittedBox(
+                          fit: BoxFit.cover,
+                          child: SizedBox(
+                            width: controller.value.size.width,
+                            height: controller.value.size.height,
+                            child: VideoPlayer(controller),
+                          ),
+                        );
+                      } catch (e) {
+                        print('HabitPlay: Video rendering error: $e');
+                        return _buildFallbackBackground(
+                            currentTask, fallbackImageUrl, context);
+                      }
+                    },
+                  )
+                : _buildFallbackBackground(
+                    currentTask, fallbackImageUrl, context),
+          ),
+        ),
+
+        // Title Positioned 20% from the Top
+        Positioned(
+          top: MediaQuery.of(context).size.height * 0.2,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Text(
+              currentTask['name'] ?? '',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    offset: Offset(0, 2),
+                    blurRadius: 4.0,
+                    color: Colors.black.withOpacity(0.5),
                   ),
-                ),
-              );
-            }
+                ],
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
+          ),
+        ),
 
-            // Stop audio when the last task's animation finishes
-            if (currentTaskIndex == tasks.length - 1 &&
-                (audioState['isAnimationVisible'] ?? false)) {
-              // Animation completion handled in _onCheckPressed
-            }
+        Positioned(
+          top: 20,
+          right: 20,
+          child: IconButton(
+            icon: Icon(
+              isTaskSnoozed ? Icons.volume_off : Icons.volume_up,
+              color: Colors.white,
+              size: 35,
+            ),
+            onPressed: _onSnoozePressed,
+          ),
+        ),
+        // DraggableScrollableSheet
+        DraggableScrollableSheet(
+          initialChildSize: 0.3,
+          minChildSize: 0.3,
+          maxChildSize: 0.6,
+          expand: true,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // Drag Handle with Upward Arrow
+                      Center(
+                        child: Icon(
+                          Icons.keyboard_arrow_up,
+                          size: 40,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final boxWidth = constraints.maxWidth * 1;
+                          var notepadTitle = currentTask["noteQuestion"];
 
-            return Stack(
-              children: [
-                // Background Video or Fallback Image/Color
-                Positioned.fill(
-                  child: videoState.isInitialized &&
-                          videoState.controller != null
-                      ? Builder(
-                          builder: (context) {
-                            try {
-                              return FittedBox(
-                                fit: BoxFit.cover,
-                                child: SizedBox(
-                                  width:
-                                      videoState.controller!.value.size.width,
-                                  height:
-                                      videoState.controller!.value.size.height,
-                                  child: VideoPlayer(videoState.controller!),
+                          return Column(
+                            children: [
+                              // Description Box - Height depends on content
+                              Container(
+                                width: boxWidth,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
-                              );
-                            } catch (e) {
-                              print('Video rendering error: $e');
-                              return Container(
-                                color: Colors.grey[900],
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.video_call_outlined,
-                                    color: Colors.white,
-                                    size: 50,
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        )
-                      : videoState.hasError ||
-                              (videoUrl == null || videoUrl.isEmpty)
-                          ? (fallbackImageUrl != null &&
-                                  fallbackImageUrl.isNotEmpty)
-                              ? Image.network(
-                                  fallbackImageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color:
-                                          colorFromString(currentTask['color']),
-                                      child: Center(
-                                        child: SvgPicture.network(
-                                          currentTask["iconUrl"],
-                                          width: 100,
-                                          height: 100,
-                                        ),
+                                child: currentTask['name'].contains('Coaching')
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          // Left Side (Name and Subtitle)
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  currentTask['name'] ?? '',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.left,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                FutureBuilder<String>(
+                                                  future: _dailyCoaching(
+                                                      currentTask['name']),
+                                                  builder: (context, snapshot) {
+                                                    if (snapshot
+                                                            .connectionState ==
+                                                        ConnectionState
+                                                            .waiting) {
+                                                      return const CircularProgressIndicator();
+                                                    } else if (snapshot
+                                                        .hasError) {
+                                                      return Text(
+                                                          'Error: ${snapshot.error}');
+                                                    } else if (snapshot
+                                                        .hasData) {
+                                                      return Text(
+                                                        snapshot.data ?? '',
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 18,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      );
+                                                    } else {
+                                                      return const Text('');
+                                                    }
+                                                  },
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          // Right Side (Play Button inside red circle)
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.play_arrow,
+                                              color: Colors.white,
+                                              size: 35,
+                                            ),
+                                            onPressed: () => {
+                                              if (habitCoachingData != null)
+                                                {
+                                                  _coachingPlay(
+                                                      habitCoachingData[
+                                                          "voiceUrl"]),
+                                                }
+                                              else
+                                                {
+                                                  print(
+                                                      "habitCoachingData is null")
+                                                }
+                                            },
+                                            style: IconButton.styleFrom(
+                                              backgroundColor: colorFromString(
+                                                  currentTask["color"]),
+                                              shape: const CircleBorder(),
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: Size(50, 50),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Column(
+                                        children: [
+                                          Html(
+                                            data: currentTask[
+                                                    'descriptionHtml'] ??
+                                                '',
+                                            style: {
+                                              "html": Style(
+                                                color: Colors.white,
+                                                fontSize: FontSize(18),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                    );
-                                  },
-                                )
-                              : Container(
-                                  color: colorFromString(currentTask['color']),
-                                  child: Center(
-                                    child: Column(
+                              ),
+                              const SizedBox(height: 20),
+                              Container(
+                                width: boxWidth,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      "Today",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const Divider(
+                                      color: Colors.white,
+                                      thickness: 1,
+                                    ),
+                                    Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        SvgPicture.network(
-                                          currentTask["iconUrl"],
-                                          width: 100,
-                                          height: 100,
+                                        // Skip Button
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              onPressed: _onSkipPressed,
+                                              icon: const Icon(
+                                                Icons.skip_next,
+                                                color: Colors.white,
+                                                size: 35,
+                                              ),
+                                            ),
+                                            const Text(
+                                              "Skip",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        if (videoState.hasError) ...[
-                                          const SizedBox(height: 20),
-                                          Text(
-                                            'Video Error: ${videoState.errorMessage}',
-                                            style: const TextStyle(
-                                                color: Colors.white),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
+
+                                        // Check Button with Animation
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                                size: 45,
+                                              ),
+                                              onPressed: () => _onCheckPressed(
+                                                currentTask.containsKey(
+                                                        "completionLottieUrl")
+                                                    ? currentTask[
+                                                        'completionLottieUrl']
+                                                    : "",
+                                                currentTask['objectId'],
+                                              ),
+                                              style: IconButton.styleFrom(
+                                                backgroundColor: Colors.pink,
+                                                shape: const CircleBorder(),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: 200,
+                                              width: 150,
+                                              child: Visibility(
+                                                visible: audioState[
+                                                        'isAnimationVisible'] ??
+                                                    false,
+                                                child: currentTask.containsKey(
+                                                        "completionLottieUrl")
+                                                    ? Lottie.network(
+                                                        currentTask[
+                                                            'completionLottieUrl'],
+                                                        repeat: false,
+                                                        width: 150,
+                                                        height: 150,
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder: (context,
+                                                            error, stackTrace) {
+                                                          print(
+                                                              'Error loading Lottie: $error');
+                                                          return const SizedBox
+                                                              .shrink();
+                                                        },
+                                                      )
+                                                    : const SizedBox.shrink(),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        // Snooze Button
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              onPressed: _onSnoozePressed,
+                                              icon: const Icon(
+                                                Icons.repeat,
+                                                color: Colors.white,
+                                                size: 35,
+                                              ),
+                                            ),
+                                            const Text(
+                                              "Snooze",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
-                                    ),
-                                  ),
-                                )
-                          : Container(
-                              color: colorFromString(currentTask['color']),
-                              child: const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(
-                                        color: Colors.white),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      'Preparing video...',
-                                      style: TextStyle(color: Colors.white),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                ),
 
-                // Title Positioned 20% from the Top
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.2,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Text(
-                      currentTask['name'] ?? '',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(0, 2),
-                            blurRadius: 4.0,
-                            color: Colors.black.withOpacity(0.5),
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  top: 20,
-                  right: 20,
-                  child: IconButton(
-                    icon: Icon(
-                      isTaskSnoozed ? Icons.volume_off : Icons.volume_up,
-                      color: Colors.white,
-                      size: 35,
-                    ),
-                    onPressed: _onSnoozePressed,
-                  ),
-                ),
-                // DraggableScrollableSheet
-                DraggableScrollableSheet(
-                  initialChildSize: 0.3,
-                  minChildSize: 0.2,
-                  maxChildSize: _calculateDynamicMaxChildSize(
-                      context, currentTask, items),
-                  builder: (context, scrollController) {
-                    _scrollController = scrollController;
-
-                    return Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.transparent,
-                      ),
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              // Drag Handle with Upward Arrow
-                              Center(
-                                child: Icon(
-                                  Icons.keyboard_arrow_up,
-                                  size: 40,
-                                  color: Colors.white.withOpacity(0.8),
+                              const SizedBox(height: 20),
+                              Container(
+                                width: boxWidth,
+                                height: 80.0 + NotepadContentHeight,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final boxWidth = constraints.maxWidth * 1;
-                                  var notepadTitle =
-                                      currentTask["noteQuestion"];
-
-                                  return Column(
-                                    children: [
-                                      // Description Box - Height depends on content
-                                      Container(
-                                        width: boxWidth,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.6),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        child: currentTask['name']
-                                                .contains('Coaching')
-                                            ? Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  // Left Side (Name and Subtitle)
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          currentTask['name'] ??
-                                                              '',
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 20,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                          textAlign:
-                                                              TextAlign.left,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 8),
-                                                        FutureBuilder<String>(
-                                                          future:
-                                                              _dailyCoaching(
-                                                                  currentTask[
-                                                                      'name']),
-                                                          builder: (context,
-                                                              snapshot) {
-                                                            if (snapshot
-                                                                    .connectionState ==
-                                                                ConnectionState
-                                                                    .waiting) {
-                                                              return const CircularProgressIndicator();
-                                                            } else if (snapshot
-                                                                .hasError) {
-                                                              return Text(
-                                                                  'Error: ${snapshot.error}');
-                                                            } else if (snapshot
-                                                                .hasData) {
-                                                              return Text(
-                                                                snapshot.data ??
-                                                                    '',
-                                                                style:
-                                                                    const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 18,
-                                                                ),
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .left,
-                                                              );
-                                                            } else {
-                                                              return const Text(
-                                                                  '');
-                                                            }
-                                                          },
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  // Right Side (Play Button inside red circle)
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.play_arrow,
-                                                      color: Colors.white,
-                                                      size: 35,
-                                                    ),
-                                                    onPressed: () => {
-                                                      if (habitCoachingData !=
-                                                          null)
-                                                        {
-                                                          _coachingPlay(
-                                                              habitCoachingData[
-                                                                  "voiceUrl"]),
-                                                        }
-                                                      else
-                                                        {
-                                                          print(
-                                                              "habitCoachingData is null")
-                                                        }
-                                                    },
-                                                    style: IconButton.styleFrom(
-                                                      backgroundColor:
-                                                          colorFromString(
-                                                              currentTask[
-                                                                  "color"]),
-                                                      shape:
-                                                          const CircleBorder(),
-                                                      padding: EdgeInsets.zero,
-                                                      minimumSize: Size(50, 50),
-                                                    ),
-                                                  ),
-                                                ],
-                                              )
-                                            : Column(
-                                                children: [
-                                                  Html(
-                                                    data: currentTask[
-                                                            'descriptionHtml'] ??
-                                                        '',
-                                                    style: {
-                                                      "html": Style(
-                                                        color: Colors.white,
-                                                        fontSize: FontSize(18),
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                      ),
-                                                    },
-                                                  ),
-                                                ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        IconButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    Notesscreen(
+                                                  email: widget.email,
+                                                  taskID:
+                                                      currentTask['objectId'],
+                                                  title: notepadTitle,
+                                                  timestamp: "",
+                                                  items: items,
+                                                ),
                                               ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Container(
-                                        width: boxWidth,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.6),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
+                                            );
+                                          },
+                                          icon: const Icon(
+                                            Icons.add,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
                                         ),
-                                        child: Column(
-                                          children: [
-                                            const Text(
-                                              "Today",
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const Divider(
+                                        Expanded(
+                                          child: Text(
+                                            notepadTitle,
+                                            style: TextStyle(
                                               color: Colors.white,
-                                              thickness: 1,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
                                             ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                // Skip Button
-                                                Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    IconButton(
-                                                      onPressed: _onSkipPressed,
-                                                      icon: const Icon(
-                                                        Icons.skip_next,
-                                                        color: Colors.white,
-                                                        size: 35,
-                                                      ),
-                                                    ),
-                                                    const Text(
-                                                      "Skip",
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-
-                                                // Check Button with Animation
-                                                Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.check,
-                                                        color: Colors.white,
-                                                        size: 45,
-                                                      ),
-                                                      onPressed: () =>
-                                                          _onCheckPressed(
-                                                        currentTask.containsKey(
-                                                                "completionLottieUrl")
-                                                            ? currentTask[
-                                                                'completionLottieUrl']
-                                                            : "",
-                                                        currentTask['objectId'],
-                                                      ),
-                                                      style:
-                                                          IconButton.styleFrom(
-                                                        backgroundColor:
-                                                            Colors.pink,
-                                                        shape:
-                                                            const CircleBorder(),
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      height: 150,
-                                                      width: 150,
-                                                      child: Visibility(
-                                                        visible: audioState[
-                                                                'isAnimationVisible'] ??
-                                                            false,
-                                                        child: currentTask
-                                                                .containsKey(
-                                                                    "completionLottieUrl")
-                                                            ? Lottie.network(
-                                                                currentTask[
-                                                                    'completionLottieUrl'],
-                                                                repeat: false,
-                                                                width: 550,
-                                                                height: 550,
-                                                              )
-                                                            : Container(),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-
-                                                // Snooze Button
-                                                Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    IconButton(
-                                                      onPressed:
-                                                          _onSnoozePressed,
-                                                      icon: const Icon(
-                                                        Icons.repeat,
-                                                        color: Colors.white,
-                                                        size: 35,
-                                                      ),
-                                                    ),
-                                                    const Text(
-                                                      "Snooze",
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                            overflow: TextOverflow.visible,
+                                            softWrap: true,
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
+                                        IconButton(
+                                          onPressed: (items.isNotEmpty)
+                                              ? () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GeneralComponentScreen(
+                                                        email: widget.email,
+                                                        taskID: currentTask[
+                                                            'objectId'],
+                                                        title: notepadTitle,
+                                                        timestamp: timestamp,
+                                                        items: items,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              : null,
+                                          icon: Icon(
+                                            Icons.book,
+                                            color: (items.isNotEmpty)
+                                                ? Colors.white
+                                                : Colors.grey,
+                                            size: 30,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (items.isNotEmpty) ...[
+                                      const Divider(
+                                        color: Colors.white,
+                                        thickness: 1,
+                                        height: 20,
                                       ),
-
-                                      const SizedBox(height: 20),
-                                      Container(
-                                        width: boxWidth,
-                                        height: 80.0 + NotepadContentHeight,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.8),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
+                                      Text(
+                                        items,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                IconButton(
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            Notesscreen(
-                                                          email: widget.email,
-                                                          taskID: currentTask[
-                                                              'objectId'],
-                                                          title: notepadTitle,
-                                                          timestamp: "",
-                                                          items: items,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                  icon: const Icon(
-                                                    Icons.add,
-                                                    color: Colors.white,
-                                                    size: 30,
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Text(
-                                                    notepadTitle,
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.visible,
-                                                    softWrap: true,
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  onPressed: (items.isNotEmpty)
-                                                      ? () {
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  GeneralComponentScreen(
-                                                                email: widget
-                                                                    .email,
-                                                                taskID: currentTask[
-                                                                    'objectId'],
-                                                                title:
-                                                                    notepadTitle,
-                                                                timestamp:
-                                                                    timestamp,
-                                                                items: items,
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }
-                                                      : null,
-                                                  icon: Icon(
-                                                    Icons.book,
-                                                    color: (items.isNotEmpty)
-                                                        ? Colors.white
-                                                        : Colors.grey,
-                                                    size: 30,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            if (items.isNotEmpty) ...[
-                                              const Divider(
-                                                color: Colors.white,
-                                                thickness: 1,
-                                                height: 20,
-                                              ),
-                                              Text(
-                                                items,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                ),
-                                                textAlign: TextAlign.start,
-                                              ),
-                                            ],
-                                          ],
-                                        ),
+                                        textAlign: TextAlign.start,
                                       ),
                                     ],
-                                  );
-                                },
+                                  ],
+                                ),
                               ),
                             ],
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              ],
+              ),
             );
           },
         ),
-      ),
+      ],
     );
   }
 }

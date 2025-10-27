@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_otp_auth/email_otp_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -9,7 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/index.dart';
 import '../../../chat/data/services/api/chat_api_service.dart';
 import '../../../chat/data/services/token/token_service.dart';
-import '../../../../main_screen.dart';
+import '../../../onboarding/presentation/Screens/onBoard1.dart';
+import '../../../../core/log/app_logger.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key, required this.togglePages});
@@ -22,6 +24,7 @@ class CreateAccountPage extends StatefulWidget {
 class CreateAccountPageState extends State<CreateAccountPage> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _stressLevelController = TextEditingController();
   String _selectedGender = 'Male';
   bool _passwordVisible = true;
   bool _isOtpVerified = false;
@@ -39,6 +42,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     _otpController.dispose();
     _ageController.dispose();
     _locationController.dispose();
+    _stressLevelController.dispose();
     super.dispose();
   }
 
@@ -55,6 +59,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
               _buildAgeTextBox(),
               _buildGenderDropdown(),
               _buildLocationTextBox(),
+              _buildStressLevelTextBox(),
               _buildEmailTextBox(),
               _buildOtpTextBox(),
               _buildPasswordTextBox(),
@@ -163,6 +168,16 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     );
   }
 
+  Widget _buildStressLevelTextBox() {
+    return _buildTextBox(
+      controller: _stressLevelController,
+      labelText: "Stress Level",
+      hintText: "Enter your stress level (1-10)",
+      icon: Icons.psychology_outlined,
+      obscureText: false,
+    );
+  }
+
   Widget _buildOtpTextBox() {
     return _buildTextBox(
       controller: _otpController,
@@ -226,7 +241,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
           onPressed: _isRegistering
               ? null
               : () {
-                  print('🔘 Create Account button pressed');
+                  AppLogger.d('🔘 Create Account button pressed');
                   _register(ref);
                 },
           labelText: "Create Account",
@@ -269,7 +284,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       );
 
       if (kDebugMode) {
-        print("Attempting to send OTP...");
+        AppLogger.d("Attempting to send OTP...");
       }
       var res = await EmailOtpAuth.sendOTP(email: _emailController.text)
           .timeout(const Duration(seconds: 10), onTimeout: () {
@@ -281,7 +296,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       }
 
       if (kDebugMode) {
-        print("Response: $res");
+        AppLogger.d("Response: $res");
       }
 
       if (res["message"] == "Email Send" && context.mounted) {
@@ -297,7 +312,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
         Navigator.of(context).pop();
       }
       if (kDebugMode) {
-        print("Error: $error");
+        AppLogger.e("Error: $error");
       }
       showSnackBar(context, "Something went wrong", Colors.red);
     }
@@ -338,7 +353,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   void _register(WidgetRef ref) async {
-    print('_register method called');
+    AppLogger.i('_register method called');
 
     // Set loading state
     setState(() {
@@ -351,17 +366,18 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     final String age = _ageController.text.trim();
     final String gender = _selectedGender;
     final String location = _locationController.text.trim();
+    final String stressLevel = _stressLevelController.text.trim();
 
-    print(
-        '📋 Registration data: name=$name, email=$email, age=$age, gender=$gender, location=$location');
-    print('OTP verified: $_isOtpVerified');
+    AppLogger.d(
+        '📋 Registration data: name=$name, email=$email, age=$age, gender=$gender, location=$location, stressLevel=$stressLevel');
+    AppLogger.d('OTP verified: $_isOtpVerified');
 
     if (!_isOtpVerified) {
       setState(() {
         _isRegistering = false;
       });
       if (!mounted) return;
-      print(' OTP not verified');
+      AppLogger.w('❌ OTP not verified');
       showSnackBar(context, 'Please verify the OTP first', Colors.red);
       return;
     }
@@ -371,18 +387,59 @@ class CreateAccountPageState extends State<CreateAccountPage> {
         password.isEmpty ||
         age.isEmpty ||
         gender.isEmpty ||
-        location.isEmpty) {
+        location.isEmpty ||
+        stressLevel.isEmpty) {
       setState(() {
         _isRegistering = false;
       });
       if (!mounted) return;
-      print(' Missing fields');
+      AppLogger.w('❌ Missing fields');
       showSnackBar(context, 'Please fill in all the fields', Colors.red);
       return;
     }
 
     try {
-      print('Starting API registration');
+      // Step 1: Create Firebase user account
+      AppLogger.i('🔥 Creating Firebase user account');
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (userCredential.user == null) {
+        AppLogger.e('❌ Firebase user creation failed');
+        setState(() {
+          _isRegistering = false;
+        });
+        if (!mounted) return;
+        showSnackBar(context, 'Failed to create account', Colors.red);
+        return;
+      }
+
+      AppLogger.i('✅ Firebase user created: ${userCredential.user!.uid}');
+
+      // Step 2: Save complete user profile to Firestore
+      AppLogger.i('💾 Saving complete user profile to Firestore');
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'uid': userCredential.user!.uid,
+        'name': name,
+        'email': email,
+        'age': age,
+        'gender': gender,
+        'location': location,
+        'stressLevel': stressLevel,
+        'profileComplete': true, // Profile is complete with all information
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      AppLogger.i('✅ Firestore profile saved successfully');
+
+      // Step 2: Register with backend API
+      AppLogger.i('� Starting backend API registration');
       final apiService = ChatApiService();
       final registrationData = {
         'name': name,
@@ -391,71 +448,61 @@ class CreateAccountPageState extends State<CreateAccountPage> {
         'age': age,
         'gender': gender,
         'location': location,
+        'stressLevel': stressLevel,
       };
       final apiResult = await apiService.register(registrationData);
-      print('📡 API registration result: $apiResult');
+      AppLogger.d('📡 API registration result: $apiResult');
 
       if (apiResult == null) {
-        print(' API registration failed');
-        setState(() {
-          _isRegistering = false;
-        });
-        if (!mounted) return;
-        showSnackBar(
-            context, 'Registration failed. Please try again.', Colors.red);
-        return;
+        AppLogger.w('⚠️ Backend API registration failed');
+        // Don't fail completely - Firebase account is created
+      } else {
+        AppLogger.i('✅ Backend API registration successful');
       }
 
-      print(' API registration successful');
-
-      // Now authenticate to get token
-      print('� Getting authentication token');
+      // Step 3: Get authentication token from backend
+      AppLogger.i('🔑 Getting authentication token');
       final apiToken = await apiService.authenticate(email, password);
 
+      // Step 4: Store tokens and user data
       if (apiToken != null) {
-        // Store token and user details
         await TokenService.storeToken(apiToken);
-        await TokenService.storeUserDetails(email: email, name: name);
+        AppLogger.i('✅ Backend token stored');
+      }
 
-        print('💾 Token and user details stored');
+      // Generate and store Firebase token
+      await TokenService.generateAndStoreToken();
+      AppLogger.i('✅ Firebase token generated and stored');
 
-        setState(() {
-          _isRegistering = false;
-        });
+      // Store user details
+      await TokenService.storeUserDetails(
+        email: email,
+        name: name,
+        userId: userCredential.user!.uid,
+        password: password,
+      );
+      AppLogger.i('💾 User details stored');
 
-        if (!mounted) return;
-        showSnackBar(context, 'Account created successfully!', Colors.green);
+      setState(() {
+        _isRegistering = false;
+      });
 
-        // Navigate directly to main screen
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => MainScreen()),
-          );
-        }
-      } else {
-        print(' Failed to get authentication token');
-        setState(() {
-          _isRegistering = false;
-        });
-        if (!mounted) return;
-        showSnackBar(
-            context,
-            'Registration successful but login failed. Please try logging in.',
-            Colors.orange);
+      if (!mounted) return;
+      showSnackBar(context, 'Account created successfully!', Colors.green);
 
-        // Navigate to login page
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted && widget.togglePages != null) {
-          widget.togglePages!();
-        }
+      // Navigate to onboarding flow
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const Onboard1()),
+        );
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isRegistering = false;
       });
       if (!mounted) return;
-      print(' Firebase error: ${e.code} - ${e.message}');
+      AppLogger.e('❌ Firebase error: ${e.code} - ${e.message}');
       if (e.code == 'weak-password') {
         showSnackBar(
             context, 'Weak password! Choose a stronger one.', Colors.red);
@@ -466,7 +513,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       setState(() {
         _isRegistering = false;
       });
-      print('Unexpected error during registration: $e');
+      AppLogger.e('💥 Unexpected error during registration: $e');
       if (!mounted) return;
       showSnackBar(context, 'Registration failed: $e', Colors.red);
     }

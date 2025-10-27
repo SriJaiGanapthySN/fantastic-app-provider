@@ -11,6 +11,7 @@ import 'dart:convert';
 import '../models/app_user.dart';
 import '../../../../core/utils/connectivity_helper.dart';
 import '../../../chat/data/services/token/token_service.dart';
+import '../../../../core/log/app_logger.dart';
 
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -35,11 +36,17 @@ class FirebaseAuthRepo implements AuthRepo {
       return null;
     }
 
-    //User exists
+    //User exists - load all profile data
+    final data = userDoc.data() as Map<String, dynamic>;
     return AppUser(
       uid: firebaseUser.uid,
       email: firebaseUser.email!,
-      name: userDoc['name'],
+      name: data['name'] ?? 'User',
+      age: data['age'],
+      gender: data['gender'],
+      location: data['location'],
+      stressLevel: data['stressLevel'],
+      profileComplete: data['profileComplete'] ?? false,
     );
   }
 
@@ -75,7 +82,7 @@ class FirebaseAuthRepo implements AuthRepo {
       // Generate and store auth token
       await TokenService.generateAndStoreToken();
 
-      // Store user details in TokenService
+      // Store user details in TokenService (including password for backend)
       await TokenService.storeUserDetails(
         email: appUser.email,
         name: appUser.name,
@@ -83,10 +90,36 @@ class FirebaseAuthRepo implements AuthRepo {
         password: password, // Store password for backend API authentication
       );
 
-      // Generate backend API token for chat functionality
-      await TokenService.generateAndStoreBackendToken();
+      // Try to generate backend API token
+      // If it fails (user not registered in backend), try to register them
+      final backendToken = await TokenService.generateAndStoreBackendToken();
 
-      print('Login successful - Auth token generated and stored');
+      if (backendToken == null) {
+        AppLogger.w(
+            '⚠️ Backend token generation failed - user may not be registered in backend');
+        AppLogger.i('📝 Attempting to register user in backend...');
+
+        // Try to register the user in backend (using default values for missing fields)
+        await _registerUserInBackendAPI(
+          appUser.name,
+          appUser.email,
+          password,
+        );
+
+        // Try again to get backend token after registration
+        final retryToken = await TokenService.generateAndStoreBackendToken();
+        if (retryToken != null) {
+          AppLogger.i(
+              '✅ Backend token generated successfully after registration');
+        } else {
+          AppLogger.w(
+              '⚠️ Could not generate backend token - chat features may be limited');
+        }
+      } else {
+        AppLogger.i('✅ Backend token generated successfully');
+      }
+
+      AppLogger.i('Login successful - Auth token generated and stored');
       return appUser;
     } on FirebaseAuthException catch (e) {
       _handleAuthException(e);
@@ -144,11 +177,13 @@ class FirebaseAuthRepo implements AuthRepo {
         password: password,
       );
 
-      //Create user
+      //Create user with basic info (profile will be completed later)
       AppUser user = AppUser(
         uid: userCredential.user!.uid,
         email: email,
         name: name,
+        profileComplete:
+            false, // Will be set to true after additional info is collected
       );
 
       //Register the user in firestore
@@ -156,6 +191,9 @@ class FirebaseAuthRepo implements AuthRepo {
           .collection('users')
           .doc(userCredential.user!.uid)
           .set(user.toJson());
+
+      // Register user in backend API (required for chat functionality)
+      await _registerUserInBackendAPI(name, email, password);
 
       // Generate and store auth token
       await TokenService.generateAndStoreToken();
@@ -171,7 +209,7 @@ class FirebaseAuthRepo implements AuthRepo {
       // Generate backend API token for chat functionality
       await TokenService.generateAndStoreBackendToken();
 
-      print('Signup successful - Auth token generated and stored');
+      AppLogger.i('Signup successful - Auth token generated and stored');
 
       //Return user
       return user;
@@ -241,10 +279,53 @@ class FirebaseAuthRepo implements AuthRepo {
     }
   }
 
+  // Helper method to register user in backend API with email/password
+  Future<void> _registerUserInBackendAPI(
+      String name, String email, String password) async {
+    try {
+      AppLogger.i('📝 Registering user in backend API: $email');
+
+      const baseUrl = 'https://mental-health.rohanrichard.com';
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/register'),
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'age': '25', // Default values - can be updated later
+          'gender_identity': 'Not Specified',
+          'location': 'Not Specified',
+        }),
+      );
+
+      AppLogger.d(
+          'Backend registration response status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.i('✅ Backend API registration successful');
+      } else if (response.statusCode == 400) {
+        // User might already exist in backend
+        AppLogger.w(
+            '⚠️ User already exists in backend - this is OK for returning users');
+      } else {
+        AppLogger.e('❌ Backend registration failed: ${response.statusCode}');
+        AppLogger.e('Response: ${response.body}');
+        // Don't throw - user can still use Firebase features
+      }
+    } catch (e) {
+      AppLogger.e('💥 Error registering user in backend API: $e', data: e);
+      // Don't throw - backend registration is optional for core Firebase features
+    }
+  }
+
   // Helper method to register user with backend API when password is not available (Google/Apple sign-in)
   Future<void> _registerUserWithBackend(String email, String name) async {
     try {
-      print('Registering user with backend API: $email');
+      AppLogger.i('Registering user with backend API: $email');
 
       const baseUrl = 'https://mental-health.rohanrichard.com';
       final response = await http.post(
@@ -265,25 +346,26 @@ class FirebaseAuthRepo implements AuthRepo {
         }),
       );
 
-      print('Backend registration response status: ${response.statusCode}');
+      AppLogger.d(
+          'Backend registration response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        print('Backend registration successful for OAuth user');
+        AppLogger.i('Backend registration successful for OAuth user');
 
         // Try to get an auth token for this user
         // Since we used an auto-generated password, we need to handle this differently
         // The backend should support OAuth token validation
       } else if (response.statusCode == 400) {
         // User might already exist, which is fine
-        print(
+        AppLogger.w(
             'User already exists in backend - this is expected for returning OAuth users');
       } else {
-        print('Backend registration failed: ${response.statusCode}');
-        print('Response: ${response.body}');
+        AppLogger.e('Backend registration failed: ${response.statusCode}');
+        AppLogger.e('Response: ${response.body}');
       }
     } catch (e) {
-      print('Error registering user with backend API: $e');
+      AppLogger.e('Error registering user with backend API: $e', data: e);
       // Don't throw error - OAuth sign-in should still work even if backend registration fails
     }
   }
@@ -333,25 +415,47 @@ class FirebaseAuthRepo implements AuthRepo {
           .doc(firebaseUser.uid)
           .get();
 
+      bool isNewUser = !userDoc.exists;
+      bool profileComplete = false;
+
       if (!userDoc.exists) {
-        // Register the new user in Firestore
+        // New user - Register with incomplete profile
         AppUser user = AppUser(
           uid: firebaseUser.uid,
           email: firebaseUser.email!,
           name: firebaseUser.displayName ?? 'User',
+          profileComplete: false, // Profile needs to be completed
         );
 
         await firebaseFirestore
             .collection('users')
             .doc(firebaseUser.uid)
             .set(user.toJson());
+
+        AppLogger.i('🆕 New Google user created - profile incomplete');
+      } else {
+        // Existing user - check if profile is complete
+        final data = userDoc.data() as Map<String, dynamic>;
+        profileComplete = data['profileComplete'] ?? false;
+        AppLogger.i('👤 Existing user - profile complete: $profileComplete');
       }
 
-      // Create AppUser instance
+      // Create AppUser instance with current profile state
       final appUser = AppUser(
         uid: firebaseUser.uid,
         email: firebaseUser.email!,
         name: firebaseUser.displayName ?? 'User',
+        age: isNewUser ? null : (userDoc.data() as Map<String, dynamic>)['age'],
+        gender: isNewUser
+            ? null
+            : (userDoc.data() as Map<String, dynamic>)['gender'],
+        location: isNewUser
+            ? null
+            : (userDoc.data() as Map<String, dynamic>)['location'],
+        stressLevel: isNewUser
+            ? null
+            : (userDoc.data() as Map<String, dynamic>)['stressLevel'],
+        profileComplete: profileComplete,
       );
 
       // Generate and store auth token
@@ -364,9 +468,10 @@ class FirebaseAuthRepo implements AuthRepo {
         userId: appUser.uid,
       );
 
-      // For Google sign-in, we need to register the user with the backend API first
-      // since we don't have their password for backend authentication
-      await _registerUserWithBackend(appUser.email, appUser.name);
+      // For Google sign-in, try to register with backend if profile is complete
+      if (profileComplete && !isNewUser) {
+        await _registerUserWithBackend(appUser.email, appUser.name);
+      }
 
       print('Google sign-in successful - Auth token generated and stored');
 
@@ -414,28 +519,52 @@ class FirebaseAuthRepo implements AuthRepo {
           .doc(firebaseUser.uid)
           .get();
 
+      bool isNewUser = !userDoc.exists;
+      bool profileComplete = false;
+
       if (!userDoc.exists) {
-        // Register the new user in Firestore
+        // New user - Register with incomplete profile
+        final userName = appleCredential.givenName != null &&
+                appleCredential.familyName != null
+            ? '${appleCredential.givenName} ${appleCredential.familyName}'
+            : firebaseUser.displayName ?? 'User';
+
         AppUser user = AppUser(
           uid: firebaseUser.uid,
           email: firebaseUser.email ?? 'No email',
-          name: appleCredential.givenName != null &&
-                  appleCredential.familyName != null
-              ? '${appleCredential.givenName} ${appleCredential.familyName}'
-              : firebaseUser.displayName ?? 'User',
+          name: userName,
+          profileComplete: false, // Profile needs to be completed
         );
 
         await firebaseFirestore
             .collection('users')
             .doc(firebaseUser.uid)
             .set(user.toJson());
+
+        AppLogger.i('🆕 New Apple user created - profile incomplete');
+      } else {
+        // Existing user - check if profile is complete
+        final data = userDoc.data() as Map<String, dynamic>;
+        profileComplete = data['profileComplete'] ?? false;
+        AppLogger.i('👤 Existing user - profile complete: $profileComplete');
       }
 
-      // Create AppUser instance
+      // Create AppUser instance with current profile state
       final appUser = AppUser(
         uid: firebaseUser.uid,
         email: firebaseUser.email ?? 'No email',
         name: firebaseUser.displayName ?? 'User',
+        age: isNewUser ? null : (userDoc.data() as Map<String, dynamic>)['age'],
+        gender: isNewUser
+            ? null
+            : (userDoc.data() as Map<String, dynamic>)['gender'],
+        location: isNewUser
+            ? null
+            : (userDoc.data() as Map<String, dynamic>)['location'],
+        stressLevel: isNewUser
+            ? null
+            : (userDoc.data() as Map<String, dynamic>)['stressLevel'],
+        profileComplete: profileComplete,
       );
 
       // Generate and store auth token
@@ -448,9 +577,10 @@ class FirebaseAuthRepo implements AuthRepo {
         userId: appUser.uid,
       );
 
-      // For Apple sign-in, we need to register the user with the backend API first
-      // since we don't have their password for backend authentication
-      await _registerUserWithBackend(appUser.email, appUser.name);
+      // For Apple sign-in, try to register with backend if profile is complete
+      if (profileComplete && !isNewUser) {
+        await _registerUserWithBackend(appUser.email, appUser.name);
+      }
 
       print('Apple sign-in successful - Auth token generated and stored');
 
